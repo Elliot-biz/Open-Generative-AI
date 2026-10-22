@@ -1,8 +1,9 @@
 # WHIHM workflow core v1
 
 A local, provider-neutral, machine-authorable JSON document and pure authoring library.
-No execution engine, provider calls, storage service, UI, planner, snapshots or rollback
-system is included. React Flow is not the source of truth. Requires Node >=20.19.
+A separate local history API provides portable snapshots and non-destructive rollback.
+No execution engine, provider calls, cloud storage, UI, or planner is included.
+React Flow is not the source of truth. Requires Node >=20.19.
 No runtime dependencies.
 
 ## Commands
@@ -193,3 +194,10 @@ Use `applyEditBatch` for serializable commands with expected-hash protection, dr
 semantic diff, allowed-path enforcement and atomic validation. `hashWorkflow`,
 `diffWorkflows`, `validateCommandBatch` and `commandSchema` are also exported.
 It does not replace the canonical document or execute any workflow.
+
+## Portable local history
+
+`createHistoryStore` and `HISTORY_VERSION` expose the additive local history layer.
+See [HISTORY.md](HISTORY.md) for the record format, persistence APIs, concurrency,
+rollback, integrity verification, relocation guarantees, and recovery limitations.
+The canonical authoring/edit APIs remain independent of persistence.

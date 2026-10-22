@@ -83,3 +83,5 @@ export function getExecutionContract(doc,nodeId){
 export { hashWorkflow, diffWorkflows } from './diff.js';
 export { applyEditBatch } from './edit.js';
 export { validateCommandBatch, commandSchema } from './commands/contract.js';
+
+export { createHistoryStore, HISTORY_VERSION } from './history/store.js';
