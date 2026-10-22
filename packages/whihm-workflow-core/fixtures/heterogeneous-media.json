@@ -1,0 +1,586 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "branded_media",
+  "name": "WHIHM branded media plan",
+  "nodes": [
+    {
+      "id": "planner",
+      "title": "Creative brief planner",
+      "kind": "planning",
+      "executor": {
+        "type": "remote-model",
+        "id": "provider.model",
+        "mayCostMoney": true,
+        "requiresConfirmation": true,
+        "provider": "example",
+        "model": "illustrative-specialist"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "brief",
+          "type": "text"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "plan",
+          "type": "text"
+        }
+      ],
+      "parameters": {},
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "image",
+      "title": "Reference image generation",
+      "kind": "image-generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "provider.model",
+        "mayCostMoney": true,
+        "requiresConfirmation": true,
+        "provider": "example",
+        "model": "illustrative-specialist"
+      },
+      "position": {
+        "x": 220,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "prompt",
+          "type": "text"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "image",
+          "type": "image"
+        }
+      ],
+      "parameters": {
+        "prompt": "{{ planner.outputs[0].value }}"
+      },
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "video",
+      "title": "Specialist motion generation",
+      "kind": "video-generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "provider.model",
+        "mayCostMoney": true,
+        "requiresConfirmation": true,
+        "provider": "example",
+        "model": "illustrative-specialist"
+      },
+      "position": {
+        "x": 440,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "image",
+          "type": "image"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "parameters": {},
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "refine",
+      "title": "Motion refinement",
+      "kind": "refinement",
+      "executor": {
+        "type": "remote-model",
+        "id": "provider.model",
+        "mayCostMoney": true,
+        "requiresConfirmation": true,
+        "provider": "example",
+        "model": "illustrative-specialist"
+      },
+      "position": {
+        "x": 660,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "parameters": {},
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "segment",
+      "title": "Subject segmentation",
+      "kind": "segmentation",
+      "executor": {
+        "type": "local-ai",
+        "id": "local.model",
+        "mayCostMoney": false,
+        "requiresConfirmation": false,
+        "tool": "segment"
+      },
+      "position": {
+        "x": 880,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "mask",
+          "type": "image"
+        }
+      ],
+      "parameters": {},
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "logo",
+      "title": "Exact WHIHM logo compositor",
+      "kind": "compositing",
+      "executor": {
+        "type": "utility",
+        "id": "whihm.utility",
+        "mayCostMoney": false,
+        "requiresConfirmation": false,
+        "tool": "logo"
+      },
+      "position": {
+        "x": 1100,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "video",
+          "type": "video"
+        },
+        {
+          "id": "mask",
+          "type": "image"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "parameters": {
+        "logo": {
+          "$asset": "brand_logo"
+        },
+        "placement": {
+          "x": 24,
+          "y": 24
+        },
+        "opacity": 1
+      },
+      "enabled": true,
+      "assetRefs": [
+        "brand_logo"
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "trim",
+      "title": "Exact clip trim",
+      "kind": "trim",
+      "executor": {
+        "type": "utility",
+        "id": "whihm.utility",
+        "mayCostMoney": false,
+        "requiresConfirmation": false,
+        "tool": "trim"
+      },
+      "position": {
+        "x": 1320,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "parameters": {
+        "inSeconds": 0,
+        "outSeconds": 4
+      },
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "combine",
+      "title": "Deterministic Video Combiner",
+      "kind": "video-combiner",
+      "executor": {
+        "type": "utility",
+        "id": "whihm.utility",
+        "mayCostMoney": false,
+        "requiresConfirmation": false,
+        "tool": "combine"
+      },
+      "position": {
+        "x": 1540,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "clips",
+          "type": "video",
+          "cardinality": "many"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "parameters": {
+        "clips": [
+          {
+            "source": {
+              "$nodeOutput": {
+                "nodeId": "trim",
+                "portId": "video"
+              }
+            },
+            "inSeconds": 0,
+            "outSeconds": 4
+          },
+          {
+            "source": {
+              "$nodeOutput": {
+                "nodeId": "refine",
+                "portId": "video"
+              }
+            },
+            "inSeconds": 1,
+            "outSeconds": 3
+          }
+        ],
+        "transition": {
+          "type": "cut",
+          "durationSeconds": 0
+        },
+        "resolution": {
+          "width": 1080,
+          "height": 1920
+        },
+        "fps": 30,
+        "codec": "h264"
+      },
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    },
+    {
+      "id": "qc",
+      "title": "Quality approval gate",
+      "kind": "qc",
+      "executor": {
+        "type": "control",
+        "id": "whihm.control",
+        "mayCostMoney": false,
+        "requiresConfirmation": false,
+        "tool": "qc"
+      },
+      "position": {
+        "x": 1760,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "approved",
+          "type": "video"
+        },
+        {
+          "id": "decision",
+          "type": "boolean"
+        }
+      ],
+      "parameters": {
+        "checks": [
+          "dimensions",
+          "duration",
+          "branding"
+        ]
+      },
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {},
+      "executionPolicy": {
+        "requiresApproval": true
+      },
+      "retryPolicy": {
+        "maxAttempts": 1
+      },
+      "fallbackPolicy": {
+        "allowed": false
+      },
+      "costPolicy": {
+        "maximum": 0
+      }
+    },
+    {
+      "id": "export",
+      "title": "Reproducible export",
+      "kind": "export",
+      "executor": {
+        "type": "utility",
+        "id": "whihm.utility",
+        "mayCostMoney": false,
+        "requiresConfirmation": false,
+        "tool": "export"
+      },
+      "position": {
+        "x": 1980,
+        "y": 0
+      },
+      "inputs": [
+        {
+          "id": "video",
+          "type": "video"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "file",
+          "type": "file"
+        }
+      ],
+      "parameters": {
+        "container": "mp4",
+        "codec": "h264",
+        "fps": 30,
+        "pixelFormat": "yuv420p"
+      },
+      "enabled": true,
+      "assetRefs": [],
+      "metadata": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "planner_image",
+      "source": {
+        "nodeId": "planner",
+        "portId": "plan"
+      },
+      "target": {
+        "nodeId": "image",
+        "portId": "prompt"
+      }
+    },
+    {
+      "id": "image_video",
+      "source": {
+        "nodeId": "image",
+        "portId": "image"
+      },
+      "target": {
+        "nodeId": "video",
+        "portId": "image"
+      }
+    },
+    {
+      "id": "video_refine",
+      "source": {
+        "nodeId": "video",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "refine",
+        "portId": "video"
+      }
+    },
+    {
+      "id": "refine_segment",
+      "source": {
+        "nodeId": "refine",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "segment",
+        "portId": "video"
+      }
+    },
+    {
+      "id": "refine_logo",
+      "source": {
+        "nodeId": "refine",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "logo",
+        "portId": "video"
+      }
+    },
+    {
+      "id": "segment_logo",
+      "source": {
+        "nodeId": "segment",
+        "portId": "mask"
+      },
+      "target": {
+        "nodeId": "logo",
+        "portId": "mask"
+      }
+    },
+    {
+      "id": "logo_trim",
+      "source": {
+        "nodeId": "logo",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "trim",
+        "portId": "video"
+      }
+    },
+    {
+      "id": "trim_combine",
+      "source": {
+        "nodeId": "trim",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "combine",
+        "portId": "clips"
+      }
+    },
+    {
+      "id": "refine_combine",
+      "source": {
+        "nodeId": "refine",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "combine",
+        "portId": "clips"
+      }
+    },
+    {
+      "id": "combine_qc",
+      "source": {
+        "nodeId": "combine",
+        "portId": "video"
+      },
+      "target": {
+        "nodeId": "qc",
+        "portId": "video"
+      }
+    },
+    {
+      "id": "qc_export",
+      "source": {
+        "nodeId": "qc",
+        "portId": "approved"
+      },
+      "target": {
+        "nodeId": "export",
+        "portId": "video"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "brief",
+      "title": "Creative brief",
+      "type": "text",
+      "required": true,
+      "targets": [
+        {
+          "nodeId": "planner",
+          "portId": "brief"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "id": "final_media",
+      "title": "Branded final media",
+      "type": "file",
+      "source": {
+        "nodeId": "export",
+        "portId": "file"
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": "brand_logo",
+      "type": "image",
+      "localPath": "assets/whihm-logo.png",
+      "metadata": {
+        "fixtureOnly": true
+      }
+    }
+  ],
+  "metadata": {},
+  "description": "Illustrative offline plan; no executors are connected.",
+  "execution": {
+    "budget": {
+      "currency": "USD",
+      "maximum": 10
+    }
+  },
+  "review": {
+    "requiresApproval": true
+  },
+  "variants": {
+    "strategy": "preserve-all"
+  },
+  "createdAt": "2026-10-22T00:00:00Z",
+  "updatedAt": "2026-10-22T00:00:00Z"
+}

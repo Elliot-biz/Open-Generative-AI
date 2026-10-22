@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "minimal",
+  "name": "Minimal workflow",
+  "nodes": [],
+  "edges": [],
+  "inputs": [],
+  "outputs": [],
+  "assets": [],
+  "metadata": {}
+}

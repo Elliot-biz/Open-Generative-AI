@@ -1,0 +1,57 @@
+{
+  "workflow_id": "upstream_demo",
+  "name": "Example upstream workflow",
+  "category": "General",
+  "edges": [
+    {
+      "id": "e1",
+      "source": "text1",
+      "sourceHandle": "textOutput",
+      "target": "image1",
+      "targetHandle": "prompt"
+    }
+  ],
+  "data": {
+    "nodes": [
+      {
+        "id": "text1",
+        "category": "text",
+        "model": "illustrative-llm",
+        "input_params": {
+          "prompt": "Make a creative brief"
+        },
+        "params": {
+          "prompt": "Make a creative brief"
+        },
+        "output_params": {
+          "outputs": []
+        },
+        "position": {
+          "x": 10,
+          "y": 20
+        }
+      },
+      {
+        "id": "image1",
+        "category": "image",
+        "model": "illustrative-image-model",
+        "input_params": {
+          "prompt": "{{ text1.outputs[0].value }}"
+        },
+        "params": {
+          "prompt": "{{ text1.outputs[0].value }}"
+        },
+        "output_params": {
+          "outputs": []
+        },
+        "inputs": [
+          "text1"
+        ],
+        "position": {
+          "x": 300,
+          "y": 20
+        }
+      }
+    ]
+  }
+}

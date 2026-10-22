@@ -1,0 +1,11 @@
+{
+  "name": "whihm-workflow-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./schema": "./schema.json" },
+  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check src/index.js && node --check src/validate.js && node --check src/adapter.js" },
+  "engines": { "node": ">=20.19.0" },
+  "license": "MIT"
+}
