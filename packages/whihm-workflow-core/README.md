@@ -185,3 +185,11 @@ a null document. Raw upstream input is never mutated.
 - `upstream.json`: synthetic two-node upstream payload with a parameter dependency.
 
 All are offline examples; none contains real credentials or generated outputs.
+
+## Declarative exact edits
+
+The additive edit-command layer is documented in [EDIT_COMMANDS.md](EDIT_COMMANDS.md).
+Use `applyEditBatch` for serializable commands with expected-hash protection, dry run,
+semantic diff, allowed-path enforcement and atomic validation. `hashWorkflow`,
+`diffWorkflows`, `validateCommandBatch` and `commandSchema` are also exported.
+It does not replace the canonical document or execute any workflow.

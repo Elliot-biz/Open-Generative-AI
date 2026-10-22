@@ -1,0 +1,873 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:whihm:workflow-edit:v1",
+  "title": "WHIHM deterministic edit batch v1",
+  "type": "object",
+  "properties": {
+    "commandVersion": {
+      "const": 1
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/command"
+      }
+    },
+    "expectedWorkflowHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allowedPaths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^/(?:[^~]|~[01])*$"
+      }
+    },
+    "dryRun": {
+      "type": "boolean"
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/precondition"
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "commandVersion",
+    "commands"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "precondition": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string",
+          "pattern": "^/(?:[^~]|~[01])*$"
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "equals": {}
+      },
+      "required": [
+        "at"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "exists"
+          ]
+        },
+        {
+          "required": [
+            "equals"
+          ]
+        }
+      ],
+      "not": {
+        "properties": {
+          "exists": {
+            "const": false
+          }
+        },
+        "required": [
+          "exists",
+          "equals"
+        ]
+      }
+    },
+    "command": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-node"
+            },
+            "value": {
+              "$ref": "urn:whihm:workflow:v1#/$defs/node"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-node"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-edge"
+            },
+            "value": {
+              "$ref": "urn:whihm:workflow:v1#/$defs/edge"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-edge"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-workflow-input"
+            },
+            "value": {
+              "$ref": "urn:whihm:workflow:v1#/$defs/workflowInput"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-workflow-input"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-workflow-output"
+            },
+            "value": {
+              "$ref": "urn:whihm:workflow:v1#/$defs/workflowOutput"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-workflow-output"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "add-asset"
+            },
+            "value": {
+              "$ref": "urn:whihm:workflow:v1#/$defs/asset"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-asset"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "update-node"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "changes": {
+              "type": "object",
+              "not": {
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "changes"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "rename-node-title"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "value": {
+              "type": "string"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "enable-node"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "disable-node"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "set-executor"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "value": {
+              "$ref": "urn:whihm:workflow:v1#/$defs/executor"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "set-provider"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "value": {
+              "type": "string"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "set-model"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "value": {
+              "type": "string"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "set-node-parameter"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "parameterPath": {
+              "type": "string",
+              "pattern": "^/(?:[^~]|~[01])*$"
+            },
+            "value": {},
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "parameterPath",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "remove-node-parameter"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "parameterPath": {
+              "type": "string",
+              "pattern": "^/(?:[^~]|~[01])*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "parameterPath"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "reconnect-edge"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "changes": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "urn:whihm:workflow:v1#/$defs/endpoint"
+                },
+                "target": {
+                  "$ref": "urn:whihm:workflow:v1#/$defs/endpoint"
+                }
+              },
+              "required": [],
+              "additionalProperties": false,
+              "minProperties": 1
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "changes"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "update-asset"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "changes": {
+              "type": "object",
+              "not": {
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "changes"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "attach-asset-to-node"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "assetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "assetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "detach-asset-from-node"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "assetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "assetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "set-node-position"
+            },
+            "targetId": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$"
+            },
+            "value": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            "preconditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/precondition"
+              }
+            },
+            "metadata": {
+              "type": "object"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "targetId",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

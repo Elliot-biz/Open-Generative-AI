@@ -79,3 +79,7 @@ export function getExecutionContract(doc,nodeId){
     fallbackPolicy:node.fallbackPolicy||{allowed:false},costPolicy:node.costPolicy||{},
     metadata:node.metadata||{}});
 }
+
+export { hashWorkflow, diffWorkflows } from './diff.js';
+export { applyEditBatch } from './edit.js';
+export { validateCommandBatch, commandSchema } from './commands/contract.js';
