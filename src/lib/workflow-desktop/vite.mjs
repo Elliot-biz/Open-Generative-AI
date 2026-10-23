@@ -11,12 +11,15 @@ export function workflowDesktopCompatibility() {
     enforce: 'pre',
     resolveId(source, importer = '') {
       importer = normalizePath(importer);
-      const studio = importer.startsWith(studioRoot) && /\/Workflow(?:Studio|UI)\.jsx$/.test(importer);
+      const studio = importer.startsWith(studioRoot) && /\/(?:Workflow(?:Studio|UI)|AgentStudio)\.jsx$/.test(importer);
       const builder = importer.startsWith(builderRoot);
       if (!studio && !builder) return;
       if (source === 'workflow-builder') return `${builderRoot}index.js`;
       if (builder && source === 'axios') return local('transport.mjs');
-      const aliases = { 'next/navigation': 'navigation.jsx', 'next/link': 'link.jsx', 'next/image': 'image.jsx', 'next/dynamic': 'dynamic.jsx' };
+      const aliases = {
+        'next/navigation': studio && importer.endsWith('/AgentStudio.jsx') ? '../agent-desktop/navigation.jsx' : 'navigation.jsx',
+        'next/link': 'link.jsx', 'next/image': 'image.jsx', 'next/dynamic': 'dynamic.jsx',
+      };
       if (aliases[source]) return local(aliases[source]);
     },
     transform(code, id) {
