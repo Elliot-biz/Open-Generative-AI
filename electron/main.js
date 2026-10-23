@@ -2,6 +2,7 @@ const { app, BrowserWindow, shell, dialog } = require('electron');
 const path = require('path');
 const { register: registerLocalInference } = require('./lib/localInference');
 const { register: registerWan2gp } = require('./lib/wan2gpProvider');
+const { register: registerWhihmHost } = require('./lib/whihm-host');
 
 process.on('uncaughtException', (err) => {
     console.error('Uncaught exception:', err);
@@ -69,6 +70,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow();
+    registerWhihmHost({ ipcMain: require('electron').ipcMain, getWindow: () => mainWindow });
 
     try {
         registerLocalInference();

@@ -42,3 +42,25 @@ contextBridge.exposeInMainWorld('localAI', {
         return () => ipcRenderer.removeListener('local-ai:download-progress', listener);
     },
 });
+
+// Fixed WHIHM channels only; no generic IPC or filesystem access is exposed.
+contextBridge.exposeInMainWorld('whihmHost', {
+    openProject: request => ipcRenderer.invoke('whihm:openProject', request),
+    getWorkflow: request => ipcRenderer.invoke('whihm:getWorkflow', request),
+    getAsset: request => ipcRenderer.invoke('whihm:getAsset', request),
+    planNode: request => ipcRenderer.invoke('whihm:planNode', request),
+    executeNode: request => ipcRenderer.invoke('whihm:executeNode', request),
+    runtimeReady: () => ipcRenderer.invoke('whihm:runtime-ready'),
+    runtimeResult: response => ipcRenderer.invoke('whihm:runtime-result', response),
+    runtimeProgress: response => ipcRenderer.invoke('whihm:runtime-progress', response),
+    onRuntimeRequest: callback => {
+        const listener = (_event, request) => callback(request);
+        ipcRenderer.on('whihm:runtime-request', listener);
+        return () => ipcRenderer.removeListener('whihm:runtime-request', listener);
+    },
+    onStatus: callback => {
+        const listener = (_event, status) => callback(status);
+        ipcRenderer.on('whihm:status', listener);
+        return () => ipcRenderer.removeListener('whihm:status', listener);
+    },
+});

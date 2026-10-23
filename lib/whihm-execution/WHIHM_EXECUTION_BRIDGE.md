@@ -3,7 +3,9 @@
 Open Generative AI is the application foundation. Reuse its clients, catalogs,
 polling, uploads, IPC and inference engines before adding infrastructure. This
 module is application integration, **not** another workflow core or execution engine.
-No UI uses it automatically. Import `createExecutionBridge` from `bridge.mjs`.
+No UI executes it automatically. Import `createExecutionBridge` from `bridge.mjs`.
+The source-checkout Electron application now exposes the fixed nonvisual host API
+documented below; application release packaging remains a separate milestone.
 
 ## Runtime map (inspected upstream, unchanged)
 
@@ -89,10 +91,9 @@ Local requests use existing localAI.generate when a host binds the existing clie
 and availability function. Tests exercise the actual client with a fake preload.
 In plain Node/browser the default is LOCAL_RUNTIME_UNAVAILABLE. Current Electron
 renderer is context-isolated with nodeIntegration false; it cannot directly import
-this Node orchestration module. **Live Electron host wiring is not implemented.**
-A later narrow nonvisual IPC/application hook is required to connect the Node-side
-project reader to renderer/preload services; do not imply this milestone changed
-live desktop behavior. Local installed-model readiness remains upstream's authority.
+this Node orchestration module. The nonvisual Electron host now connects main-process
+project/bridge operations to existing renderer/preload services through fixed IPC.
+Local installed-model readiness remains upstream's authority.
 Wan2GP may point at a configured remote MCP server; local-ai does not guarantee
 physically offline execution. Local project-asset binding is currently rejected
 rather than guessing sd.cpp/Wan2GP-specific input roles or staging files.
@@ -138,8 +139,9 @@ No workflow execution scheduler, remote workflow persistence/write-back, archite
 retry framework, credential vault, job database, gallery, downloads, cancellation
 facade, provider catalog, costs, model installation, IPC, UI or packaging. Existing
 cancellation/progress/pending-job APIs remain available in upstream; this first
-awaited single-node bridge does not yet expose those hooks or persist request IDs
-before completion. No providers beyond existing MuAPI/local paths were added.
+awaited single-node bridge does not persist request IDs before completion. The host
+now forwards existing request-ID, upload and local-progress callbacks without adding
+persistence or cancellation machinery. No providers beyond existing MuAPI/local paths were added.
 
 ## QA / rollback
 
@@ -157,3 +159,120 @@ Tests use fixtures/fake fetch/fake preload and the actual existing client functi
 no real request, model, download or paid generation. Project tests clean temporary
 fixtures. Core/workspaces/lockfiles/submodules remain unchanged. Rollback consists
 only of removing this new directory and its test file after preserving desired work.
+
+
+## Electron application host (nonvisual)
+
+`electron/main.js` registers `electron/lib/whihm-host.js`. The existing preload
+exposes `window.whihmHost` with fixed `openProject`, `getWorkflow`, `getAsset`,
+`planNode`, `executeNode`, and `onStatus` operations. Internal fixed transport
+methods (`runtimeReady`, `onRuntimeRequest`, `runtimeResult`, `runtimeProgress`)
+connect to `src/lib/whihmHostRuntime.mjs`, initialized once by `src/main.js`.
+There is no generic IPC channel argument, filesystem read, shell or execution API.
+No visual controls, menus or settings were added.
+
+```js
+const opened = await window.whihmHost.openProject({ projectRoot: selectedProjectRoot });
+// Check opened.status before continuing. Only root selection takes an absolute path.
+const request = {
+  projectHandle: opened.projectHandle,
+  workflowId: 'selected_workflow', nodeId: 'image',
+  assetBindings: { image_url: 'reference_asset' },
+};
+const workflow = await window.whihmHost.getWorkflow(request);
+const asset = await window.whihmHost.getAsset({
+  projectHandle: opened.projectHandle, assetId: 'reference_asset',
+});
+const off = window.whihmHost.onStatus(status => { /* future UI consumer */ });
+const plan = await window.whihmHost.planNode(request);
+// Separate explicit authorization required. Do not call for a dry run:
+// await window.whihmHost.executeNode({ ...request, allowExecution: true });
+// off() removes the listener.
+```
+
+The root is transient, absolute and local, with traversal rejected. Existing project
+validation rejects invalid manifests, unsafe internal paths, symlinks and corrupt
+assets. Successful open returns an opaque session handle, project ID and portable
+manifest, not an absolute path. The handle is scoped to the originating renderer;
+each operation reopens and verifies the saved project identity. Workflow/node IDs
+select canonical data from disk; the renderer cannot inject replacement workflow
+objects or a filesystem path into generation. Assets are addressed by ID only.
+At most 32 open handles per renderer are retained until navigation/window disposal.
+No project/workflow/history writes are performed by this host.
+
+Flow: renderer API → checked main IPC → `host.mjs` → existing project APIs → existing
+bridge → fixed request to renderer → existing studio function or local client →
+existing normalized bridge result. `planNode` ends at bridge planning, without a
+renderer execution request, authentication, upload, remote cost query or polling.
+Execution without literal `allowExecution: true` rejects before reading the project.
+There is no force execution, automatic retry, scheduler or queue. A second concurrent
+host execution returns `HOST_EXECUTION_BUSY` to avoid overlapping host operations.
+
+For uploads, main resolves the asset again through project APIs, reads only its
+validated relative path, and verifies size/checksum after reading. The current
+64 MiB asset limit is retained. Main sends Uint8Array/name/contentType, never the
+absolute path. Renderer makes a native File and calls unchanged studio `uploadFile`
+(FormData/XHR). Credentials remain in the existing renderer auth context:
+`window.__MUAPI_KEY__` or `localStorage.muapi_key`. They are not passed to main.
+Shared studio generation functions still own endpoint mapping, submission and
+polling. `onRequestId` is forwarded as running/requestId, upload callbacks as
+uploading/progress, and existing local progress states are preserved. Local execution
+uses `localInferenceClient.generate` → existing `window.localAI` → existing sd.cpp
+or Wan2GP IPC handlers; no new inference entry point or launcher.
+
+Runtime replies are correlated to outstanding main-originated requests and checked
+against the exact owning BrowserWindow, its main frame, and local dist/index.html URL.
+Subframes, other windows and navigated remote content are rejected. Navigation or
+window destruction clears handles and rejects outstanding transports. Transport
+waits have a 35-minute ceiling; disconnect/timeouts do NOT cancel an upstream job
+or retry it. Reported failure in that case means completion is unknown; inspect
+existing upstream history before attempting another paid operation. Existing local
+progress is global; no new per-job progress service is claimed.
+
+Results preserve the bridge contract, cost/refund metadata and request IDs. Before
+IPC, renderer errors omit raw messages and use structured fields. Credential-looking
+fields and signed URLs are redacted; local absolute paths/file URLs are omitted.
+Consequently a Wan2GP file result is not yet a portable usable project output: output
+import/registration is a separate later step. sd.cpp data URLs and safe public URLs
+remain available transiently. Error codes include existing project/bridge errors,
+`HOST_SENDER_REJECTED`, `PROJECT_HANDLE_INVALID`, `HOST_EXECUTION_BUSY`,
+`EXECUTION_NOT_AUTHORIZED`, `HOST_RESPONSE_UNEXPECTED`, `HOST_COMPONENTS_UNAVAILABLE`
+and `UPSTREAM_ERROR`. No raw Error object crosses IPC.
+
+### Electron compatibility and release boundary
+
+Installed Electron 33.4.11 embeds Node 20.18.3. A direct bridge import fails because
+upstream .js ESM is classified as CommonJS there. `whihm-esm-loader.mjs` supplies
+only an ESM format hint for studio/src/*.js and the two existing local-client/catalog
+files. It changes neither source nor package module types, and leaves other modules
+alone. The default host bootstrap registers this shim before importing the bridge.
+This was tested with the actual installed Electron executable in RUN_AS_NODE mode,
+using fake Electron transport/preload boundaries and no model execution.
+
+The source-checkout `npm run electron:dev` path has the required files. Existing
+release `build.files` includes only dist/electron, not lib/whihm-execution or core
+sources. **Packaged installers do not yet deliver these host dependencies** and
+return `HOST_COMPONENTS_UNAVAILABLE`; missing components do not crash the application.
+No Electron Builder, Windows installer, NSIS or package configuration was changed.
+Adding host dependencies to future release delivery is explicitly deferred; this is
+not a claim of packaged Windows/USB readiness or a graphical desktop smoke test.
+Web builds have no whihmHost and connector startup is a no-op. There is no new web API.
+
+Additional checks:
+
+```sh
+node --test tests/whihmHost.test.mjs
+ELECTRON_RUN_AS_NODE=1 ./node_modules/electron/dist/electron --input-type=module -e "import {register} from 'node:module'; register(new URL('./electron/lib/whihm-esm-loader.mjs', import.meta.url)); await import('./tests/whihmHost.test.mjs');"
+npm run vite:build
+```
+
+Host tests execute the real preload wrapper, host registration, project APIs and
+bridge, with fake Electron IPC endpoints; actual shared fetch/polling and XHR upload
+functions are exercised through fake transports. They include sender/path rejection,
+serialization, disconnect, concurrent-execution refusal and local preload routing.
+No provider requests, model runs or user credentials are used.
+
+Host rollback: restore only the added registration in electron/main.js, added
+whihmHost exposure in electron/preload.js, connector initialization in src/main.js,
+and this documentation update; remove the five newly added host/test modules.
+Keep the committed bridge/core intact. Rebuild Vite assets after reverting startup.

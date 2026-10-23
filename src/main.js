@@ -1,3 +1,5 @@
+import { connectWhihmHost } from './lib/whihmHostRuntime.mjs';
+connectWhihmHost(); // Nonvisual; no-op outside Electron. Never starts execution.
 import './style.css';
 import { Header } from './components/Header.js';
 import { ImageStudio } from './components/ImageStudio.js';
