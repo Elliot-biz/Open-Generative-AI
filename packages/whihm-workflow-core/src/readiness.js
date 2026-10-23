@@ -60,7 +60,7 @@ function checkContext(workflow, context) {
     for (const [i, entry] of context[key].entries()) {
       const path = `/${key}/${i}`;
       if (!keys(entry, fields, path)) continue;
-      if (typeof entry.id !== 'string' || !entry.id || typeof entry[key === 'assets' ? 'present' : 'available'] !== 'boolean') fail(path);
+      if (typeof entry.id !== 'string' || !entry.id || ![true, false, null].includes(entry[key === 'assets' ? 'present' : 'available'])) fail(path);
       if (key === 'executors' && !['remote-model', 'local-ai', 'utility', 'control'].includes(entry.type)) fail(path);
       for (const field of ['provider', 'model', 'tool']) if (entry[field] !== undefined && typeof entry[field] !== 'string') fail(path);
       const identity = key === 'assets' ? entry.id : JSON.stringify([entry.id, entry.type, entry.provider, entry.model, entry.tool]);
@@ -182,6 +182,7 @@ export function assessWorkflowReadiness(workflow, context = {}) {
       const match = context.executors?.find(e => ['id', 'type', 'provider', 'model', 'tool'].every(field => e[field] === node.executor[field]));
       if (context.executors === undefined) add(id, 'EXECUTOR_UNVERIFIED', 'No executor availability evidence was supplied.', 'uncertain');
       else if (!match) add(id, 'EXECUTOR_UNSUPPORTED', 'No matching runtime binding was supplied for this executor identity.', 'hard');
+      else if (match.available === null) add(id, 'EXECUTOR_UNVERIFIED', 'Runtime binding exists, but operational availability is unverified.', 'uncertain');
       else if (!match.available) add(id, node.executor.type === 'utility' ? 'UTILITY_UNAVAILABLE' : 'EXECUTOR_UNAVAILABLE', 'Declared runtime binding is unavailable.', 'hard');
     }
     const refs = assetIds(node.parameters, new Set(node.assetRefs || []));
@@ -199,10 +200,10 @@ export function assessWorkflowReadiness(workflow, context = {}) {
     for (const assetId of sorted(refs)) {
       const asset = workflow.assets.find(a => a.id === assetId);
       const optional = asset?.metadata?.optional === true;
-      if (!asset || (inventory !== null && inventory.get(assetId) !== true)) {
+      if (!asset || (inventory !== null && inventory.get(assetId) !== true && inventory.get(assetId) !== null)) {
         if (optional) base.warnings.push(reason('OPTIONAL_ASSET_MISSING', 'Optional asset is not present.', { nodeId: id, assetId }));
         else add(id, 'ASSET_MISSING', 'Required asset is undeclared or not present in the supplied inventory.', 'hard', { assetId });
-      } else if (inventory === null) {
+      } else if (inventory === null || inventory.get(assetId) === null) {
         if (optional) base.warnings.push(reason('OPTIONAL_ASSET_UNVERIFIED', 'Optional asset presence is unverified.', { nodeId: id, assetId }));
         else add(id, 'ASSET_UNVERIFIED', 'Asset declaration exists, but presence has not been verified.', 'uncertain', { assetId });
       }

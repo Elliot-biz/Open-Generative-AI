@@ -49,11 +49,13 @@ time and the effective freshness policy so an agent can identify its evidence.
   and `capabilities` flags from binding entries. One identity can cover many nodes.
   An absent inventory means unverified; a supplied empty inventory means unsupported.
   `available: false` means unavailable, with `UTILITY_UNAVAILABLE` for utilities.
+  Per-entry `available: null` means the binding is known but availability is unverified.
   A host can project its existing runtime/catalog checks into these plain records.
 - `assets` is explicit presence evidence, e.g. after existing project integrity/path
   checks. Declarations alone do not establish physical existence, checksum correctness
   or remote URL reachability. Missing from a supplied inventory means not present;
-  omitting inventory means unverified. All `node.assetRefs`, structured `$asset`
+  omitting inventory or using per-entry `present: null` means unverified.
+  All `node.assetRefs`, structured `$asset`
   parameters and workflow asset-input values are checked. Referenced assets must be
   declared canonically. Unreferenced library assets do not prevent a production run.
   `asset.metadata.optional: true` makes missing/unverified presence a warning only.

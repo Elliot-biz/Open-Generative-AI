@@ -199,3 +199,17 @@ test('formatting/key order does not invalidate canonical quote bindings or chang
   const reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(w).reverse())));
   assert.deepEqual(assessWorkflowReadiness(w, ctx), assessWorkflowReadiness(reordered, ctx));
 });
+
+test('per-entry null evidence preserves mixed known and unknown availability', () => {
+  const w = doc([node('a'), node('b', 'local-ai')]);
+  const ctx = options(w); ctx.executors.find(e => e.type === 'local-ai').available = null;
+  const r = assessWorkflowReadiness(w, ctx);
+  assert.equal(r.nodes.a.status, 'EXECUTABLE'); assert.equal(r.nodes.b.status, 'UNVERIFIED');
+  assert.equal(r.status, 'CONDITIONALLY_READY'); assert.ok(has(r, 'EXECUTOR_UNVERIFIED'));
+});
+test('per-asset null means unverified, not missing, alongside verified project assets', () => {
+  const w = doc(); w.assets = [{ id: 'logo', type: 'image', localPath: 'assets/logo.png' }, { id: 'music', type: 'audio', remoteUrl: 'https://example.com/music.wav' }];
+  w.nodes[0].assetRefs = ['logo', 'music'];
+  const r = assessWorkflowReadiness(w, { ...options(w), assets: [{ id: 'logo', present: true }, { id: 'music', present: null }] });
+  assert.equal(r.status, 'CONDITIONALLY_READY'); assert.ok(has(r, 'ASSET_UNVERIFIED')); assert.ok(!has(r, 'ASSET_MISSING'));
+});

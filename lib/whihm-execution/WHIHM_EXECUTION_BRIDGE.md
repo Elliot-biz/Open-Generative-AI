@@ -276,3 +276,11 @@ Host rollback: restore only the added registration in electron/main.js, added
 whihmHost exposure in electron/preload.js, connector initialization in src/main.js,
 and this documentation update; remove the five newly added host/test modules.
 Keep the committed bridge/core intact. Rebuild Vite assets after reverting startup.
+
+## Whole-workflow readiness evidence
+
+[READINESS_EVIDENCE.md](./READINESS_EVIDENCE.md) documents the nonvisual application
+adapter for project assets, shared static runtime bindings, supplied local snapshots
+and external quotes. It calls the existing workflow-core readiness evaluator.
+`resolveExecutionBinding` is shared with execution; no provider calls or local probes
+are made while gathering readiness evidence.
