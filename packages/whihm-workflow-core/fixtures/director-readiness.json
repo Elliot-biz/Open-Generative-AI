@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "director_readiness",
+  "name": "Fictional production-readiness proof",
+  "nodes": [
+    {
+      "id": "image",
+      "title": "image",
+      "kind": "generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "remote",
+        "provider": "example",
+        "model": "fake-image",
+        "mayCostMoney": true,
+        "requiresConfirmation": false
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "image"
+        }
+      ],
+      "parameters": {
+        "prompt": "Fictional WHIHM launch concept"
+      }
+    },
+    {
+      "id": "reference_edit",
+      "title": "reference_edit",
+      "kind": "generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "remote",
+        "provider": "example",
+        "model": "fake-edit",
+        "mayCostMoney": true,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "image",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "image"
+        }
+      ],
+      "parameters": {
+        "prompt": "Fictional WHIHM launch concept"
+      }
+    },
+    {
+      "id": "storyboard",
+      "title": "storyboard",
+      "kind": "control",
+      "executor": {
+        "type": "control",
+        "id": "control",
+        "tool": "storyboard-review",
+        "mayCostMoney": false,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "image",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "image"
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "video_a",
+      "title": "video_a",
+      "kind": "generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "remote",
+        "provider": "example",
+        "model": "fake-video",
+        "mayCostMoney": true,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "image",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "video"
+        }
+      ],
+      "parameters": {
+        "prompt": "Fictional WHIHM launch concept"
+      }
+    },
+    {
+      "id": "video_b",
+      "title": "video_b",
+      "kind": "generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "remote",
+        "provider": "example",
+        "model": "fake-video",
+        "mayCostMoney": true,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "image",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "video"
+        }
+      ],
+      "parameters": {
+        "prompt": "Fictional WHIHM launch concept"
+      }
+    },
+    {
+      "id": "assembly",
+      "title": "assembly",
+      "kind": "utility",
+      "executor": {
+        "type": "utility",
+        "id": "utility",
+        "tool": "whihm.video-combiner",
+        "mayCostMoney": false,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "video",
+          "required": true,
+          "cardinality": "many"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "video"
+        }
+      ],
+      "parameters": {},
+      "assetRefs": [
+        "logo",
+        "music"
+      ]
+    },
+    {
+      "id": "qc",
+      "title": "qc",
+      "kind": "control",
+      "executor": {
+        "type": "control",
+        "id": "control",
+        "tool": "qc",
+        "mayCostMoney": false,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "video",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "video"
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "export",
+      "title": "export",
+      "kind": "utility",
+      "executor": {
+        "type": "utility",
+        "id": "utility",
+        "tool": "export",
+        "mayCostMoney": false,
+        "requiresConfirmation": false
+      },
+      "inputs": [
+        {
+          "id": "input",
+          "type": "video",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "video"
+        }
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "premium",
+      "title": "premium",
+      "kind": "generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "remote",
+        "provider": "example",
+        "model": "fake-premium",
+        "mayCostMoney": true,
+        "requiresConfirmation": false
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "video"
+        }
+      ],
+      "parameters": {
+        "prompt": "Fictional WHIHM launch concept"
+      },
+      "enabled": false,
+      "executionPolicy": {
+        "optional": true
+      }
+    },
+    {
+      "id": "sfx",
+      "title": "sfx",
+      "kind": "generation",
+      "executor": {
+        "type": "remote-model",
+        "id": "remote",
+        "provider": "example",
+        "model": "fake-sfx",
+        "mayCostMoney": true,
+        "requiresConfirmation": false
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "id": "result",
+          "type": "audio"
+        }
+      ],
+      "parameters": {
+        "prompt": "Fictional WHIHM launch concept"
+      },
+      "enabled": false,
+      "executionPolicy": {
+        "optional": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_0",
+      "source": {
+        "nodeId": "image",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "reference_edit",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_1",
+      "source": {
+        "nodeId": "reference_edit",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "storyboard",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_2",
+      "source": {
+        "nodeId": "storyboard",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "video_a",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_3",
+      "source": {
+        "nodeId": "storyboard",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "video_b",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_4",
+      "source": {
+        "nodeId": "video_a",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "assembly",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_5",
+      "source": {
+        "nodeId": "video_b",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "assembly",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_6",
+      "source": {
+        "nodeId": "assembly",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "qc",
+        "portId": "input"
+      }
+    },
+    {
+      "id": "edge_7",
+      "source": {
+        "nodeId": "qc",
+        "portId": "result"
+      },
+      "target": {
+        "nodeId": "export",
+        "portId": "input"
+      }
+    }
+  ],
+  "inputs": [],
+  "outputs": [
+    {
+      "id": "final",
+      "type": "video",
+      "source": {
+        "nodeId": "export",
+        "portId": "result"
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": "logo",
+      "type": "image",
+      "localPath": "assets/logo.png"
+    },
+    {
+      "id": "music",
+      "type": "audio",
+      "localPath": "assets/music.wav"
+    }
+  ]
+}

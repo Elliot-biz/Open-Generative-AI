@@ -209,3 +209,10 @@ The canonical authoring/edit APIs remain independent of persistence.
 See [PROJECTS.md](PROJECTS.md) for the manifest, workflow/history boundaries,
 asset import, presets, review/export metadata, and validated directory transfer.
 This is portable user data, not application/installer packaging.
+
+## Whole-workflow readiness
+
+`assessWorkflowReadiness(workflow, context)` combines canonical validation and graph
+readiness with externally supplied asset/runtime evidence, hash-bound quotes and
+an optional budget. It is pure and requires an explicit evaluation timestamp.
+See [READINESS.md](./READINESS.md) for contracts, status/cost semantics and examples.
