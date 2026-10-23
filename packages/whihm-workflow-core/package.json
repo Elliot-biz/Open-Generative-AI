@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": { ".": "./src/index.js", "./schema": "./schema.json", "./commands-schema": "./commands.schema.json" },
-  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check src/index.js && node --check src/validate.js && node --check src/adapter.js && node --check src/diff.js && node --check src/edit.js && node --check src/commands/contract.js && node --check src/commands/apply.js && node --check src/history/store.js" },
+  "scripts": { "test": "node --test tests/*.test.js", "check": "node --check src/index.js && node --check src/validate.js && node --check src/adapter.js && node --check src/diff.js && node --check src/edit.js && node --check src/commands/contract.js && node --check src/commands/apply.js && node --check src/history/store.js && node --check src/project/io.js && node --check src/project/format.js && node --check src/project/store.js" },
   "engines": { "node": ">=20.19.0" },
   "license": "MIT"
 }

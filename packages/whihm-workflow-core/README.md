@@ -201,3 +201,11 @@ It does not replace the canonical document or execute any workflow.
 See [HISTORY.md](HISTORY.md) for the record format, persistence APIs, concurrency,
 rollback, integrity verification, relocation guarantees, and recovery limitations.
 The canonical authoring/edit APIs remain independent of persistence.
+
+## Portable project data
+
+`createProject`, `openProject`, `verifyProjectIntegrity`, `exportProjectData`,
+`importProjectData`, and `PROJECT_VERSION` expose the project-data foundation.
+See [PROJECTS.md](PROJECTS.md) for the manifest, workflow/history boundaries,
+asset import, presets, review/export metadata, and validated directory transfer.
+This is portable user data, not application/installer packaging.

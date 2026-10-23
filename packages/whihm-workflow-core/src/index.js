@@ -85,3 +85,5 @@ export { applyEditBatch } from './edit.js';
 export { validateCommandBatch, commandSchema } from './commands/contract.js';
 
 export { createHistoryStore, HISTORY_VERSION } from './history/store.js';
+
+export { createProject, openProject, verifyProjectIntegrity, exportProjectData, importProjectData, PROJECT_VERSION } from './project/store.js';
