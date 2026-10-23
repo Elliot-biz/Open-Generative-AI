@@ -104,6 +104,7 @@ export function SettingsModal(onClose) {
         const key = apiPanel.querySelector('#settings-api-key').value.trim();
         if (key) {
             localStorage.setItem('muapi_key', key);
+            window.dispatchEvent(new Event('desktop:auth-changed'));
             close();
         } else {
             alert(t('settings.invalidKey'));

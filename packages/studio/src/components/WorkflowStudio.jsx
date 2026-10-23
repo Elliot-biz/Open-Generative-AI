@@ -127,6 +127,7 @@ function WorkflowCard({ workflow, onClick, activeTab, onRename, onDelete }) {
 
 export default function WorkflowStudio({
   apiKey,
+  desktop = false,
   isHeaderVisible = true,
   onToggleHeader,
   onGenerationStart,
@@ -274,7 +275,7 @@ export default function WorkflowStudio({
           // Route to /workflow/[id] so useParams().id works in the builder library.
           // That page has no white-label session of its own, so hand off our token
           // via sessionStorage — it reads "wl_workflow_token" on mount.
-          if (apiKey) sessionStorage.setItem("wl_workflow_token", apiKey);
+          if (apiKey && !desktop) sessionStorage.setItem("wl_workflow_token", apiKey);
           router.push(`/workflow/${response.workflow_id}/builder`);
           return;
         }
@@ -290,7 +291,7 @@ export default function WorkflowStudio({
         setLoading(false);
       }
     },
-    [apiKey, router],
+    [apiKey, desktop, router],
   );
 
   const handleDeleteWorkflow = async (wfId) => {
@@ -380,12 +381,13 @@ export default function WorkflowStudio({
 
   // Handle reload on exit to clear builder CSS
   useEffect(() => {
+    if (desktop) return;
     const fromBuilder = sessionStorage.getItem("fromWorkflowBuilder");
     if (fromBuilder && (!urlWorkflowId || activeSubTab !== "builder")) {
       sessionStorage.removeItem("fromWorkflowBuilder");
       window.location.reload();
     }
-  }, [urlWorkflowId, activeSubTab]);
+  }, [urlWorkflowId, activeSubTab, desktop]);
 
   useEffect(() => {
     async function loadWorkflows() {
@@ -494,7 +496,7 @@ export default function WorkflowStudio({
                     onClick={() => {
                         setActiveSubTab("builder");
                         if (selectedWorkflow?.id) {
-                          if (apiKey) sessionStorage.setItem("wl_workflow_token", apiKey);
+                          if (apiKey && !desktop) sessionStorage.setItem("wl_workflow_token", apiKey);
                           router.push(`/workflow/${selectedWorkflow.id}/builder`);
                         }
                     }}
@@ -835,6 +837,8 @@ export default function WorkflowStudio({
             <div className="flex-1 relative bg-[#050505]">
               {nodeSchemas && workflowDef ? (
                 <WorkflowUI
+                  key={desktop ? selectedWorkflow?.id : undefined}
+                  desktop={desktop}
                   apiKey={apiKey}
                   workflowId={selectedWorkflow?.id}
                   initialNodeSchemas={nodeSchemas}

@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const WorkflowUI = ({
   apiKey,
+  desktop = false,
   workflowId,
   initialNodeSchemas,
   initialWorkflowData,
@@ -17,8 +18,8 @@ const WorkflowUI = ({
   onGenerationError,
 }) => {
   useEffect(() => {
-    sessionStorage.setItem("fromWorkflowBuilder", "true");
-  }, []);
+    if (!desktop) sessionStorage.setItem("fromWorkflowBuilder", "true");
+  }, [desktop]);
 
   return (
     <div className="w-full h-full bg-black">

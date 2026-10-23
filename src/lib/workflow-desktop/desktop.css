@@ -1,0 +1,13 @@
+.desktop-workflow-studio {
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* The upstream builder fills a web viewport; here it fills its desktop tab. */
+.desktop-workflow-studio .h-screen,
+.desktop-workflow-studio .h-dvh {
+  height: 100%;
+}

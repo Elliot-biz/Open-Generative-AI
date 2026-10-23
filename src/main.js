@@ -15,15 +15,29 @@ function navigate(page) {
   if (!contentArea) return;
 
   // Hide all existing pages
-  Object.values(mountedPages).forEach(node => { node.style.display = 'none'; });
+  Object.entries(mountedPages).forEach(([name, node]) => {
+    if (name === 'workflows') {
+      // React Flow's async fit/resize needs nonzero dimensions while inactive.
+      node.style.visibility = 'hidden';
+      node.inert = true;
+    } else node.style.display = 'none';
+  });
 
   if (mountedPages[page]) {
     // Already mounted — just show it again
     mountedPages[page].style.display = '';
+    if (page === 'workflows') {
+      mountedPages[page].style.visibility = '';
+      mountedPages[page].inert = false;
+    }
   } else {
     // First visit — create a wrapper and mount the studio into it
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;';
+    if (page === 'workflows') {
+      wrapper.style.position = 'absolute';
+      wrapper.style.inset = '0';
+    }
     contentArea.appendChild(wrapper);
     mountedPages[page] = wrapper;
 
