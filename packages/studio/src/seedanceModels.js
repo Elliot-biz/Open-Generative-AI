@@ -66,9 +66,10 @@ const MODERN_WORKFLOWS = Object.freeze({
 for (const profile of ["standard", "intl", "spicy"]) {
   for (const { stem, workflowId } of Object.values(MODERN_WORKFLOWS)) {
     for (const resolution of ["default", "480p", "1080p", "4k"]) {
-      const usesNativeResolution = profile === "spicy" &&
-        resolution === "default" &&
-        (workflowId === null || workflowId === "animate_image");
+      const usesNativeResolution = resolution === "default" && (
+        (profile === "spicy" && (workflowId === null || workflowId === "animate_image")) ||
+        (profile === "standard" && workflowId === "edit_video")
+      );
       register(
         `seedance-2.5-${profile === "standard" ? "" : `${profile}-`}${stem}${resolution === "default" ? "" : `-${resolution}`}`,
         "seedance-2.5",

@@ -546,7 +546,7 @@ function mergeInputs(modelInputs = {}, overrideInputs = {}) {
   return inputs;
 }
 
-function getVideoToolCapabilities(model) {
+export function getVideoToolCapabilities(model) {
   if (!model) return null;
   const override = VIDEO_TOOL_OVERRIDES[model.id] || {};
   return {

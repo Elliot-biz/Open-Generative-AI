@@ -28366,7 +28366,8 @@ export const v2vModels = [
         "description": "Enable high bitrate mode for better visual fidelity. Produces larger files.",
         "default": false
       },
-      "aspect_ratio": SEEDANCE_25_ASPECT_RATIO_INPUT
+      "resolution": { "type": "string", "title": "Resolution", "name": "resolution",
+        "enum": ["480p", "720p", "1080p", "4k"], "default": "720p" }
     },
     "description": "Seedance 2.5 Video Edit edits an input video from a natural-language prompt. The reference video drives subject identity, composition, and motion while the model rewrites lighting, style, weather, environment, or specific elements as instructed.",
     "provider": "bytedance",
@@ -30822,6 +30823,7 @@ export const v2vModels = [
     "family": "runway",
     "videoField": "video_url",
     "hasPrompt": false,
+    "required": ["video_url", "reference_video_url"],
     "inputs": {
       "video_url": {
         "examples": [

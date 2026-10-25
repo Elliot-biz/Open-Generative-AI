@@ -60,7 +60,7 @@ Conflicting parameter/input values are rejected; unresolved template dependencie
 are rejected, not evaluated. A scheduler or caller must supply resolved values.
 
 `node.metadata.oga.mode` optionally disambiguates `t2i`, `i2i`, `t2v`, `i2v`,
-`audio`, `lipsync`, `recast`, `motion_control`. Without it, catalog lookup must identify exactly one route.
+`audio`, `lipsync`, `recast`, `motion_control`, `v2v`. Without it, catalog lookup must identify exactly one route.
 No guessed unknown-model fallback. `executor.provider='muapi'` selects transport;
 model vendor labels such as Google/ByteDance do not change that transport.
 Audio mode preserves `parameters.model` as the audio version and passes canonical
@@ -433,3 +433,68 @@ All execution/upload/lifecycle tests use fake transports and harmless fixtures.
 No model/agent/local inference, real upload, paid generation or media processing is
 performed. Existing Recast coverage remains, apart from removing the now-obsolete
 assertion that Motion Control has no route.
+
+
+## Reviewed shared V2V execution
+
+`metadata.oga.mode: 'v2v'` selects the **existing** shared `processV2V` through
+`runtime.mjs`; the older application `MuapiClient.processV2V` delegates to that
+same service. Existing authentication, uploader, submit/poll lifecycle, request
+IDs, cost/refund metadata and normalized result behavior remain authoritative.
+No new client, polling engine, provider payload API or execution authorization.
+
+The bounded [V2V contract review](V2V_CONTRACT_REVIEW.md) accounts for all 75
+current source entries and documents why only nine are admitted now:
+
+- `runway-aleph-v2v`, `wan2.2-edit-video`, `seedance-2.5-video-edit`
+- `runway-act-two-v2v`, `ai-video-face-swap`, `video-background-remover`
+- `ai-video-upscaler`, `topaz-video-upscale`, `heygen-video-translate`
+
+The shared pure `v2vInputContracts.js` projects existing Studio catalog/overrides;
+its small eligibility set contains IDs only, not another model catalog/schema.
+Reviewed service calls and plans use the same validation. Required source video,
+prompt/reference requirements, enum/type/range/count checks and unsupported-option
+rejections occur before authentication/upload/submission in the canonical path.
+No silent clamping, reference truncation, ordering changes, option dropping or
+model/route fallback. Arrays preserve duplicates and order. The existing desktop
+single `image_url` form explicitly maps to Seedance `images_list: [image_url]`;
+competing forms reject. Configurable `options` fields may also be top-level;
+conflicts reject. Arbitrary raw provider fields are not accepted.
+
+Act Two **V2V** requires a character video plus `reference_video_url`; Recast
+requires a character image plus driving video and keeps its separate alias.
+Kling Recast, Wan Animate and Lip Sync provider endpoints are deliberately not
+admitted under generic V2V. Their specialized routes remain intact; selecting the
+wrong explicit mode rejects rather than rerouting. Motion Control remains separate.
+All other current V2V entries remain on their existing OGA paths and are unavailable
+through canonical V2V until their contracts are reviewed.
+
+Targeted upstream corrections: Wan resolution and Act Two aspect no longer
+vanish in shared payload construction; Act Two records both required videos;
+base Seedance 2.5 edit now declares its live resolution enum instead of unsupported
+aspect ratio and is identified as a native-resolution endpoint. No neighboring
+variants or unrelated I2V/T2V contracts were altered.
+
+A valid plan reports exact provider/model/endpoint, `requiredMedia`,
+`supportedOptions`, `effectiveOptions` (including defaults), and `request.v2v`
+with family/purpose, required/supplied input names and media count/limits.
+Invalid plans return structured diagnostic codes and field paths:
+`V2V_REQUIRED_INPUT_MISSING`, `V2V_OPTION_UNSUPPORTED`, `V2V_OPTION_INVALID`,
+`V2V_INPUT_CONFLICT`; unsupported canonical models produce the existing
+`MODEL_ROUTE_UNSUPPORTED_OR_AMBIGUOUS`. The pure helper uses
+`V2V_REQUEST_INVALID` / `V2V_MODEL_UNSUPPORTED` for invalid requests/models.
+Planning never reads credentials, loads asset bytes, uploads, estimates, submits
+or polls. Existing readiness evidence reports the binding as plannable; detailed
+resolved-input validation remains in planning, not a competing readiness engine.
+
+Project `assetBindings` use the existing validated project resolver. Reviewed V2V
+media-array fields (Seedance image/audio references) support ordered asset ID
+arrays; absolute host paths stay transient. Execution still requires explicit
+host authorization. No canonical document, project file or history changes.
+
+Limits: face-swap target filters and background-removal container/audio controls
+are not declared by current OGA metadata and reject rather than disappearing.
+HeyGen defaults visibly to Hindi if language is omitted. URL-only validation
+cannot prove dimensions, bytes, codec or source duration; provider-side Seedance
+trimming of long source videos is documented in the review, not a local precision
+guarantee. No media probe or network checks were added. No UI or packaging changes.

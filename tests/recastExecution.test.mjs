@@ -161,8 +161,9 @@ test('project asset roles remain relative and planning never loads/uploads bytes
   assert.deepEqual(calls[0].payload, { image_url: image, reference_video_url: video, aspect_ratio: '16:9' });
   assert.deepEqual(w, original);
 });
-test('Recast preserves its narrow contract without broad V2V routing', () => {
-  assert.equal(findRemote('runway-act-two-v2v'), null);
+test('Recast preserves its narrow contract separately from reviewed V2V routing', () => {
+  assert.equal(findRemote('runway-act-two-v2v').mode, 'v2v');
+  assert.equal(findRemote('runway-act-two-i2v', 'v2v'), null);
   assert.throws(() => buildRecastRequest(null), { code: 'RECAST_REQUEST_INVALID' });
 });
 

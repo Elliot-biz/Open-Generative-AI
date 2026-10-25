@@ -9,6 +9,7 @@ import { pollForGenerationResult } from './utils/generationLifecycle.js';
 import { getModelMediaCapabilities, mapReferenceParams } from './modelCapabilities.js';
 import { buildMotionControlRequest } from './motionControlInputContracts.js';
 import { buildRecastRequest } from './recastInputContracts.js';
+import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 
@@ -217,6 +218,10 @@ export async function generateMarketingStudioAd(apiKey, params) {
 }
 
 export async function processV2V(apiKey, params) {
+    if (getV2VExecutionModel(params?.model)) {
+        const { endpoint, payload } = buildV2VRequest(params);
+        return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    }
     const modelInfo = getV2VModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const toolPayload = buildVideoToolPayload(modelInfo, params);

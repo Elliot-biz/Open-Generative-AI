@@ -1,5 +1,5 @@
-import { processRecast as sharedProcessRecast, processMotionControl as sharedProcessMotionControl, generateI2V as sharedGenerateI2V } from '../../packages/studio/src/muapi.js';
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById } from './models.js';
+import { processV2V as sharedProcessV2V, processRecast as sharedProcessRecast, processMotionControl as sharedProcessMotionControl, generateI2V as sharedGenerateI2V } from '../../packages/studio/src/muapi.js';
+import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getLipSyncModelById } from './models.js';
 import { pollForGenerationResult } from '../../packages/studio/src/utils/generationLifecycle.js';
 
 export class MuapiClient {
@@ -405,52 +405,7 @@ export class MuapiClient {
      * @param {string} [params.prompt] - Motion description (motion-control models)
      */
     async processV2V(params) {
-        const key = this.getKey();
-        const modelInfo = getV2VModelById(params.model);
-        const endpoint = modelInfo?.endpoint || params.model;
-        const url = `${this.baseUrl}/api/v1/${endpoint}`;
-
-        const videoField = modelInfo?.videoField || 'video_url';
-        const finalPayload = { [videoField]: params.video_url };
-
-        if (modelInfo?.imageField && params.image_url) {
-            finalPayload[modelInfo.imageField] = params.image_url;
-        }
-        if (modelInfo?.hasPrompt && params.prompt) {
-            finalPayload.prompt = params.prompt;
-        }
-
-        console.log('[Muapi] V2V Request:', url);
-        console.log('[Muapi] V2V Payload:', finalPayload);
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': key },
-                body: JSON.stringify(finalPayload)
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
-            }
-
-            const submitData = await response.json();
-            console.log('[Muapi] V2V Submit Response:', submitData);
-
-            const requestId = submitData.request_id || submitData.id;
-            if (!requestId) return submitData;
-
-            if (params.onRequestId) params.onRequestId(requestId);
-
-            const result = await this.pollForResult(requestId, key, 900, 2000);
-            const videoUrl = result.outputs?.[0] || result.url || result.output?.url;
-            console.log('[Muapi] V2V Result URL:', videoUrl);
-            return { ...result, url: videoUrl };
-        } catch (error) {
-            console.error('Muapi V2V Error:', error);
-            throw error;
-        }
+        return sharedProcessV2V(this.getKey(), params);
     }
 
     /**

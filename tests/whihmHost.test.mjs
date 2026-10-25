@@ -417,3 +417,59 @@ for (const [model, mode, options] of [
   assert.equal((await h.host.getWorkflow(request(opened))).workflow.nodes[0].parameters.mode, mode);
   assert.ok(!JSON.stringify(result).includes(f.root));
 });
+
+for (const [model, parameters] of [
+  ['runway-act-two-v2v', { reference_video_url: 'https://example.com/performance.mp4', aspect_ratio: '9:16' }],
+  ['heygen-video-translate', { language: 'French' }],
+]) test(`fixed preload/host V2V: ${model} reuses shared service and authorization`, async t => {
+  const f = await fixture(t), h = await transport(t), calls = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  const node = changed.nodes[0]; node.executor.model = model; node.metadata.oga.mode = 'v2v'; node.outputs[0].type = 'video';
+  node.parameters = { video_url: 'https://example.com/source.mp4', ...parameters };
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-v2v' }
+      : { status: 'completed', outputs: ['https://example.com/v2v.mp4'] } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = request(opened);
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned'); assert.equal(plan.runtime, 'studio.processV2V');
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(result.requestId, 'host-v2v'); assert.equal(result.model, model);
+  assert.equal(calls.length, 2); assert.ok(calls[0].url.endsWith(`/api/v1/${model}`));
+  assert.deepEqual(JSON.parse(calls[0].body), node.parameters);
+  assert.ok(calls[1].url.endsWith('/predictions/host-v2v/result'));
+  assert.ok(h.statuses.some(s => s.requestId === 'host-v2v'));
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+});
+
+test('fixed host V2V preserves ordered registered references through the existing uploader', async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  const node = changed.nodes[0]; node.executor.model = 'seedance-2.5-video-edit'; node.metadata.oga.mode = 'v2v';
+  node.outputs[0].type = 'video'; node.inputs = [{ id: 'images_list', type: 'image' }]; node.assetRefs = ['reference'];
+  node.parameters = { video_url: 'https://example.com/source.mp4', prompt: 'Restyle', duration: 4, resolution: '720p' };
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { processV2V } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { processV2V, async uploadFile(_key, file) {
+    uploaded.push(await file.text()); return 'https://example.com/reference.png';
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => ({ status: 'completed', url: 'https://example.com/result.mp4' }) };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  const args = { ...request(opened), assetBindings: { images_list: ['reference', 'reference'] } };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned'); assert.equal(plan.requiredUploads.length, 2);
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0); assert.equal(uploaded.length, 0);
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(calls.length, 1);
+  assert.deepEqual(uploaded, ['tiny upload fixture', 'tiny upload fixture']);
+  assert.deepEqual(JSON.parse(calls[0].body).images_list, Array(2).fill('https://example.com/reference.png'));
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+});

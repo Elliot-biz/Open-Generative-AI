@@ -145,7 +145,7 @@ test('source catalog reflects provider 2.0 seed support and unknown routes do no
   assert.equal(getMotionControlModelById(basic).supportsSeed, false);
   assert.throws(() => buildMotionControlRequest({ ...base, model: primary, mode: Object('motion_transfer') }), { code: 'MOTION_MODE_INVALID' });
   assert.equal(findRemote('not-a-motion-model', 'motion_control'), null);
-  assert.equal(findRemote('runway-aleph-v2v'), null);
+  assert.equal(findRemote('flux-3-video-upscaler'), null);
   assert.equal(findRemote('seedance-2.5-intl-motion-control', 'motion_control'), null);
   assert.equal(findRemote('seedance-2.5-spicy-motion-control', 'motion_control'), null);
 });
