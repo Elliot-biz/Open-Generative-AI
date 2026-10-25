@@ -50,6 +50,7 @@ contextBridge.exposeInMainWorld('whihmHost', {
     getAsset: request => ipcRenderer.invoke('whihm:getAsset', request),
     planNode: request => ipcRenderer.invoke('whihm:planNode', request),
     executeNode: request => ipcRenderer.invoke('whihm:executeNode', request),
+    assessWorkflowReadiness: request => ipcRenderer.invoke('whihm:assessWorkflowReadiness', request),
     runtimeReady: () => ipcRenderer.invoke('whihm:runtime-ready'),
     runtimeResult: response => ipcRenderer.invoke('whihm:runtime-result', response),
     runtimeProgress: response => ipcRenderer.invoke('whihm:runtime-progress', response),

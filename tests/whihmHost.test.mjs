@@ -8,7 +8,7 @@ import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { File } from 'node:buffer';
-import { createProject, createWorkflow } from 'whihm-workflow-core';
+import { createProject, createWorkflow, hashWorkflow } from 'whihm-workflow-core';
 import { createWorkflowHost } from '../lib/whihm-execution/host.mjs';
 import { connectWhihmHost } from '../src/lib/whihmHostRuntime.mjs';
 const require = createRequire(import.meta.url);
@@ -140,7 +140,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -189,4 +189,71 @@ test('runtime inputs cannot introduce absolute machine paths or credential field
   assert.equal(errorCode(await h.host.planNode({ ...request(opened), inputs: { prompt: '/private/external.txt' } })), 'PROJECT_PATH_UNSAFE');
   assert.equal(errorCode(await h.host.planNode({ ...request(opened), inputs: { apiKey: 'fixture-secret' } })), 'HOST_REQUEST_INVALID');
   assert.equal(h.authReads(), 0);
+});
+
+test('fixed preload readiness operation assesses a supplied canonical workflow without runtime activity', async t => {
+  const f = await fixture(t), h = await transport(t), oldFetch = globalThis.fetch; let fetchCalls = 0;
+  globalThis.fetch = () => { fetchCalls++; throw Error('Network forbidden'); }; t.after(() => { globalThis.fetch = oldFetch; });
+  const result = await h.host.assessWorkflowReadiness({ workflow: f.workflow, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.equal(result.status, 'assessed'); assert.equal(result.workflowId, f.workflow.workflowId);
+  assert.ok(result.report.nodes.remote.status === 'READY' || result.report.nodes.remote.status === 'MANUAL_PENDING');
+  assert.equal(fetchCalls, 0); assert.equal(h.authReads(), 0); assert.equal(h.localCalls.length, 0);
+  assert.ok(h.handlers.has('whihm:assessWorkflowReadiness'));
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), result);
+});
+
+test('fixed readiness operation loads the selected workflow from a validated project handle', async t => {
+  const f = await fixture(t), h = await transport(t), opened = await h.host.openProject({ projectRoot: f.root });
+  const result = await h.host.assessWorkflowReadiness({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.equal(result.status, 'assessed'); assert.equal(result.workflowHash, hashWorkflow(f.workflow));
+  assert.equal(result.report.workflowId, f.workflow.workflowId); assert.equal(result.provenance.project.state, 'VERIFIED');
+  assert.ok(!JSON.stringify(result).includes(f.root)); assert.equal(h.authReads(), 0);
+});
+
+test('readiness rejects missing project/workflow handles and corrupted projects fail closed', async t => {
+  const f = await fixture(t), h = await transport(t);
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-25T12:00:00Z' })), 'WORKFLOW_SOURCE_MISSING');
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ projectHandle: 'missing', workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-25T12:00:00Z' })), 'PROJECT_HANDLE_INVALID');
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ projectHandle: opened.projectHandle, workflowId: 'not_here', evaluatedAt: '2026-10-25T12:00:00Z' })), 'WORKFLOW_NOT_FOUND');
+  const record = (await f.project.getProjectAsset('reference')).asset;
+  await fs.writeFile(path.join(f.root, record.path), 'tampered project asset');
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-25T12:00:00Z' })), 'ASSET_HASH_MISMATCH');
+});
+
+test('readiness propagates missing assets, unsupported executors and pending manual gates', async t => {
+  const f = await fixture(t), h = await transport(t);
+  const missingAsset = structuredClone(f.workflow); missingAsset.assets[0].localPath = 'assets/not-registered.txt';
+  missingAsset.nodes[0].assetRefs = ['reference'];
+  const missing = await h.host.assessWorkflowReadiness({ projectHandle: (await h.host.openProject({ projectRoot: f.root })).projectHandle, workflow: missingAsset, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.ok(missing.report.blockers.some(item => item.code === 'ASSET_MISSING'));
+  const unsupported = structuredClone(f.workflow); unsupported.nodes = [unsupported.nodes[0]]; unsupported.edges = []; unsupported.nodes[0].executor.model = 'not-in-catalog';
+  const unsupportedResult = await h.host.assessWorkflowReadiness({ workflow: unsupported, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.equal(unsupportedResult.report.nodes.remote.status, 'UNSUPPORTED');
+  const manual = createWorkflow({ workflowId: 'manual_host_check', name: 'Manual gate', nodes: [{ id: 'approval', title: 'Review', kind: 'control', executor: { id: 'control', type: 'control', tool: 'approval-gate', mayCostMoney: false, requiresConfirmation: true }, inputs: [], outputs: [], parameters: {} }] });
+  const manualResult = await h.host.assessWorkflowReadiness({ workflow: manual, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.deepEqual(manualResult.report.manualGates, ['approval']);
+});
+
+test('readiness passes quote/budget evidence, preserves stale hash state and leaves local runtime unverified', async t => {
+  const f = await fixture(t), h = await transport(t), workflow = structuredClone(f.workflow);
+  workflow.nodes = workflow.nodes.filter(node => ['remote', 'local'].includes(node.id)); workflow.edges = [];
+  const remote = workflow.nodes.find(node => node.id === 'remote');
+  const quoteContext = { schemaVersion: 1, workflowId: workflow.workflowId, workflowHash: hashWorkflow(workflow), quotes: [{ nodeId: 'remote', amount: 0.25, currency: 'USD', quotedAt: '2026-10-25T11:00:00Z', provider: 'muapi', model: remote.executor.model, source: 'mock-estimator' }] };
+  const request = { workflow, evaluatedAt: '2026-10-25T12:00:00Z', quoteContext, budget: { maximumSpend: 1, currency: 'USD' } };
+  const current = await h.host.assessWorkflowReadiness(request);
+  assert.equal(current.report.cost.budgetStatus, 'WITHIN_BUDGET'); assert.equal(current.report.nodes.local.status, 'UNVERIFIED');
+  const stale = await h.host.assessWorkflowReadiness({ ...request, quoteContext: { ...quoteContext, workflowHash: 'f'.repeat(64) } });
+  assert.equal(stale.report.nodes.remote.cost.status, 'STALE'); assert.equal(stale.report.cost.budgetStatus, 'BUDGET_UNKNOWN');
+  assert.equal(h.authReads(), 0); assert.equal(h.localCalls.length, 0);
+});
+
+test('readiness host rejects arbitrary path/channel/function input and exposes only one fixed method', async t => {
+  const h = await transport(t);
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ projectRoot: '/tmp/untrusted', workflow: {} })), 'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ operation: 'executeNode', workflow: {} })), 'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await h.host.assessWorkflowReadiness({ channel: 'local-ai:generate', workflow: {} })), 'HOST_REQUEST_INVALID');
+  assert.ok(Object.hasOwn(h.host, 'assessWorkflowReadiness'));
+  const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
+  assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
 });
