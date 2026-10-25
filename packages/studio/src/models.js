@@ -27,6 +27,12 @@ const SEEDANCE_25_RESOLUTION_INPUT = Object.freeze({
   description: "Output video resolution.",
   default: "1080p",
 });
+// Video edit/extend native resolution differs from neighboring generation routes.
+// Verified base-route metadata on 2026-10-25; suffix resolution semantics remain unverified.
+const SEEDANCE_25_VIDEO_RESOLUTION_INPUT = Object.freeze({
+  type: "string", title: "Resolution", name: "resolution",
+  enum: Object.freeze(["480p", "720p", "1080p", "4k"]), default: "720p",
+});
 const SEEDANCE_HIGH_BITRATE_INPUT = Object.freeze({
   type: "boolean",
   title: "High Bitrate",
@@ -166,7 +172,7 @@ const KLING_O1_EDIT_INPUTS = Object.freeze({
   video_url: { type: "string", field: "video", title: "Source video", name: "video_url" },
   images_list: {
     type: "array", items: { type: "string" }, title: "Reference images",
-    name: "images_list", maxItems: 4,
+    name: "images_list", minItems: 0, maxItems: 4,
   },
   keep_original_sound: KLING_KEEP_SOUND_INPUT,
 });
@@ -27701,6 +27707,7 @@ export const v2vModels = [
     "videoField": "video_url",
     "imageField": "images_list",
     "maxImages": 4,
+    "imageOptional": true,
     "hasPrompt": true,
     "promptRequired": true,
     "required": [
@@ -27721,6 +27728,7 @@ export const v2vModels = [
     "videoField": "video_url",
     "imageField": "images_list",
     "maxImages": 4,
+    "imageOptional": true,
     "hasPrompt": true,
     "promptRequired": true,
     "required": [
@@ -27741,6 +27749,7 @@ export const v2vModels = [
     "videoField": "video_url",
     "imageField": "images_list",
     "maxImages": 4,
+    "imageOptional": true,
     "hasPrompt": true,
     "promptRequired": true,
     "required": [
@@ -27914,6 +27923,7 @@ export const v2vModels = [
       "resolution": WAN_27_RESOLUTION_INPUT,
       "duration": {
         "type": "integer", "title": "Duration", "name": "duration",
+        "description": "Total duration of the final output video in seconds (5–15).",
         "minValue": 5, "maxValue": 15, "default": 5
       }
     },
@@ -28366,8 +28376,7 @@ export const v2vModels = [
         "description": "Enable high bitrate mode for better visual fidelity. Produces larger files.",
         "default": false
       },
-      "resolution": { "type": "string", "title": "Resolution", "name": "resolution",
-        "enum": ["480p", "720p", "1080p", "4k"], "default": "720p" }
+      "resolution": SEEDANCE_25_VIDEO_RESOLUTION_INPUT
     },
     "description": "Seedance 2.5 Video Edit edits an input video from a natural-language prompt. The reference video drives subject identity, composition, and motion while the model rewrites lighting, style, weather, environment, or specific elements as instructed.",
     "provider": "bytedance",
@@ -28761,6 +28770,7 @@ export const v2vModels = [
         "description": "Enable high bitrate mode for better visual fidelity. Produces larger files.",
         "default": false
       },
+      "resolution": SEEDANCE_25_VIDEO_RESOLUTION_INPUT,
       "aspect_ratio": SEEDANCE_25_ASPECT_RATIO_INPUT
     },
     "description": "Seedance 2.5 Video Extend extends an input video with a new cinematic continuation generated from its last frame and a natural-language prompt.",
@@ -30950,6 +30960,7 @@ export const v2vModels = [
     "imageOptional": true,
     "hasPrompt": true,
     "promptRequired": true,
+    "required": ["prompt", "video_urls"],
     "inputs": {
       "prompt": {
         "examples": [
@@ -30972,6 +30983,7 @@ export const v2vModels = [
         },
         "title": "Video URLs",
         "name": "video_urls",
+        "minItems": 1,
         "maxItems": 1
       },
       "images_list": {

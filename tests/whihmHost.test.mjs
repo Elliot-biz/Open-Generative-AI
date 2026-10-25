@@ -473,3 +473,33 @@ test('fixed host V2V preserves ordered registered references through the existin
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
   assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
 });
+
+test('fixed host Wave 1 preserves native Seedance 2.0 project source array and endpoint', async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  const node = changed.nodes[0]; node.executor.model = 'seedance-2-video-edit'; node.metadata.oga.mode = 'v2v';
+  node.outputs[0].type = 'video'; node.inputs = [{ id: 'video_urls', type: 'video' }]; node.assetRefs = ['reference'];
+  node.parameters = { prompt: 'Restyle', duration: 4, quality: 'high', aspect_ratio: '9:16' };
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { processV2V } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { processV2V, async uploadFile(_key, file) {
+    uploaded.push(await file.text()); return 'https://example.com/source.mp4';
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => ({ status: 'completed', url: 'https://example.com/result.mp4' }) };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  const args = { ...request(opened), assetBindings: { video_urls: ['reference'] } };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned'); assert.equal(plan.request.requiredMedia[0].maximum, 1);
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0); assert.equal(uploaded.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(result.model, 'seedance-2-video-edit');
+  assert.ok(calls[0].url.endsWith('/api/v1/seedance-v2.0-video-edit'));
+  assert.deepEqual(JSON.parse(calls[0].body), { ...node.parameters, video_urls: ['https://example.com/source.mp4'] });
+  assert.deepEqual(uploaded, ['tiny upload fixture']);
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+});

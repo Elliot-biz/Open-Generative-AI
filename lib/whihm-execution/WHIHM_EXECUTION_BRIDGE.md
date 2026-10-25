@@ -498,3 +498,33 @@ HeyGen defaults visibly to Hindi if language is omitted. URL-only validation
 cannot prove dimensions, bytes, codec or source duration; provider-side Seedance
 trimming of long source videos is documented in the review, not a local precision
 guarantee. No media probe or network checks were added. No UI or packaging changes.
+
+
+### Wave 1 extension (safe partial coverage)
+
+Seven exact models join the original nine: `seedance-2.5-video-extend`,
+`seedance-2-video-edit`, `wan2.7-video-edit`, `wan2.7-video-extend`,
+`kling-o1-video-edit`, `kling-o1-video-edit-fast`, `kling-o1-standard-video-edit`.
+See [verified contracts and provider discrepancies](V2V_CONTRACT_REVIEW.md#wave-1-review--2026-10-25-safe-partial-admission).
+
+Seedance 2.0 retains native `video_urls` as an array, currently exactly one source
+per public OpenAPI, plus ordered `images_list` and `audio_files`. Its existing
+`seedance-v2.0-video-edit` execution endpoint is preserved. Multiple sources reject;
+no scalar coercion or flattening. Existing Studio `videos_list` / `audios_list`
+aliases normalize explicitly to native array fields; competing forms reject.
+The existing project-asset array path already supports these fields.
+
+Base Seedance 2.5 extend retains optional `last_image`, aspect ratio, duration,
+audio, seed and bitrate, and adds verified native resolution. Wan 2.7 edit retains
+optional images/audio-setting; extend's guiding audio is optional and duration
+means total output length. Kling references are 0–4; its wire list defaults to []
+even though no actual reference images are required. Standard rejects aspect;
+full/fast retain their own enums. No variant substitutions.
+
+Plans now include detached control schemas/ranges/defaults and ordered media
+minimum/maximum counts. Required media is distinct from required empty wire lists.
+The six Standard Seedance fixed-resolution edit/extend variants remain unbound:
+model metadata omits resolution, while OpenAPI exposes a common 720p-default
+resolution field on every suffix. Exact override/output-resolution semantics need
+first-party clarification. Intl/Spicy profiles remain unbound too. The original
+nine-model subset is retained; no UI, execution lifecycle or security changes.
