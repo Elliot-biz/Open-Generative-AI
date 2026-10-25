@@ -2,7 +2,7 @@ const { register: registerLoader } = require('node:module');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
-const operations = ['openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness'];
+const operations = ['openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
 const reject = code => ({ status: 'rejected', diagnostics: [{ code, path: '', message: code.replaceAll('_', ' ') }] });
 let loaded;
 function loadHost() {

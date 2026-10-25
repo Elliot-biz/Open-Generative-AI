@@ -8,7 +8,7 @@ import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { File } from 'node:buffer';
-import { createProject, createWorkflow, hashWorkflow, setNodeApproval } from 'whihm-workflow-core';
+import { createProject, createWorkflow, hashWorkflow, setNodeApproval, applyEditBatch, recordNodeOutput } from 'whihm-workflow-core';
 import { assessCurrentWorkflowReadiness } from '../src/lib/whihmReadinessClient.mjs';
 import { createWorkflowHost } from '../lib/whihm-execution/host.mjs';
 import { connectWhihmHost } from '../src/lib/whihmHostRuntime.mjs';
@@ -141,7 +141,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -268,4 +268,74 @@ test('renderer consumer reaches fixed readiness host with persisted approval sem
   const result = await assessCurrentWorkflowReadiness({ workflow: approved.workflow, evaluatedAt: '2026-10-25T12:00:00Z' }, { host: h.host });
   assert.equal(result.report.status, 'READY'); assert.equal(result.report.nodes.review.approval, 'APPROVED');
   assert.equal(h.authReads(), 0); assert.equal(h.localCalls.length, 0);
+});
+
+async function productionFixture(t) {
+  const f = await fixture(t);
+  const media = id => ({ id, title: id, kind: 'fixture', executor: { id: 'local-tool', type: 'utility', tool: 'fixture', mayCostMoney: false, requiresConfirmation: false }, inputs: [], outputs: [{ id: 'result', type: 'video' }], parameters: { trim: 1 } });
+  let workflow = createWorkflow({ workflowId: 'production', name: 'Dynamic fixture', nodes: [media('left'), media('sibling'), { ...media('review'), dependencies: ['left'], executor: { id: 'manual', type: 'control', tool: 'review', mayCostMoney: false, requiresConfirmation: false } }] });
+  for (const node of workflow.nodes) workflow = recordNodeOutput(workflow, { nodeId: node.id, outputHash: 'a'.repeat(64), timestamp: '2026-10-25T12:00:00Z', expectedWorkflowHash: hashWorkflow(workflow) }).workflow;
+  assert.equal((await f.project.addWorkflowToProject(workflow)).status, 'added');
+  const history = (await f.project.getProjectHistory(workflow.workflowId)).store;
+  return { ...f, workflow, history };
+}
+const approvalRequest = (opened, workflow, extra = {}) => ({ projectHandle: opened.projectHandle, workflowId: workflow.workflowId, nodeId: 'review', decision: 'APPROVED', timestamp: '2026-10-25T12:00:00Z', expectedWorkflowHash: hashWorkflow(workflow), ...extra });
+
+test('fixed approval channel persists approved/rejected decisions and their history without runtime calls', async t => {
+  const f = await productionFixture(t), h = await transport(t), opened = await h.host.openProject({ projectRoot: f.root });
+  const originalFetch = globalThis.fetch; globalThis.fetch = () => { assert.fail('Network forbidden'); }; t.after(() => { globalThis.fetch = originalFetch; });
+  const approved = await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow, { expectedLatestRecordId: null, actor: { source: 'test' }, note: 'Local mock review' }));
+  assert.equal(approved.status, 'applied', JSON.stringify(approved)); assert.equal(approved.workflow.nodes[2].metadata.production.approval.decision, 'APPROVED');
+  const record = await f.history.getHistoryRecord(f.workflow.workflowId, approved.recordId); assert.equal(record.status, 'ok'); assert.equal(record.record.beforeHash, hashWorkflow(f.workflow));
+  assert.deepEqual((await f.project.getProjectWorkflow(f.workflow.workflowId)).workflow, approved.workflow);
+  const rejected = await h.host.applyWorkflowApproval(approvalRequest(opened, approved.workflow, { decision: 'REJECTED', expectedLatestRecordId: approved.recordId }));
+  assert.equal(rejected.status, 'applied');
+  const readiness = await h.host.assessWorkflowReadiness({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.ok(readiness.report.blockers.some(d => d.code === 'APPROVAL_REJECTED'));
+  assert.equal((await f.history.listHistory(f.workflow.workflowId)).records.length, 2); assert.equal(h.authReads(), 0); assert.equal(h.localCalls.length, 0);
+  assert.ok(!JSON.stringify([approved, rejected]).includes(f.root));
+});
+
+test('production host rejects stale hashes/history heads, missing nodes/workflows and unsafe requests before writing', async t => {
+  const f = await productionFixture(t), h = await transport(t), opened = await h.host.openProject({ projectRoot: f.root });
+  assert.equal(errorCode(await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow, { expectedWorkflowHash: 'f'.repeat(64) }))), 'WORKFLOW_HASH_MISMATCH');
+  assert.equal(errorCode(await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow, { nodeId: 'absent' }))), 'NODE_NOT_FOUND');
+  assert.equal(errorCode(await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow, { workflowId: 'absent' }))), 'WORKFLOW_NOT_FOUND');
+  for (const extra of [{ projectRoot: '/tmp/outside' }, { channel: 'local-ai:generate' }, { functionName: 'executeNode' }, { actor: { assetId: 'unregistered' } }]) {
+    assert.equal(errorCode(await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow, extra))), 'HOST_REQUEST_INVALID');
+  }
+  await assert.rejects(h.host.applyWorkflowApproval({ ...approvalRequest(opened, f.workflow), callback() { assert.fail('Must not execute'); } }), /clone/i);
+  const approved = await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow)); assert.equal(approved.status, 'applied');
+  assert.equal(errorCode(await h.host.applyWorkflowApproval(approvalRequest(opened, approved.workflow, { expectedLatestRecordId: null }))), 'STALE_WORKFLOW_STATE');
+  assert.equal((await f.history.listHistory(f.workflow.workflowId)).records.length, 1);
+});
+
+test('invalidation uses a verified current history transition and preserves sibling/media/old snapshots', async t => {
+  const f = await productionFixture(t), h = await transport(t), opened = await h.host.openProject({ projectRoot: f.root });
+  const originalFetch = globalThis.fetch; globalThis.fetch = () => { assert.fail('Network forbidden'); }; t.after(() => { globalThis.fetch = originalFetch; });
+  const approved = await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow)); assert.equal(approved.status, 'applied');
+  const batch = { commandVersion: 1, expectedWorkflowHash: approved.afterHash, commands: [{ type: 'set-node-parameter', targetId: 'left', parameterPath: '/trim', value: 2 }] };
+  const edit = applyEditBatch(approved.workflow, batch), transition = await f.history.recordEdit({ before: approved.workflow, batch, result: edit }); assert.equal(transition.status, 'recorded');
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: edit.workflow, expectedHash: approved.afterHash })).status, 'updated');
+  const asset = (await f.project.getProjectAsset('reference')).asset, bytes = await fs.readFile(path.join(f.root, asset.path));
+  const result = await h.host.applyWorkflowInvalidation({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, transitionRecordId: transition.recordId, expectedWorkflowHash: edit.afterHash, evaluatedAt: '2026-10-25T12:00:00Z' });
+  assert.equal(result.status, 'applied', JSON.stringify(result)); assert.deepEqual(result.affectedNodeIds, ['left', 'review']);
+  assert.equal(result.workflow.nodes[2].metadata.production.approval.decision, 'STALE');
+  assert.deepEqual(result.workflow.nodes[1], f.workflow.nodes[1]);
+  assert.deepEqual(await fs.readFile(path.join(f.root, asset.path)), bytes);
+  const old = (await f.history.getWorkflowAtRecord(f.workflow.workflowId, approved.recordId)).workflow;
+  assert.equal(old.nodes[2].metadata.production.approval.decision, 'APPROVED'); assert.equal((await f.history.listHistory(f.workflow.workflowId)).records.length, 3);
+  assert.equal((await f.project.verifyProjectIntegrity()).status, 'valid'); assert.equal(h.authReads(), 0); assert.equal(h.localCalls.length, 0);
+  assert.equal(errorCode(await h.host.applyWorkflowInvalidation({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, transitionRecordId: transition.recordId, expectedWorkflowHash: result.afterHash, evaluatedAt: '2026-10-25T12:00:00Z' })), 'STALE_WORKFLOW_STATE');
+});
+
+test('corrupted project blocks both production operations and fixed channels reject foreign senders', async t => {
+  const f = await productionFixture(t), h = await transport(t), opened = await h.host.openProject({ projectRoot: f.root });
+  const asset = (await f.project.getProjectAsset('reference')).asset;
+  await fs.writeFile(path.join(f.root, asset.path), 'tampered');
+  assert.equal(errorCode(await h.host.applyWorkflowApproval(approvalRequest(opened, f.workflow))), 'ASSET_HASH_MISMATCH');
+  const request = { projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, transitionRecordId: '00000000-0000-4000-8000-000000000000', expectedWorkflowHash: hashWorkflow(f.workflow), evaluatedAt: '2026-10-25T12:00:00Z' };
+  assert.equal(errorCode(await h.host.applyWorkflowInvalidation(request)), 'ASSET_HASH_MISMATCH');
+  assert.equal(errorCode(await h.host.applyWorkflowInvalidation({ ...request, commands: [] })), 'HOST_REQUEST_INVALID');
+  for (const name of ['applyWorkflowApproval', 'applyWorkflowInvalidation']) assert.equal(errorCode(await h.handlers.get(`whihm:${name}`)({ ...h.event, sender: {} }, {})), 'HOST_SENDER_REJECTED');
 });
