@@ -216,3 +216,12 @@ This is portable user data, not application/installer packaging.
 readiness with externally supplied asset/runtime evidence, hash-bound quotes and
 an optional budget. It is pure and requires an explicit evaluation timestamp.
 See [READINESS.md](./READINESS.md) for contracts, status/cost semantics and examples.
+
+## Production evidence and approvals
+
+`setNodeApproval`, `recordNodeOutput`, `getNodeProductionEvidence`,
+`hashNodeProductionScope`, `bindWorkflowQuotes` and `invalidateWorkflowProduction`
+provide explicit gate decisions, dependency-bound validity and selective quote/state
+invalidation. Transitions reuse normal edit batches and append-only history.
+See [PRODUCTION.md](./PRODUCTION.md) for the portable metadata contract, renderer
+readiness consumer, safety rules and persistence sequence.

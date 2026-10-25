@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createProject, createWorkflow, hashWorkflow, assessWorkflowReadiness } from 'whihm-workflow-core';
+import { createProject, createWorkflow, hashWorkflow, assessWorkflowReadiness, setNodeApproval, bindWorkflowQuotes } from 'whihm-workflow-core';
 import { buildWorkflowReadinessContext, assessProjectWorkflowReadiness } from '../lib/whihm-execution/readiness.mjs';
 import { resolveExecutionBinding } from '../lib/whihm-execution/runtime.mjs';
 
@@ -172,7 +172,8 @@ test('conflicting mode support for one executor identity stays unverified', asyn
 
 test('resolved manual controls retain declaration provenance without misclassifying QC', async () => {
   const n = node('control'); n.executor.tool = 'approval-gate';
-  const resolved = await build(workflow(n), { nodeStates: { image: { manualResolved: true } } });
+  const w = workflow(n), approved = setNodeApproval(w, { nodeId: 'image', decision: 'APPROVED', timestamp: evaluatedAt, expectedWorkflowHash: hashWorkflow(w) }).workflow;
+  const resolved = await build(approved);
   assert.equal(resolved.report.status, 'READY'); assert.equal(resolved.provenance.executors.image.state, 'MANUAL');
   n.executor.tool = 'qc';
   const qc = await build(workflow(n), { nodeStates: { image: { manualResolved: true } } });
@@ -181,4 +182,16 @@ test('resolved manual controls retain declaration provenance without misclassify
 test('expected project identity cannot be silently ignored without a root source', async () => {
   const r = await build(workflow(), { expectedProjectId: 'unexpected' });
   assert.equal(r.status, 'rejected'); assert.equal(r.diagnostics[0].code, 'PROJECT_ID_CONTEXT_INVALID');
+});
+
+test('scope-bound quote provenance distinguishes preserved branch evidence from stale quotes', async () => {
+  const w = workflow(); w.nodes.push({ ...structuredClone(w.nodes[0]), id: 'second' });
+  const q = quoteContext(w); q.quotes.push({ ...q.quotes[0], nodeId: 'second' });
+  const scoped = bindWorkflowQuotes(w, q, { evaluatedAt }); assert.equal(scoped.status, 'bound');
+  const cosmetic = structuredClone(w); cosmetic.nodes[0].title = 'Only a title';
+  const preserved = await build(cosmetic, { quoteContext: scoped.quoteContext });
+  assert.equal(preserved.provenance.quotes.state, 'SCOPE_VERIFIED'); assert.equal(preserved.report.cost.staleNodeIds.length, 0);
+  cosmetic.nodes[0].parameters.prompt = 'New input';
+  const changed = await build(cosmetic, { quoteContext: scoped.quoteContext });
+  assert.equal(changed.provenance.quotes.state, 'PARTIALLY_STALE'); assert.deepEqual(changed.report.cost.staleNodeIds, ['image']);
 });

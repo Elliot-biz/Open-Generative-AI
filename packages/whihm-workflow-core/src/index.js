@@ -89,3 +89,4 @@ export { createHistoryStore, HISTORY_VERSION } from './history/store.js';
 export { createProject, openProject, verifyProjectIntegrity, exportProjectData, importProjectData, PROJECT_VERSION } from './project/store.js';
 
 export { assessWorkflowReadiness } from './readiness.js';
+export { hashNodeProductionScope, getNodeProductionEvidence, setNodeApproval, recordNodeOutput, bindWorkflowQuotes, invalidateWorkflowProduction } from './production.js';

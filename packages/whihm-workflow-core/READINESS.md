@@ -16,7 +16,6 @@ const report = assessWorkflowReadiness(workflow, {
   }],
   assets: [{ id: 'logo', present: true }],
   inputs: { creative_brief: 'An externally supplied brief' },
-  nodeStates: { storyboard: { manualResolved: false } },
   quoteContext: {
     schemaVersion: 1,
     workflowId: workflow.workflowId,
@@ -72,8 +71,10 @@ time and the effective freshness policy so an agent can identify its evidence.
   branch outcomes, choose variants, or infer that an orphan paid generation is free.
 - Manual gates are explicit `executionPolicy.manual: true`, an executor requiring
   confirmation, or a control tool named `approval`, `approval-gate`, `review`,
-  `manual`, or `storyboard-review`. External `manualResolved: true` is a supplied
-  statement for assessment only, not stored approval or execution authorization.
+  `manual`, or `storyboard-review`. A current explicit approval in node
+  `metadata.production` resolves the gate. REJECTED is a hard blocker; STALE
+  requires a fresh review. Legacy `manualResolved` is accepted but cannot bypass
+  these rules. See [PRODUCTION.md](./PRODUCTION.md) for decision APIs and scope binding.
   Manual control gates require no generation binding. Other control tools (QC,
   merge, etc.) still require an actual runtime binding.
 
@@ -115,12 +116,15 @@ Counts include blocked unsupported nodes in `blocked` and the `unsupported` subs
 Quote envelope v1 is external to creative state, projects/history and snapshots.
 It can be retained by a caller as portable estimate data; this milestone provides
 validation/evaluation, not quote persistence. Its hash binds quotes to the exact
-canonical workflow, including metadata/title edits: any canonical change makes the
-old envelope stale. Do not rebind old quotes to a new hash without external estimate
-verification. Canonical JSON formatting/object-key order changes leave the hash intact.
+canonical workflow, including metadata/title edits: any canonical change makes a
+legacy unscoped envelope stale. `bindWorkflowQuotes` can attach current externally
+supplied quotes to dependency scopes using existing quote metadata. Those entries
+survive unrelated/cosmetic edits; relevant scope changes make only affected entries
+stale. Do not rebind stale quotes to a new hash. See [PRODUCTION.md](./PRODUCTION.md).
+Canonical JSON formatting/object-key order changes leave hashes intact.
 
 One quote per node; no automatic latest-quote selection. A quote is `CURRENT` only
-when the envelope ID/hash and any supplied model/provider match, it is not in the
+when the envelope ID and full hash (or explicitly bound dependency scope) and any supplied model/provider match, it is not in the
 future, its age is strictly less than `maxAgeMs`, and its expiration has not been
 reached. Otherwise it is `STALE`; absence of a required quote is `MISSING`. Stale prices are excluded
 from current known subtotal and included in both `staleNodeIds` and `unknownNodeIds`.
@@ -169,7 +173,8 @@ npm test -w whihm-workflow-core
 npm run check -w whihm-workflow-core
 ```
 
-No runtime/bridge/UI/Electron/provider code changes are required. Future host code
-may gather evidence from existing services and call this API. Live capability/model
-validation, approval enforcement, spend enforcement, execution scheduling, automatic
-quote refresh, finishing and selective quote invalidation remain separate work.
+The existing evidence adapter and fixed desktop host gather/pass evidence into this
+API. [PRODUCTION.md](./PRODUCTION.md) adds approval enforcement in readiness and
+selective invalidation as ordinary command/history transitions. Live model validation,
+execution/spend enforcement, scheduling, automatic quote refresh and finishing remain
+outside this assessment layer.

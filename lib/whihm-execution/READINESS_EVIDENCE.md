@@ -116,8 +116,12 @@ extension, not a canonical schema, status or readiness-policy redesign.
 
 External quote envelopes are never rewritten with the current hash. Provider/model,
 amount/currency, timestamps, expiration, source metadata and envelope identity survive
-unchanged. Workflow/hash mismatch is flagged `QUOTE_WORKFLOW_MISMATCH`; the original
-core evaluator marks mismatched quotes stale and prevents a false budget pass.
+unchanged. Legacy workflow/hash mismatch is flagged `QUOTE_WORKFLOW_MISMATCH`.
+Explicit per-node scope bindings from core `bindWorkflowQuotes` are evaluated by
+the same readiness engine: matching scopes yield `SCOPE_VERIFIED` provenance,
+while affected entries yield `PARTIALLY_STALE`/`QUOTE_SCOPE_STALE`. The adapter does
+not create, refresh or repair those bindings. See core `PRODUCTION.md` for approval
+metadata, dependency scopes and the nonvisual renderer consumer.
 Malformed/secret-bearing envelopes are rejected. No estimate endpoint is called and
 no exchange rate, currency conversion or price is invented.
 

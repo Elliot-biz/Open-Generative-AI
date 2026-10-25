@@ -1,5 +1,7 @@
 import { validateWorkflow } from './validate.js';
 import { hashWorkflow } from './diff.js';
+import { workflowDependencyMap, assetIds } from './dependencies.js';
+import { getNodeProductionEvidence, isManualGate, quoteScopeCurrent, quoteScopeValid } from './production.js';
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const own = (value, key) => Object.hasOwn(value, key);
@@ -87,19 +89,12 @@ function checkContext(workflow, context) {
         if (quote.expiresAt !== undefined && (!iso(quote.expiresAt) || Date.parse(quote.expiresAt) <= Date.parse(quote.quotedAt))) fail(path);
         for (const field of ['provider', 'model', 'source']) if (quote[field] !== undefined && typeof quote[field] !== 'string') fail(path);
         if (quote.metadata !== undefined && !object(quote.metadata)) fail(path);
+        if (quote.metadata?.whihmScope !== undefined && !quoteScopeValid(quote.metadata.whihmScope)) fail(`${path}/metadata/whihmScope`);
         seen.add(quote.nodeId);
       });
     }
   }
   return errors;
-}
-function assetIds(value, found = new Set()) {
-  if (Array.isArray(value)) value.forEach(v => assetIds(v, found));
-  else if (object(value)) {
-    if (typeof value.$asset === 'string') found.add(value.$asset);
-    Object.values(value).forEach(v => assetIds(v, found));
-  }
-  return found;
 }
 function inputValueValid(input, value) {
   const one = v => v !== null && (input.type === 'any' || (['text', 'image', 'video', 'audio', 'asset', 'file', 'result', 'selection'].includes(input.type) ? typeof v === 'string' && v.length > 0
@@ -120,14 +115,7 @@ export function assessWorkflowReadiness(workflow, context = {}) {
   const nodes = new Map(workflow.nodes.map(n => [n.id, n]));
   const reports = new Map();
   const hard = new Set(), pending = new Set(), uncertain = new Set();
-  const deps = new Map(workflow.nodes.map(n => [n.id, new Set()]));
-  validation.dependencies.forEach(d => {
-    if (d.targetNodeId !== null) deps.get(d.targetNodeId).add(d.sourceNodeId);
-    else {
-      const inputIndex = Number(d.path.split('/')[2]);
-      for (const target of workflow.inputs[inputIndex]?.targets || []) deps.get(target.nodeId).add(d.sourceNodeId);
-    }
-  });
+  const deps = workflowDependencyMap(workflow, validation);
   const reachable = new Set();
   const visit = id => { if (reachable.has(id)) return; reachable.add(id); deps.get(id).forEach(visit); };
   workflow.outputs.forEach(o => visit(o.source.nodeId));
@@ -171,10 +159,17 @@ export function assessWorkflowReadiness(workflow, context = {}) {
     const node = nodes.get(id), report = reports.get(id);
     if (!report.active) continue;
     if (!report.outputReachable && workflow.outputs.length) base.warnings.push(reason('NODE_OUTSIDE_OUTPUT_PATH', 'Enabled node is outside declared output ancestry; it still counts toward readiness and cost.', { nodeId: id }));
-    const manual = node.executionPolicy?.manual === true || node.executor.requiresConfirmation ||
-      (node.executor.type === 'control' && ['approval', 'approval-gate', 'review', 'manual', 'storyboard-review'].includes(node.executor.tool));
-    if (manual && context.nodeStates?.[id]?.manualResolved !== true) {
-      add(id, 'APPROVAL_PENDING', 'Required manual/control gate has no supplied resolution.', 'manual');
+    const manual = isManualGate(node);
+    let production;
+    try { production = getNodeProductionEvidence(workflow, id, { inputs: context.inputs, evaluatedAt: context.evaluatedAt }); }
+    catch { add(id, 'PRODUCTION_STATE_INVALID', 'Production evidence is malformed or its scope cannot be verified.', 'hard'); }
+    report.approval = manual ? production?.approval.status || 'PENDING' : 'NOT_REQUIRED';
+    report.derived = production?.derived.status || 'ABSENT';
+    if (production?.derived.status === 'STALE') add(id, 'OUTPUT_STALE', 'Derived output evidence no longer matches its production dependencies.', 'hard');
+    if (manual && production?.approval.status === 'REJECTED') add(id, 'APPROVAL_REJECTED', 'Required manual/control gate was explicitly rejected.', 'hard');
+    else if (manual && production?.approval.status !== 'APPROVED') {
+      add(id, 'APPROVAL_PENDING', 'Required manual/control gate has no current explicit approval.', 'manual');
+      if (production?.approval.status === 'STALE') add(id, 'APPROVAL_STALE', 'Approval belongs to a different production dependency state.', 'manual');
       base.manualGates.push(id);
     }
     // A resolved manual control gate needs no generation/runtime binding.
@@ -234,7 +229,7 @@ export function assessWorkflowReadiness(workflow, context = {}) {
         : uncertain.has(id) ? 'UNVERIFIED' : 'EXECUTABLE';
       for (const r of report.reasons) {
         const diagnostic = { ...r, nodeId: id };
-        if (['ASSET_MISSING', 'EXECUTOR_UNSUPPORTED', 'UTILITY_UNAVAILABLE', 'EXECUTOR_UNAVAILABLE', 'DEPENDENCY_CYCLE', 'WORKFLOW_INPUT_MISSING', 'REQUIRED_INPUT_MISSING', 'UPSTREAM_BLOCKED'].includes(r.code)) base.blockers.push(diagnostic);
+        if (['ASSET_MISSING', 'EXECUTOR_UNSUPPORTED', 'UTILITY_UNAVAILABLE', 'EXECUTOR_UNAVAILABLE', 'DEPENDENCY_CYCLE', 'WORKFLOW_INPUT_MISSING', 'REQUIRED_INPUT_MISSING', 'UPSTREAM_BLOCKED', 'APPROVAL_REJECTED', 'PRODUCTION_STATE_INVALID', 'OUTPUT_STALE'].includes(r.code)) base.blockers.push(diagnostic);
         else if (r.code !== 'APPROVAL_PENDING') base.warnings.push(diagnostic);
       }
     }
@@ -267,7 +262,12 @@ function assessCosts(workflow, context, reports, workflowHash) {
     const report = reports.get(node.id), quote = quotes.get(node.id);
     let state = 'NOT_REQUIRED';
     if (node.executor.mayCostMoney || quote) {
-      state = !quote ? 'MISSING' : !matchingContext || now < Date.parse(quote.quotedAt) || now - Date.parse(quote.quotedAt) >= maxAgeMs
+      let bindingCurrent = matchingContext;
+      if (quote?.metadata?.whihmScope !== undefined) {
+        try { bindingCurrent = q.workflowId === workflow.workflowId && quoteScopeCurrent(workflow, quote, context.inputs); }
+        catch { bindingCurrent = false; }
+      }
+      state = !quote ? 'MISSING' : !bindingCurrent || now < Date.parse(quote.quotedAt) || now - Date.parse(quote.quotedAt) >= maxAgeMs
         || (quote.expiresAt !== undefined && now >= Date.parse(quote.expiresAt))
         || (quote.provider !== undefined && quote.provider !== node.executor.provider)
         || (quote.model !== undefined && quote.model !== node.executor.model) ? 'STALE' : 'CURRENT';

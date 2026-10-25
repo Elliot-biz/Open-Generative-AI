@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { assessWorkflowReadiness, createWorkflow, hashWorkflow, validateWorkflow, exportWorkflow } from '../src/index.js';
+import { assessWorkflowReadiness, createWorkflow, hashWorkflow, validateWorkflow, exportWorkflow, setNodeApproval } from '../src/index.js';
 const time = '2026-10-23T16:00:00Z';
 const node = (id = 'a', type = 'utility') => ({ id, title: id, kind: 'test', executor: { id: type, type, ...(type === 'remote-model' ? { provider: 'example', model: 'fake-model' } : { tool: 'test-tool' }), mayCostMoney: type === 'remote-model', requiresConfirmation: false }, inputs: [{ id: 'input', type: 'video' }], outputs: [{ id: 'output', type: 'video' }], parameters: {} });
 const doc = (nodes = [node()]) => createWorkflow({ workflowId: 'test_ready', name: 'Test', nodes });
@@ -58,6 +58,9 @@ test('manual gate and downstream waiting remain conditional, not hard failures',
   assert.equal(r.status, 'CONDITIONALLY_READY'); assert.deepEqual(r.manualGates, ['gate']);
   assert.equal(r.nodes.gate.status, 'MANUAL_PENDING'); assert.equal(r.nodes.b.status, 'WAITING_MANUAL'); assert.equal(r.blockers.length, 0);
   r = assessWorkflowReadiness(w, { ...options(w), nodeStates: { gate: { manualResolved: true } } });
+  assert.equal(r.status, 'CONDITIONALLY_READY');
+  const approved = setNodeApproval(w, { nodeId: 'gate', decision: 'APPROVED', timestamp: time, expectedWorkflowHash: hashWorkflow(w) }).workflow;
+  r = assessWorkflowReadiness(approved, options(approved));
   assert.equal(r.status, 'READY');
 });
 test('requiresConfirmation is a reported gate, never an execution authorization', () => {

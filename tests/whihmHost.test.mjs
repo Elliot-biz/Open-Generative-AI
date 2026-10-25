@@ -8,7 +8,8 @@ import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { File } from 'node:buffer';
-import { createProject, createWorkflow, hashWorkflow } from 'whihm-workflow-core';
+import { createProject, createWorkflow, hashWorkflow, setNodeApproval } from 'whihm-workflow-core';
+import { assessCurrentWorkflowReadiness } from '../src/lib/whihmReadinessClient.mjs';
 import { createWorkflowHost } from '../lib/whihm-execution/host.mjs';
 import { connectWhihmHost } from '../src/lib/whihmHostRuntime.mjs';
 const require = createRequire(import.meta.url);
@@ -256,4 +257,15 @@ test('readiness host rejects arbitrary path/channel/function input and exposes o
   assert.ok(Object.hasOwn(h.host, 'assessWorkflowReadiness'));
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
+});
+
+test('renderer consumer reaches fixed readiness host with persisted approval semantics and no execution', async t => {
+  const h = await transport(t);
+  const w = createWorkflow({ workflowId: 'approved_host_gate', name: 'Mock approval', nodes: [{ id: 'review', title: 'Review', kind: 'control', executor: { id: 'control', type: 'control', tool: 'approval-gate', mayCostMoney: false, requiresConfirmation: false }, inputs: [], outputs: [], parameters: {} }] });
+  const pending = await assessCurrentWorkflowReadiness({ workflow: w, evaluatedAt: '2026-10-25T12:00:00Z', nodeStates: { review: { manualResolved: true } } }, { host: h.host });
+  assert.equal(pending.report.nodes.review.approval, 'PENDING');
+  const approved = setNodeApproval(w, { nodeId: 'review', decision: 'APPROVED', timestamp: '2026-10-25T12:00:00Z', expectedWorkflowHash: hashWorkflow(w) });
+  const result = await assessCurrentWorkflowReadiness({ workflow: approved.workflow, evaluatedAt: '2026-10-25T12:00:00Z' }, { host: h.host });
+  assert.equal(result.report.status, 'READY'); assert.equal(result.report.nodes.review.approval, 'APPROVED');
+  assert.equal(h.authReads(), 0); assert.equal(h.localCalls.length, 0);
 });
