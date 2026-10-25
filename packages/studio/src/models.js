@@ -31783,7 +31783,7 @@ export const motionControlModels = [
     maxImages: 9,
     supportsAudio: true,
     supportsQuality: true,
-    supportsSeed: true,
+    supportsSeed: false,
     aspectRatios: ["16:9", "9:16", "4:3", "1:1", "3:4", "21:9"],
     defaultAspectRatio: "16:9"
   },

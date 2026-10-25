@@ -374,3 +374,46 @@ for (const [model, endpoint, options, wireVideo] of [
   assert.ok(h.statuses.some(s => s.requestId === 'host-recast'));
   assert.ok(!JSON.stringify(result).includes('test-placeholder'));
 });
+
+for (const [model, mode, options] of [
+  ['seedance-2.5-motion-control', 'objects_swap', { duration: 30, seed: 42, high_bitrate: true }],
+  ['seedance-2-motion-control', 'motion_transfer', { duration: 15, quality: 'basic' }],
+]) test(`fixed host plans and authorizes ${model} with ordered project references`, async t => {
+  const f = await fixture(t), calls = [], uploads = [];
+  const second = path.join(path.dirname(f.root), 'second.txt'); await fs.writeFile(second, 'second reference');
+  const imported = await f.project.importAsset({ sourcePath: second, assetId: 'second_ref', contentType: 'text/plain' });
+  assert.equal(imported.status, 'imported');
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  changed.assets.push({ id: 'second_ref', type: 'file', localPath: imported.asset.path });
+  const node = changed.nodes[0]; node.executor.model = model; node.metadata.oga.mode = 'motion_control';
+  node.outputs[0].type = 'video'; node.inputs = [{ id: 'images_list', type: 'image' }]; node.assetRefs = ['reference', 'second_ref'];
+  node.parameters = { mode, video_url: 'https://example.com/driving.mp4', ...options };
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { processMotionControl } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { processMotionControl, async uploadFile(_key, file) {
+    const content = await file.text(); uploads.push(content);
+    return content === 'second reference' ? 'https://example.com/second.png' : 'https://example.com/first.png';
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-motion' }
+      : { status: 'completed', outputs: ['https://example.com/motion.mp4'] } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  const args = { ...request(opened), assetBindings: { images_list: ['second_ref', 'reference'] } };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned'); assert.equal(plan.runtime, 'studio.processMotionControl');
+  assert.equal(plan.request.motionControl.intentMode, mode); assert.equal(plan.request.motionControl.imageCount, 2);
+  assert.equal(uploads.length, 0); assert.equal(h.authReads(), 0); assert.equal(calls.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  assert.equal(uploads.length, 0); assert.equal(calls.length, 0);
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(result.model, model); assert.equal(result.requestId, 'host-motion');
+  assert.deepEqual(uploads, ['second reference', 'tiny upload fixture']);
+  assert.equal(calls.length, 2); assert.ok(calls[0].url.endsWith(`/api/v1/${model}`));
+  const payload = JSON.parse(calls[0].body);
+  assert.deepEqual(payload.images_list, ['https://example.com/second.png', 'https://example.com/first.png']);
+  for (const [key, value] of Object.entries(options)) assert.equal(payload[key], value);
+  assert.equal((await h.host.getWorkflow(request(opened))).workflow.nodes[0].parameters.mode, mode);
+  assert.ok(!JSON.stringify(result).includes(f.root));
+});

@@ -60,7 +60,7 @@ Conflicting parameter/input values are rejected; unresolved template dependencie
 are rejected, not evaluated. A scheduler or caller must supply resolved values.
 
 `node.metadata.oga.mode` optionally disambiguates `t2i`, `i2i`, `t2v`, `i2v`,
-`audio`, `lipsync`, `recast`. Without it, catalog lookup must identify exactly one route.
+`audio`, `lipsync`, `recast`, `motion_control`. Without it, catalog lookup must identify exactly one route.
 No guessed unknown-model fallback. `executor.provider='muapi'` selects transport;
 model vendor labels such as Google/ByteDance do not change that transport.
 Audio mode preserves `parameters.model` as the audio version and passes canonical
@@ -130,7 +130,7 @@ One optional `{tool, validate(parameters), run(parameters)}` host binding suppor
 an explicitly selected deterministic utility without provider assumptions. It is
 not a registry or execution framework. Test identity utility only; no FFmpeg,
 HyperFrames, shell commands or media processing. Unsupported control/tool routes
-fail closed. V2V/recast/motion-control/clipping and other specialized studio routes
+fail closed. V2V/clipping and other specialized studio routes
 remain unbound pending targeted payload tests; their upstream code is untouched.
 
 ## Deliberately not rebuilt
@@ -334,3 +334,102 @@ Focused checks:
 ```sh
 node --test tests/recastExecution.test.mjs tests/whihmExecutionBridge.test.mjs tests/whihmHost.test.mjs tests/whihmReadinessEvidence.test.mjs
 ```
+
+## Seedance Motion Control
+
+Canonical nodes may select `metadata.oga.mode: "motion_control"` with
+`seedance-2.5-motion-control` or `seedance-2-motion-control`. The route calls the
+existing **`studio.processMotionControl`**, never a new provider client. The desktop
+application class adds only a delegation of the same name to that shared service.
+The fixed host runtime allowlist derives from existing routes and requires the same
+explicit execution authorization. There is no new IPC operation or desktop Studio.
+
+The existing model catalog supplies limits; the feature-specific pure
+`motionControlInputContracts.js:buildMotionControlRequest` validates and prepares the
+existing request before service submission or bridge planning. Model and intent mode
+are explicit. `motion_transfer` and `objects_swap` keep their existing, distinct
+instruction prefixes, followed by the optional trimmed user prompt. These modes
+are prompt policies, **not provider payload mode fields or preservation guarantees**.
+Model/node identity and the caller's canonical parameters remain unchanged.
+
+| Contract | Seedance 2.5 | Seedance 2.0 |
+| --- | --- | --- |
+| Endpoint | `/api/v1/seedance-2.5-motion-control` | `/api/v1/seedance-2-motion-control` |
+| Required application media | `video_url` + 1–30 `images_list` references | `video_url` + 1–9 `images_list` references |
+| Duration | integer 4–30 inclusive; default 5 | integer 4–15 inclusive; default 5 |
+| Aspect | Existing catalog ratios including adaptive | Existing six ratios; adaptive rejected |
+| Generated audio | `generate_audio`, boolean, default false | Same |
+| Other controls | `high_bitrate` boolean default false; optional integer seed −1…4294967295 | `quality` high/basic, default high |
+| Resolution / audio-reference inputs | Not exposed by current contract | Not exposed by current contract |
+
+Read-only public metadata was checked on 2026-10-25: GET
+[`/api/v1/models/seedance-2.5-motion-control`](https://api.muapi.ai/api/v1/models/seedance-2.5-motion-control),
+[`/api/v1/models/seedance-2-motion-control`](https://api.muapi.ai/api/v1/models/seedance-2-motion-control),
+and the two endpoint request schemas in
+[`/openapi.json`](https://api.muapi.ai/openapi.json). No credentials, quotes,
+generation, uploads or jobs were used for verification.
+
+Two deliberate product/provider distinctions:
+
+- Both provider schemas require only video and permit optional images. OGA Studio
+  already requires at least one image; this application contract preserves that
+  behavior rather than relaxing it or fabricating references.
+- The source catalog previously advertised seed support for 2.0, but **neither live
+  model metadata nor OpenAPI lists it**. The source flag is corrected, that Studio
+  seed input is disabled for 2.0, and supplying seed to the service rejects before
+  transport. 2.5 preserves even explicit seed −1. OpenAPI also has a webhook field,
+  but the existing shared Motion Control service did not expose it; this task does
+  not introduce a webhook route or neighboring models' resolution/audio inputs.
+
+The Studio's request assembly now sends only controls supported by the selected
+model, avoiding stale quality/bitrate/seed fields from other selections. Layout,
+intent controls, navigation, uploads and result UI are unchanged. Existing visual
+control adjustment on model selection remains; the service never clamps duration,
+truncates references or coerces numeric/boolean strings before submission.
+
+Ordered references are preserved without sorting, deduplication, filtering or
+truncation. Legacy `images` (array/single URL) and `image_url` input forms remain
+explicitly normalized; conflicting representations reject. Invalid members,
+unsupported options/models/modes, count/range/type failures and missing media return
+structured `MOTION_*` errors with field paths. No transport follows rejection.
+
+For project images, the existing request can use:
+
+```js
+assetBindings: {
+  video_url: 'registered_driver',
+  images_list: ['registered_reference_b', 'registered_reference_a'],
+}
+```
+
+Array bindings are accepted **only for Motion Control's `images_list`**. Each item
+uses the existing project registry/path/integrity checks and uploader; input order
+is retained with an index in `requiredUploads`. No physical path is stored in the
+workflow or exposed in the plan. Count validation precedes runtime byte-loading for uploads. Project resolution and
+integrity checks may read/checksum registered files.
+No project format, canonical schema, asset registry or uploader was added.
+
+Plans expose required roles, selected intent/model, reference count/limits, duration
+and its bounds, supplied options, effective settings and upstream parameter keys.
+They do not look up credentials, construct upload Files, upload, submit or poll. Existing
+readiness discovers the new binding through its current resolver; detailed request
+validation is performed by the existing plan operation, not a new readiness engine.
+Cost remains unknown unless independently supplied; no automatic quote refresh.
+
+Only the two audited base endpoints gain canonical bindings. Existing shared-service
+Intl/Spicy variants retain source-catalog handling, but do not gain WHIHM routes in
+this milestone; their provider contracts were not refreshed here. No generic V2V
+binding or capability projection is introduced. Conflicting provider descriptions
+about location preservation remain unresolved: camera/location/pixel preservation
+are creative intentions, not validated or measured output invariants.
+
+Targeted mocked QA:
+
+```sh
+node --test tests/motionControlExecution.test.mjs tests/recastExecution.test.mjs tests/whihmExecutionBridge.test.mjs tests/whihmHost.test.mjs tests/whihmReadinessEvidence.test.mjs
+```
+
+All execution/upload/lifecycle tests use fake transports and harmless fixtures.
+No model/agent/local inference, real upload, paid generation or media processing is
+performed. Existing Recast coverage remains, apart from removing the now-obsolete
+assertion that Motion Control has no route.

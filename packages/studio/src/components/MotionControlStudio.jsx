@@ -823,10 +823,10 @@ export default function MotionControlStudio({
         prompt: prompt.trim(),
         aspect_ratio: aspectRatio,
         duration: duration,
-        quality: quality,
-        high_bitrate: highBitrate,
+        ...(selectedModel.supportsQuality ? { quality } : {}),
+        ...(selectedModel.supportsBitrate ? { high_bitrate: highBitrate } : {}),
         generate_audio: generateAudio,
-        seed: seed,
+        ...(selectedModel.supportsSeed ? { seed } : {}),
         onRequestId: (rid) => {
           pendingRequestId.current = rid;
         },
@@ -1323,6 +1323,7 @@ export default function MotionControlStudio({
                     <input
                       type="number"
                       value={seed}
+                      disabled={!selectedModel.supportsSeed}
                       onChange={(e) => setSeed(Number(e.target.value))}
                       placeholder="-1"
                       className="w-20 px-2 py-1 text-xs bg-black/60 border border-white/10 rounded-lg text-white text-right focus:outline-none focus:border-[#22d3ee]/50"

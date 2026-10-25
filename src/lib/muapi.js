@@ -1,4 +1,4 @@
-import { processRecast as sharedProcessRecast, generateI2V as sharedGenerateI2V } from '../../packages/studio/src/muapi.js';
+import { processRecast as sharedProcessRecast, processMotionControl as sharedProcessMotionControl, generateI2V as sharedGenerateI2V } from '../../packages/studio/src/muapi.js';
 import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById } from './models.js';
 import { pollForGenerationResult } from '../../packages/studio/src/utils/generationLifecycle.js';
 
@@ -11,6 +11,10 @@ export class MuapiClient {
     // Recast shares the Studio contract, auth context and submit/poll lifecycle.
     async processRecast(params) {
         return sharedProcessRecast(this.getKey(), params);
+    }
+
+    async processMotionControl(params) {
+        return sharedProcessMotionControl(this.getKey(), params);
     }
 
     getKey() {
