@@ -550,3 +550,46 @@ with controls/defaults from the shared catalog. No Topaz/simple-upscale substitu
 All invalid/undeclared options reject before transport. Plans remain auth-, upload-
 and submission-free. Existing catalog subsets/defaults are distinguished from
 provider-only fields in the review; no raw provider fields are exposed.
+
+
+### Wave 3: Topaz creative, generative and precision
+
+The exact IDs `topaz-upscale-video-creative`, `topaz-upscale-video-generative` and
+`topaz-upscale-video-precision` use existing shared V2V execution. See the
+[Wave 3 contracts and evidence](V2V_CONTRACT_REVIEW.md#wave-3-review--2026-10-25).
+No new client, poller, upload path, provider options object or canonical schema.
+
+Generative/precision use **topaz_model** for the provider engine. For example:
+
+```js
+// Canonical node fields; execution authorization is still separate.
+const executionFields = {
+  executor: { id: 'studio', type: 'remote-model', provider: 'muapi',
+    model: 'topaz-upscale-video-generative', mayCostMoney: true,
+    requiresConfirmation: true },
+  parameters: { video_url: 'https://example.com/source.mp4',
+    topaz_model: 'Starlight HQ', upscale_factor: 2 },
+  metadata: { oga: { mode: 'v2v' } },
+};
+```
+
+Root service params.model remains the selected endpoint. The registered catalog
+alias maps validated topaz_model to wire model only at payload construction.
+The existing web parameter helper now emits topaz_model too, fixing its endpoint
+selector collision without copying Studio code. options.model and arbitrary
+provider_options are rejected; canonical parameters.model remains prohibited.
+Creative has no provider engine and rejects topaz_model.
+
+Plans keep model as canonical identity, request.v2v.providerModel as engine,
+providerModelField as model, and request.effectiveOptions.topaz_model as the named
+application option. The actual wire contains model, not topaz_model. Upstream model
+metadata cannot overwrite normalized canonical result identity.
+
+All three require source video. Creative supports optional prompt and bounded
+creativity/realism/sharp; Generative supports its existing Starlight enum plus
+softness only for Precise 2.6; Precision supports its existing 21-engine enum and
+bounded restoration controls. Factor 1–4 accepts fractions, FPS is integer 16–60,
+H264_output is boolean. Defaults remain explicit and FPS omission stays omitted.
+These are AI enhancement/reconstruction paths with no exact preservation guarantee.
+Plans show the caveat; no workflow executes automatically when planning/readiness
+succeeds. Existing authorization and passive planning behavior remain unchanged.

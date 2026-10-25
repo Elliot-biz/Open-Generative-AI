@@ -107,7 +107,7 @@ for (const [model, patch, code, path] of invalid) test(`${model}: reject ${JSON.
 });
 test('unknown/deferred/specialized models never gain generic canonical V2V access', async t => {
   const calls = fake(t);
-  for (const model of ['unknown', 'kling-v3.0-pro-motion-control', 'wan2.2-animate', 'topaz-upscale-video-precision', 'happy-horse-1-video-edit', 'topaz-upscale-video-generative']) {
+  for (const model of ['unknown', 'kling-v3.0-pro-motion-control', 'wan2.2-animate', 'luma-flash-reframe', 'happy-horse-1-video-edit', 'happy-horse-1.1-video-edit']) {
     assert.equal(findRemote(model, 'v2v'), null);
     assert.throws(() => buildV2VRequest({ model, video_url: video }), { code: 'V2V_MODEL_UNSUPPORTED' });
     const r = await createExecutionBridge().plan({ workflow: workflow(model, { video_url: video }), nodeId: 'edit' });

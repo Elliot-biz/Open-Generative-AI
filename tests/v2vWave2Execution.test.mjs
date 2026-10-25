@@ -171,7 +171,7 @@ test('project source assets plan without bytes/auth and use existing upload path
 });
 test('unrelated and specialized routes remain outside generic Wave 2 admission', async t => {
   const calls = fake(t);
-  for (const id of ['gemini-omni-video-edit', 'topaz-upscale-video-precision', 'invented']) assert.equal(findRemote(id, 'v2v'), null);
+  for (const id of ['gemini-omni-video-edit', 'luma-flash-reframe', 'invented']) assert.equal(findRemote(id, 'v2v'), null);
   assert.equal(findRemote('wan2.2-animate', 'v2v'), null);
   assert.equal(findRemote('wan2.2-animate-recast').mode, 'recast');
   assert.equal(findRemote('seedance-2.5-motion-control').mode, 'motion_control');

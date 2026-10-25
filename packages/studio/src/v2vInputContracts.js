@@ -14,6 +14,7 @@ const reviewed = new Set([
   'kling-o1-video-edit', 'kling-o1-video-edit-fast', 'kling-o1-standard-video-edit',
   'gemini-omni-flash-1-1-edit', 'flux-3-video-extend',
   'flux-3-video-extend-draft', 'flux-3-video-upscaler',
+  'topaz-upscale-video-creative', 'topaz-upscale-video-generative', 'topaz-upscale-video-precision',
 ]);
 export function getV2VExecutionModel(id) {
   return reviewed.has(id) ? getVideoToolCapabilities(getV2VModelById(id)) : null;
@@ -98,21 +99,34 @@ export function buildV2VRequest(params = {}) {
     } else if (spec.type === 'array') {
       valid &&= Array.isArray(value) && value.length >= (spec.minItems ?? 0) && value.length <= (spec.maxItems ?? spec.max_items ?? Infinity) &&
         [...value].every(item => typeof item === spec.items?.type && (!mediaFields.has(field) || media(item)));
-    } else if (['string', 'boolean'].includes(spec.type)) valid &&= typeof value === spec.type;
+    } else if (spec.type === 'string') valid &&= typeof value === 'string' && [...value].length <= (spec.maxLength ?? Infinity);
+    else if (spec.type === 'boolean') valid &&= typeof value === 'boolean';
     else valid = false; // Unreviewed nested/object schemas do not gain generic access.
     if (mediaFields.has(field) && spec.type !== 'array') valid &&= media(value);
     need(valid, 'V2V_OPTION_INVALID', field);
+  }
+  if (model.id === 'topaz-upscale-video-generative' && values.softness !== undefined) {
+    need(values.topaz_model === 'Starlight Precise 2.6', 'V2V_OPTION_INVALID', 'softness');
   }
   // Reuse existing mappings; forward validated declared fields exactly so common
   // controls (Wan resolution, Act Two aspect) cannot disappear or be coerced.
   const payload = { ...buildSupplementalInputPayload(model, values),
     ...buildVideoToolPayload(model, values), ...mapReferenceParams(model, values), ...values };
   const supportedOptions = Object.keys(inputs).filter(field => !mediaFields.has(field)).sort();
+  const effectiveOptions = Object.fromEntries(supportedOptions.filter(field => Object.hasOwn(values, field)).map(field => [field, values[field]]));
+  // Only these reviewed catalog controls declare this fixed wire alias. The
+  // caller cannot supply a schema, wire field, or arbitrary provider options.
+  const providerModel = inputs.topaz_model?.providerField === 'model';
+  if (providerModel) {
+    payload.model = values.topaz_model;
+    delete payload.topaz_model;
+  }
   const mediaRequired = field => required.has(field) && (inputs[field].type !== 'array' || (inputs[field].minItems ?? 1) > 0);
-  return { endpoint: model.endpoint, payload, supportedOptions,
+  return { endpoint: model.endpoint, payload, supportedOptions, effectiveOptions,
     requiredMedia: [...mediaFields].filter(([field]) => mediaRequired(field)).map(([field, type]) => ({ role: field === model.videoField ? 'source-video' : field, field, upstreamField: field, type,
       ...(inputs[field].type === 'array' ? { minimum: inputs[field].minItems ?? 1, maximum: inputs[field].maxItems, ordered: true } : {}) })),
     v2v: { family: model.family, purpose: model.description, operation: model.operation ?? null,
+      ...(providerModel ? { providerModel: values.topaz_model, providerModelField: 'model' } : {}),
       fixedParameters: { ...model.fixedParameters },
       controls: structuredClone(Object.fromEntries(supportedOptions.map(field => [field, inputs[field]]))),
       requiredInputs: [...required].sort(), suppliedInputs: Object.keys(values).sort(),

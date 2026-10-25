@@ -31245,12 +31245,15 @@ export const v2vModels = [
       "prompt": {
         "description": "Optional text prompt to guide creative detail (limits input to 450 frames when set).",
         "type": "string",
+        "maxLength": 1024,
         "title": "Prompt",
         "name": "prompt"
       },
       "creativity": {
         "description": "Creative detail strength (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Creativity",
         "name": "creativity",
         "default": 0.5
@@ -31258,18 +31261,24 @@ export const v2vModels = [
       "realism": {
         "description": "Realism strength (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Realism",
         "name": "realism"
       },
       "sharp": {
         "description": "Sharpening amount (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Sharp",
         "name": "sharp"
       },
       "upscale_factor": {
         "description": "Factor to upscale the video by.",
         "type": "number",
+        "minValue": 1,
+        "maxValue": 4,
         "title": "Upscale Factor",
         "name": "upscale_factor",
         "default": 2
@@ -31293,7 +31302,7 @@ export const v2vModels = [
     },
     "provider": "topaz",
     "provider_name": "FAL_AI",
-    "description": "Upscale a video with Topaz's Astra 2 creative diffusion model, generating new plausible detail while enlarging up to 4x and up to 4K.",
+    "description": "Topaz AI creative diffusion enhancement with optional prompt-guided detail. Reconstructs plausible detail; no exact pixel, identity, texture, motion or background preservation guarantee.",
     "example_url": "https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/topaz-upscaler.mp4",
     "image_url": "https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/topaz-upscaler.avif"
   },
@@ -31315,11 +31324,12 @@ export const v2vModels = [
         "title": "Video URL",
         "name": "video_url"
       },
-      "model": {
+      "topaz_model": {
         "description": "Topaz Starlight generative upscale model variant.",
         "type": "string",
-        "title": "Model",
-        "name": "model",
+        "title": "Topaz Engine",
+        "name": "topaz_model",
+        "providerField": "model",
         "enum": [
           "Starlight Precise 2.6",
           "Starlight HQ",
@@ -31332,6 +31342,8 @@ export const v2vModels = [
       "upscale_factor": {
         "description": "Factor to upscale the video by.",
         "type": "number",
+        "minValue": 1,
+        "maxValue": 4,
         "title": "Upscale Factor",
         "name": "upscale_factor",
         "default": 2
@@ -31364,7 +31376,7 @@ export const v2vModels = [
     },
     "provider": "topaz",
     "provider_name": "FAL_AI",
-    "description": "Upscale a video with Topaz's Starlight generative models, reconstructing clean, temporally consistent detail for heavily degraded or low-resolution footage.",
+    "description": "Topaz Starlight AI generative enhancement reconstructs detail in degraded or low-resolution footage. No exact pixel, identity, texture, motion or background preservation guarantee.",
     "example_url": "https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/topaz-upscaler.mp4",
     "image_url": "https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/topaz-upscaler.avif"
   },
@@ -31386,11 +31398,12 @@ export const v2vModels = [
         "title": "Video URL",
         "name": "video_url"
       },
-      "model": {
+      "topaz_model": {
         "description": "Topaz precision upscale model variant (Proteus/Iris/Dione/Artemis/Gaia/Rhea/Theia families).",
         "type": "string",
-        "title": "Model",
-        "name": "model",
+        "title": "Topaz Engine",
+        "name": "topaz_model",
+        "providerField": "model",
         "enum": [
           "Proteus",
           "Proteus Natural",
@@ -31419,6 +31432,8 @@ export const v2vModels = [
       "upscale_factor": {
         "description": "Factor to upscale the video by.",
         "type": "number",
+        "minValue": 1,
+        "maxValue": 4,
         "title": "Upscale Factor",
         "name": "upscale_factor",
         "default": 2
@@ -31435,30 +31450,40 @@ export const v2vModels = [
       "compression": {
         "description": "Compression-artifact reduction amount (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Compression",
         "name": "compression"
       },
       "noise": {
         "description": "Noise reduction amount (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Noise",
         "name": "noise"
       },
       "halo": {
         "description": "Halo/ringing reduction amount (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Halo",
         "name": "halo"
       },
       "grain": {
         "description": "Film-grain amount to add back (0-0.1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 0.1,
         "title": "Grain",
         "name": "grain"
       },
       "recover_detail": {
         "description": "Detail recovery amount (0-1).",
         "type": "number",
+        "minValue": 0,
+        "maxValue": 1,
         "title": "Recover Detail",
         "name": "recover_detail"
       },
@@ -31472,7 +31497,7 @@ export const v2vModels = [
     },
     "provider": "topaz",
     "provider_name": "FAL_AI",
-    "description": "Upscale a video faithfully with Topaz's precision model library (Proteus, Artemis, Iris, Dione, Gaia, Rhea, Theia), tuned for clean broadcast/CGI/animation sources.",
+    "description": "Topaz AI precision restoration/enhancement using its existing model library. Conservative enhancement intent is not a guarantee of exact pixel, identity, texture, motion or background preservation.",
     "example_url": "https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/topaz-upscaler.mp4",
     "image_url": "https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/topaz-upscaler.avif"
   }

@@ -535,3 +535,39 @@ for (const [model, parameters] of [
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
   assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
 });
+
+for (const [model, parameters, engine] of [
+  ['topaz-upscale-video-generative', { topaz_model: 'Starlight HQ', upscale_factor: 1.25, target_fps: 30, H264_output: true }, 'Starlight HQ'],
+  ['topaz-upscale-video-precision', { topaz_model: 'Gaia CG', upscale_factor: 2, grain: 0.1 }, 'Gaia CG'],
+]) test(`fixed host Wave 3 keeps ${model} distinct from provider engine ${engine}`, async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  const node = changed.nodes[0]; node.executor.model = model; node.metadata.oga.mode = 'v2v'; node.outputs[0].type = 'video';
+  node.parameters = parameters; node.inputs = [{ id: 'video_url', type: 'video' }]; node.assetRefs = ['reference'];
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { processV2V } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { processV2V, async uploadFile(_key, file) {
+    uploaded.push(await file.text()); return 'https://example.com/source.mp4';
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => ({ status: 'completed', url: 'https://example.com/result.mp4', model: engine }) };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  const args = { ...request(opened), assetBindings: { video_url: 'reference' } };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned'); assert.equal(plan.model, model);
+  assert.equal(plan.request.v2v.providerModel, engine); assert.equal(plan.request.effectiveOptions.topaz_model, engine);
+  assert.equal(Object.hasOwn(plan.request.effectiveOptions, 'model'), false);
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0); assert.equal(uploaded.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(result.model, model); assert.equal(result.upstream.model, engine);
+  assert.equal(calls[0].url, `https://api.muapi.ai/api/v1/${model}`);
+  const payload = JSON.parse(calls[0].body);
+  assert.equal(payload.model, engine); assert.equal(Object.hasOwn(payload, 'topaz_model'), false);
+  for (const [field, value] of Object.entries(parameters).filter(([k]) => k !== 'topaz_model')) assert.equal(payload[field], value);
+  assert.deepEqual(uploaded, ['tiny upload fixture']);
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+});

@@ -24,7 +24,7 @@ Required/optional media in the inventory below is **source declaration**, not a 
 
 ## Complete checked-out inventory
 
-Classes retain the original review and subsequent Wave 1/2 results: `R` = READY_FOR_GENERIC_V2V_BINDING; `F` = NEEDS_TARGETED_CONTRACT_FIX (fixed, now bound); `S` = SPECIALIZED_ROUTE_ALREADY_EXISTS; `I` = INSUFFICIENT_EVIDENCE; `D` = DEFER (source inspected, not yet reviewed sufficiently for execution).
+Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READY_FOR_GENERIC_V2V_BINDING; `F` = NEEDS_TARGETED_CONTRACT_FIX (fixed, now bound); `S` = SPECIALIZED_ROUTE_ALREADY_EXISTS; `I` = INSUFFICIENT_EVIDENCE; `D` = DEFER (source inspected, not yet reviewed sufficiently for execution).
 
 | Exact OGA ID (endpoint when different) | Class | Media beyond source video; text | Declared supplemental fields |
 | --- | --- | --- | --- |
@@ -100,18 +100,18 @@ Classes retain the original review and subsequent Wave 1/2 results: `R` = READY_
 | `seedance-2-video-edit` → `seedance-v2.0-video-edit` | F | source video_urls [exactly 1], images_list?, audio_files?, prompt required | aspect_ratio, quality, duration |
 | `happy-horse-1-video-edit` | D | images_list?, prompt required | resolution, audio_setting, seed |
 | `happy-horse-1.1-video-edit` | D | images_list?, prompt required | resolution, audio_setting, seed |
-| `topaz-upscale-video-creative` | D | prompt supported | creativity, realism, sharp, upscale_factor, target_fps, H264_output |
-| `topaz-upscale-video-generative` | D | — | model, upscale_factor, target_fps, softness, H264_output |
-| `topaz-upscale-video-precision` | D | — | model, upscale_factor, target_fps, compression, noise, halo, grain, recover_detail, H264_output |
+| `topaz-upscale-video-creative` | F | prompt supported | creativity, realism, sharp, upscale_factor, target_fps, H264_output |
+| `topaz-upscale-video-generative` | F | — | topaz_model (wire model), upscale_factor, target_fps, softness, H264_output |
+| `topaz-upscale-video-precision` | F | — | topaz_model (wire model), upscale_factor, target_fps, compression, noise, halo, grain, recover_detail, H264_output |
 
-Counts after Wave 2: **D=34, F=8, I=17, R=12, S=4**; 75 total, **20 now bound** (nine original + seven Wave 1 + four Wave 2). Six reviewed Seedance fixed-resolution variants moved from D to I because metadata/OpenAPI disagree.
+Counts after Wave 3: **D=31, F=11, I=17, R=12, S=4**; 75 total, **23 now bound** (nine original + seven Wave 1 + four Wave 2 + three Wave 3). Six reviewed Seedance fixed-resolution variants moved from D to I because metadata/OpenAPI disagree.
 
 ## Deferred/specialized findings
 
 - Kling v3 Pro Motion Control and Wan Animate have the richer existing `recast` aliases; Infinitetalk/Volcengine have `lipsync`. Explicit V2V routing rejects these; it does not silently reroute. Other Kling variants are deferred, not assumed covered by a different alias.
-- Seedance fixed-resolution/profile variants, Happy Horse, other Gemini entries, Luma and creative Topaz paths remain on existing OGA paths, outside canonical admission. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
+- Seedance fixed-resolution/profile variants, Happy Horse, other Gemini entries and Luma paths remain on existing OGA paths, outside canonical admission. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
 - `seedance-2-video-edit` is now admitted with native `video_urls`, **exactly one** source under the current provider schema, and ordered optional image/audio arrays. Do not flatten or invent multi-clip support.
-- Topaz generative/precision inputs contain a provider option named `model`, colliding with the existing logical model selector. Defer pending a narrow explicit representation; no raw-field workaround.
+- Topaz generative/precision now use explicit `topaz_model` for provider wire `model`; see Wave 3. The logical endpoint selector remains separate; no raw-field workaround.
 - Depth Anything can have alternative image/video roles. Source-only validation would fabricate a mandatory video contract; defer.
 - Sparse catalog entries do not prove absent provider functionality. Watermarks/captions/pro upscaler/remix/MMAudio/dance/Gemini need contract evidence before canonical admission.
 - Existing desktop V2V forwarded only source video, image and prompt. Delegation now preserves shared options and lifecycle, without changing desktop Video Studio controls. Missing UI controls are not invented.
@@ -212,3 +212,59 @@ Plans show exact model/endpoint/provider, required source video, required vs opt
 Flux extension source metadata requires clips under 50 MB and under 15 seconds. This URL-only layer cannot verify those content properties. No probe or duration inference was added. No claim that draft has a fixed resolution, that Precise mode preserves exact pixels, or that motion/timing/audio are guaranteed. No actual quality, latency, cost or output media was measured.
 
 QA uses fake transports, including all four shared/application payloads and canonical plans/execution, invalid-input rejection before auth/upload, full/draft defaults and distinction, numeric upscale boundaries, project assets through the existing host, and polling callback reuse. Existing Wave 1/V2V/Recast/Motion contracts remain separate. No UI, dependencies, packaging, workflow/project schema or Electron security changes.
+
+## Wave 3 review — 2026-10-25
+
+Starting HEAD: `aa0e9f3a8a2dc7e06346e290a99c24478b6ca6d2`. All three exact Topaz IDs admitted through existing `processV2V`. No second catalog, provider/client, uploader, poller, raw options object or workflow/project schema change. Seedance suffix/profile exclusions were not revisited.
+
+### Provider evidence
+
+Three unauthenticated public model metadata GETs plus one [OpenAPI GET](https://api.muapi.ai/openapi.json) verified the exact POST schemas:
+
+- [topaz-upscale-video-creative](https://api.muapi.ai/api/v1/models/topaz-upscale-video-creative) → `/api/v1/topaz-upscale-video-creative` / `TopazUpscaleVideoCreativeRequest`
+- [topaz-upscale-video-generative](https://api.muapi.ai/api/v1/models/topaz-upscale-video-generative) → `/api/v1/topaz-upscale-video-generative` / `TopazUpscaleVideoGenerativeRequest`
+- [topaz-upscale-video-precision](https://api.muapi.ai/api/v1/models/topaz-upscale-video-precision) → `/api/v1/topaz-upscale-video-precision` / `TopazUpscaleVideoPrecisionRequest`
+
+These endpoint schemas agree on required video_url and engine enums/defaults. Model metadata describes several tuning ranges without machine-readable bounds; OpenAPI provides them. No authentication, upload, estimate, provider execution or paid operation occurred. Evidence describes accepted requests, not measured output quality.
+
+### Explicit identity separation and upstream fix
+
+`executor.model` is still the canonical selected endpoint ID. In the shared application call, root `params.model` is still that ID. The **only** provider-engine representation is scalar `topaz_model` for generative/precision. Existing catalog `inputs.model` was renamed to `inputs.topaz_model`, with `name=topaz_model`, title Topaz Engine, the original enum/default, and fixed metadata `providerField: model`.
+
+This fixes a concrete upstream collision: the existing Video Studio creates `{model: selectedModel, ...buildSupplementalInputPayload(...)}`. Its old supplemental key `model` could overwrite the endpoint selector with a provider engine. The existing metadata-driven control and parameter helpers now emit topaz_model, retaining the selected endpoint without a UI component edit or desktop-specific request builder.
+
+The pure V2V contract validates topaz_model against the exact selected endpoint's existing enum. Only then does it map that registered scalar to payload `model` and omit topaz_model from the wire. This is a fixed catalog alias, not a caller-supplied field mapping. Generic `options.model`, arbitrary `provider_options`, undeclared options and invalid engine values reject. Creative has no provider engine selector and rejects topaz_model.
+
+Canonical root parameter/input `model` still fails the unchanged bridge IDENTITY_OVERRIDE protection. No logical selected-model rename, overload, alias fallback or raw object bypass. Historical caller code using the colliding provider `model` key must switch explicitly to topaz_model; no ambiguous legacy interpretation is introduced.
+
+Plans distinguish `plan.model` (canonical endpoint) from `request.v2v.providerModel` and `providerModelField=model`. `request.effectiveOptions.topaz_model` and its detached enum/default schema retain the application name. The wire-key summary includes model, not topaz_model. Existing normalized results keep canonical identity even if upstream metadata includes a model field. The bridge uses the contract's explicit effectiveOptions so renamed controls do not disappear from plans.
+
+### Verified request contracts
+
+| Exact endpoint | Required / prompt | Optional controls and verified defaults | Constraints / caveats |
+| --- | --- | --- | --- |
+| topaz-upscale-video-creative | video_url; prompt optional | creativity default 0.5; realism, sharp; upscale_factor default 2; target_fps; H264_output default false | creativity/realism/sharp numbers 0–1; factor number 1–4; FPS integer 16–60; prompt ≤1024 Unicode code points. No provider-engine, softness or precision controls. Creative diffusion reconstruction, not deterministic enlargement |
+| topaz-upscale-video-generative | video_url; **no prompt** | topaz_model default Starlight Precise 2.6; upscale_factor default 2; target_fps; softness; H264_output default false | Factor number 1–4; FPS integer 16–60; softness integer 1–5, accepted **only with Starlight Precise 2.6** per existing source/model metadata. Other engines never silently replace that selection or discard softness |
+| topaz-upscale-video-precision | video_url; **no prompt** | topaz_model default Proteus; upscale_factor default 2; target_fps; compression, noise, halo, grain, recover_detail; H264_output default false | Factor number 1–4; FPS integer 16–60; compression/noise/halo/recover_detail numbers 0–1, grain 0–0.1. Precision restoration intent does not guarantee exact pixels/identity/textures/motion/background |
+
+Generative engine values (five, exact): `Starlight Precise 2.6`, `Starlight HQ`, `Starlight Mini`, `Starlight Sharp`, `Starlight Fast 2`.
+
+Precision engine values (21, exact): `Proteus`, `Proteus Natural`, `Iris`, `Iris Low Quality`, `Dione DV`, `Dione TV`, `Dione Robust`, `Dione Dehalo`, `Dione Robust Dehalo`, `Artemis High Quality`, `Artemis Medium Quality`, `Artemis Low Quality`, `Artemis Strong Halo`, `Artemis Medium Halo`, `Artemis Aliasing & Moire`, `Gaia HQ`, `Gaia CG`, `Gaia 2`, `Rhea`, `Theia Fine Tune Detail`, `Theia Fine Tune Fidelity`. Enums/defaults live in the existing OGA catalog; this document is evidence, not another runtime registry.
+
+### Bounds, semantics and uncertainty
+
+- Source corrections: add missing numeric min/max constraints for factors and tuning strengths, plus Creative prompt maxLength=1024 from OpenAPI. Existing enum/FPS/softness/H264 types and defaults remain. The V2V string validator now enforces declared maxLength without truncation, counting Unicode code points. Existing V2V report values remain unchanged.
+- Upscale factor is a number, not an integer; OpenAPI defines no multipleOf restriction. Valid fractional factors such as 1.25 remain exact. Actual output dimension rounding/caps are UNVERIFIED; no deterministic scaling guarantee.
+- target_fps is requested output frame rate, integer 16–60. There is **no declared default**; omission stays omitted. Frame duplication/interpolation method and exact timing/cadence guarantees are UNVERIFIED. This is not a local deterministic FPS converter.
+- H264_output is a boolean. True asks the provider to encode H.264; false uses its default codec. The default codec/container is not identified by these schemas and is not invented.
+- Only Creative accepts prompt. OGA/provider model metadata says supplying a prompt limits input to 450 frames; URLs do not establish source frame count, so no claim of local enforcement. Null representations permitted for some optional provider controls are excluded from this non-null application subset; omission is supported instead.
+- Softness has the explicit Starlight Precise 2.6 applicability rule above. No additional mutually exclusive control combinations are specified in the inspected request contracts. Actual per-engine effects remain provider-owned; no unsupported conditional guarantees were inferred.
+- Source purpose descriptions now state AI enhancement/reconstruction and preservation caveats for all three. Precision is more conservative intent, not pixel-equivalent output. Quality, identity fidelity, speed, cost, actual output FPS/codec and repeated-run reproducibility were not measured.
+
+### Reused execution, project and security boundaries
+
+Existing desktop V2V delegation, shared processV2V, uploader, request-ID callback, submit/poll/result lifecycle, runtime bindings, authorization and project resolver remain authoritative. No new provider authentication or execution mechanism. Project asset paths stay relative in canonical data and transient host paths do not enter plans/files.
+
+The shared source namespace also keeps the existing web parameter builder compatible. Only the existing metadata-driven control key/title changes; no Studio component/layout changes. Invalid shared/canonical requests reject before transport; existing web picker/parameter-helper normalization remains UI behavior, not a provider passthrough.
+
+Plans expose media, optional prompt, factor/FPS/H264, family controls/defaults, engine identity and enhancement caveat without authentication, asset-byte loading, uploads, submissions or polling. All QA uses fake transports. Existing 20 V2V bindings plus Recast/Motion/Lip Sync remain separate, with no schema, project/history, packaging, dependency or Electron security changes.
