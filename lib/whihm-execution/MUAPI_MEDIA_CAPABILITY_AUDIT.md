@@ -7,6 +7,10 @@ surface, not a promise that endpoints, prices or schemas will remain unchanged.
 
 ## Executive decision and evidence limits
 
+The subsequent [creative capability and external reuse audit](CREATIVE_CAPABILITY_REUSE_AUDIT.md)
+adds Body Swap, motion/performance and commercial workflow comparisons; its creative
+binding priorities complement this finishing-focused evidence without replacing it.
+
 **PARTIAL:** live discovery was extensive and adds concrete reuse opportunities,
 but protected agent-skill discovery returned 403 and backend precision, audio
 retention and repeatability were not verified by execution. No generation was

@@ -22,6 +22,10 @@ pricing caveats, capability classifications and the revised local-versus-remote 
 
 ## Executive assessment
 
+For creative strategy and priorities beyond finishing, see the subsequent
+[creative capability and external reuse audit](CREATIVE_CAPABILITY_REUSE_AUDIT.md).
+It prioritizes binding existing recast/motion/V2V services before new finishing tools.
+
 Open Generative AI already supplies a reusable remote Video Combiner UI/service
 path, generation/upload/polling clients, browser playback/download and some image
 canvas operations. WHIHM supplies the canonical graph, project asset/export storage,
