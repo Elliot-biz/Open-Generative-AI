@@ -6,6 +6,20 @@ names were inspected read-only. No provider queries, model runs, media processin
 installations, downloads or external Wan2GP-installation scans were performed.
 The accompanying host changes only persist existing production-state transitions.
 
+## Live provider audit follow-up
+
+The [2026-10-25 live MuAPI capability audit](MUAPI_MEDIA_CAPABILITY_AUDIT.md)
+extends this local-source snapshot without replacing it. It inspected public
+catalogs, schemas, workflow definitions, MCP discovery and non-generating price
+quotes. MuAPI confirms free PIL/FFmpeg watermark insertion, ordered Video Combiner
+and Suno-specific WAV conversion; image watermark and Suno WAV already have
+existing application/WHIHM routes. Prefer those bounded remote contracts over
+rebuilding equivalent tools. No generic probe or exact timeline/export contract
+was established. The FFprobe-first recommendation remains, with narrower rationale;
+FFmpeg finishing remains incremental and optional. Protected metadata and backend
+timing/audio/repeatability remain unverified. See the companion for evidence,
+pricing caveats, capability classifications and the revised local-versus-remote matrix.
+
 ## Executive assessment
 
 Open Generative AI already supplies a reusable remote Video Combiner UI/service
