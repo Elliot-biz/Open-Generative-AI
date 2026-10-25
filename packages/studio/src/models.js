@@ -30670,7 +30670,7 @@ export const v2vModels = [
         "default": 0
       }
     },
-    "description": "FLUX 3 Video Upscaler raises FLUX 3 (or any) video output beyond its native resolution, preserving motion coherence and native audio sync while sharpening detail \u2014 useful since FLUX 3 Video launches capped at 720p ahead of a planned 1080p+ rollout.",
+    "description": "FLUX 3 Video Upscaler is AI-based enhancement with an optional refinement prompt and Precise/Creative modes. Creative mode reconstructs detail; neither mode guarantees deterministic pixel preservation, motion fidelity, or audio synchronization.",
     "provider": "blackforest",
     "provider_name": "Black Forest Labs"
   },

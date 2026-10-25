@@ -444,7 +444,7 @@ IDs, cost/refund metadata and normalized result behavior remain authoritative.
 No new client, polling engine, provider payload API or execution authorization.
 
 The bounded [V2V contract review](V2V_CONTRACT_REVIEW.md) accounts for all 75
-current source entries and documents why only nine are admitted now:
+current source entries and documents the original nine-model admission (later waves below):
 
 - `runway-aleph-v2v`, `wan2.2-edit-video`, `seedance-2.5-video-edit`
 - `runway-act-two-v2v`, `ai-video-face-swap`, `video-background-remover`
@@ -528,3 +528,25 @@ model metadata omits resolution, while OpenAPI exposes a common 720p-default
 resolution field on every suffix. Exact override/output-resolution semantics need
 first-party clarification. Intl/Spicy profiles remain unbound too. The original
 nine-model subset is retained; no UI, execution lifecycle or security changes.
+
+
+### Wave 2: Gemini edit and Flux 3 video
+
+Reviewed exact IDs: `gemini-omni-flash-1-1-edit`, `flux-3-video-extend`,
+`flux-3-video-extend-draft`, `flux-3-video-upscaler`. All use the existing shared
+V2V service, catalog contracts, project resolver and execution authorization.
+See [Wave 2 evidence and limits](V2V_CONTRACT_REVIEW.md#wave-2-review--2026-10-25).
+No bridge/runtime/host/client implementation change was needed.
+
+Gemini requires source video and prompt, with its four-resolution enum/default
+720p. Flux full/draft require source video and prompt, preserve extension duration
+5–20, aspect and generate_audio. Full also supports 720p/1080p resolution; draft
+rejects resolution and leaves omitted aspect unspecified. No full/draft fallback.
+
+Flux upscaler supports optional prompt, numeric factor 1–4 (catalog default 2),
+and creativity 0/1. This is AI enhancement; even Precise mode has no deterministic
+pixel-preservation guarantee. That caveat appears in the existing plan purpose,
+with controls/defaults from the shared catalog. No Topaz/simple-upscale substitution.
+All invalid/undeclared options reject before transport. Plans remain auth-, upload-
+and submission-free. Existing catalog subsets/defaults are distinguished from
+provider-only fields in the review; no raw provider fields are exposed.

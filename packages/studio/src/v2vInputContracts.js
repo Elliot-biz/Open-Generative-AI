@@ -12,6 +12,8 @@ const reviewed = new Set([
   'seedance-2.5-video-extend',
   'seedance-2-video-edit', 'wan2.7-video-edit', 'wan2.7-video-extend',
   'kling-o1-video-edit', 'kling-o1-video-edit-fast', 'kling-o1-standard-video-edit',
+  'gemini-omni-flash-1-1-edit', 'flux-3-video-extend',
+  'flux-3-video-extend-draft', 'flux-3-video-upscaler',
 ]);
 export function getV2VExecutionModel(id) {
   return reviewed.has(id) ? getVideoToolCapabilities(getV2VModelById(id)) : null;

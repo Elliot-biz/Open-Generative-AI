@@ -24,7 +24,7 @@ Required/optional media in the inventory below is **source declaration**, not a 
 
 ## Complete checked-out inventory
 
-Classes retain the original review and subsequent Wave 1 results: `R` = READY_FOR_GENERIC_V2V_BINDING; `F` = NEEDS_TARGETED_CONTRACT_FIX (fixed, now bound); `S` = SPECIALIZED_ROUTE_ALREADY_EXISTS; `I` = INSUFFICIENT_EVIDENCE; `D` = DEFER (source inspected, not yet reviewed sufficiently for execution).
+Classes retain the original review and subsequent Wave 1/2 results: `R` = READY_FOR_GENERIC_V2V_BINDING; `F` = NEEDS_TARGETED_CONTRACT_FIX (fixed, now bound); `S` = SPECIALIZED_ROUTE_ALREADY_EXISTS; `I` = INSUFFICIENT_EVIDENCE; `D` = DEFER (source inspected, not yet reviewed sufficiently for execution).
 
 | Exact OGA ID (endpoint when different) | Class | Media beyond source video; text | Declared supplemental fields |
 | --- | --- | --- | --- |
@@ -90,10 +90,10 @@ Classes retain the original review and subsequent Wave 1 results: `R` = READY_FO
 | `seedance-2.5-spicy-video-extend-1080p` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-extend-4k` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-spicy-video-extend-4k` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
-| `flux-3-video-extend` | D | prompt required | aspect_ratio, resolution, duration, generate_audio |
-| `flux-3-video-upscaler` | D | prompt supported | upscale_factor, creativity |
-| `flux-3-video-extend-draft` | D | prompt required | aspect_ratio, duration, generate_audio |
-| `gemini-omni-flash-1-1-edit` | D | prompt required | resolution |
+| `flux-3-video-extend` | R | prompt required | aspect_ratio, resolution, duration, generate_audio |
+| `flux-3-video-upscaler` | R | prompt supported | upscale_factor, creativity |
+| `flux-3-video-extend-draft` | R | prompt required | aspect_ratio, duration, generate_audio |
+| `gemini-omni-flash-1-1-edit` | R | prompt required | resolution |
 | `depth-anything` | I | image_url? | — |
 | `runway-act-two-v2v` | F | reference_video_url required | aspect_ratio |
 | `luma-flash-reframe` | D | image_url?, prompt supported | aspect_ratio, duration |
@@ -104,12 +104,12 @@ Classes retain the original review and subsequent Wave 1 results: `R` = READY_FO
 | `topaz-upscale-video-generative` | D | — | model, upscale_factor, target_fps, softness, H264_output |
 | `topaz-upscale-video-precision` | D | — | model, upscale_factor, target_fps, compression, noise, halo, grain, recover_detail, H264_output |
 
-Counts after Wave 1: **D=38, F=8, I=17, R=8, S=4**; 75 total, **16 now bound** (nine original + seven Wave 1). Six reviewed Seedance fixed-resolution variants moved from D to I because metadata/OpenAPI disagree.
+Counts after Wave 2: **D=34, F=8, I=17, R=12, S=4**; 75 total, **20 now bound** (nine original + seven Wave 1 + four Wave 2). Six reviewed Seedance fixed-resolution variants moved from D to I because metadata/OpenAPI disagree.
 
 ## Deferred/specialized findings
 
 - Kling v3 Pro Motion Control and Wan Animate have the richer existing `recast` aliases; Infinitetalk/Volcengine have `lipsync`. Explicit V2V routing rejects these; it does not silently reroute. Other Kling variants are deferred, not assumed covered by a different alias.
-- Seedance fixed-resolution/profile variants, Happy Horse, Gemini, Flux, Luma and creative Topaz paths remain on existing OGA paths, outside canonical admission. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
+- Seedance fixed-resolution/profile variants, Happy Horse, other Gemini entries, Luma and creative Topaz paths remain on existing OGA paths, outside canonical admission. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
 - `seedance-2-video-edit` is now admitted with native `video_urls`, **exactly one** source under the current provider schema, and ordered optional image/audio arrays. Do not flatten or invent multi-clip support.
 - Topaz generative/precision inputs contain a provider option named `model`, colliding with the existing logical model selector. Defer pending a narrow explicit representation; no raw-field workaround.
 - Depth Anything can have alternative image/video roles. Source-only validation would fabricate a mandatory video contract; defer.
@@ -179,3 +179,36 @@ Existing bridge asset binding already supports video_urls/audio_files arrays thr
 The refreshed unsuffixed Intl/Spicy edit and extend model metadata matches corresponding Standard field sets, but source declarations still have stale native-resolution information. Their suffixed variants were not separately reviewed live; the Standard suffix conflict already prevents treating family branding as proof. No automatic admission, source rewrites or substitution.
 
 Remaining Wave 1 work is provider clarification for the six Standard fixed-resolution routes, followed by a bounded contract update. No runtime behavior was inferred by running paid jobs.
+
+## Wave 2 review — 2026-10-25
+
+Starting HEAD: `6ca2cff0c62fc03a6f4b729def95cf6c5dfc1053`. All four targeted IDs admitted through existing `v2v` validation and shared `processV2V`; no wildcard, new catalog/client/uploader/poller or provider-field passthrough. The six Seedance suffix variants and Intl/Spicy profiles were not revisited.
+
+### Evidence and exact contracts
+
+Source: existing `models.js`, `videoToolCapabilities.js`, `modelCapabilities.js`, `modelParameters.js`, `videoWorkflows.js`, shared `muapi.js`, desktop delegation and existing execution bindings. Four unauthenticated public model GETs below plus one [OpenAPI GET](https://api.muapi.ai/openapi.json) verified selected POST schemas. No estimates, auth, uploads or execution. Model IDs equal exact endpoint suffixes `/api/v1/<id>`.
+
+| Exact endpoint / evidence | Required inputs | Supported optional controls / defaults | Model-specific safety |
+| --- | --- | --- | --- |
+| [gemini-omni-flash-1-1-edit](https://api.muapi.ai/api/v1/models/gemini-omni-flash-1-1-edit) | video_url + nonblank prompt | resolution 360p/720p/1080p/4k, default 720p | Metadata and OpenAPI agree. No additional image/audio/reference input or duration control. Preserve prompt exactly; no Gemini substitution |
+| [flux-3-video-extend](https://api.muapi.ai/api/v1/models/flux-3-video-extend) | video_url + nonblank prompt | aspect_ratio 16:9/9:16/1:1/4:3/3:4/21:9, catalog default 16:9; resolution 720p/1080p, default 720p; duration integer 5–20/default 5; generate_audio boolean/default true | Duration is extension length per model description; optional native synchronized audio is generated, not an audio-reference input. Full endpoint only, no draft fallback |
+| [flux-3-video-extend-draft](https://api.muapi.ai/api/v1/models/flux-3-video-extend-draft) | video_url + nonblank prompt | same declared aspect enum, **no aspect default**; duration integer 5–20/default 5; generate_audio boolean/default true | No resolution field in metadata or OpenAPI: reject even a 720p override. Actual output resolution is UNVERIFIED; do not invent fixedParameters. Existing description calls this a fast/lower-cost draft; no performance, quality or price comparison was measured |
+| [flux-3-video-upscaler](https://api.muapi.ai/api/v1/models/flux-3-video-upscaler) | video_url only | optional prompt; upscale_factor finite number 1–4, catalog default 2; creativity integer enum 0/1, default 0 | Precise/Creative AI enhancement, not conventional pixel-preserving deterministic upscale. Prompt may be omitted or empty; when supplied, retain text exactly. No Topaz/simple-upscaler routing, copy_audio, resolution or duration fields |
+
+### Resolved metadata differences / conservative subset
+
+- Both Flux extension OpenAPI schemas additionally allow aspect `2:1` and nullable aspect with no default. Existing OGA catalog declares six non-null strings. Keep that existing supported subset and reject `2:1`/null rather than silently accepting undeclared controls. Full extend's explicit **catalog** default 16:9 remains; draft has no default and omission stays omitted. No global aspect-enum change.
+- Flux upscaler OpenAPI permits optional nullable prompt/upscale_factor and no factor default. The existing catalog supplies factor 2; retain that explicit product default and non-null representations. Null rejects rather than silently becoming a default.
+- `upscale_factor.step=0.5` is existing UI increment metadata, not an OpenAPI multipleOf restriction. Numbers such as 1.25 are valid within 1–4 and remain exact; no rounding to the picker increment.
+- OpenAPI exposes webhook_url, but no such canonical option is admitted. No arbitrary callback/raw provider payload escape hatch.
+- No required media/control schemas needed correction. Only Flux upscaler's touched description was narrowed: AI-based refinement, Creative reconstruction, and no deterministic pixel, motion-fidelity or audio-sync guarantee. Existing precise/creative labels and optional controls remain unchanged.
+
+### Existing runtime, application and planning
+
+The four-ID eligibility addition uses existing source schemas and the existing validator's required-field/type/enum/range checks. `processV2V` already selects that pure shared contract, and desktop `MuapiClient.processV2V` already delegates unchanged. Existing upload, submission, request-ID callback, polling, cost/result normalization, project resolver and authorization remain untouched. No new runtime/readiness rules.
+
+Plans show exact model/endpoint/provider, required source video, required vs optional prompt, accepted options, effective defaults and detached control schemas. `operation=edit` identifies Gemini, `operation=extend` distinguishes full/draft extension, and Flux upscaler `operation=upscale` retains an explicit AI/creative caveat in purpose plus its creativity control. Readiness continues to mean plannable binding, not measured generative fidelity. Planning does not read credentials, load media bytes, upload, estimate, submit or poll.
+
+Flux extension source metadata requires clips under 50 MB and under 15 seconds. This URL-only layer cannot verify those content properties. No probe or duration inference was added. No claim that draft has a fixed resolution, that Precise mode preserves exact pixels, or that motion/timing/audio are guaranteed. No actual quality, latency, cost or output media was measured.
+
+QA uses fake transports, including all four shared/application payloads and canonical plans/execution, invalid-input rejection before auth/upload, full/draft defaults and distinction, numeric upscale boundaries, project assets through the existing host, and polling callback reuse. Existing Wave 1/V2V/Recast/Motion contracts remain separate. No UI, dependencies, packaging, workflow/project schema or Electron security changes.
