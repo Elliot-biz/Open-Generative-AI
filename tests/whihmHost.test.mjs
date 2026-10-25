@@ -339,3 +339,38 @@ test('corrupted project blocks both production operations and fixed channels rej
   assert.equal(errorCode(await h.host.applyWorkflowInvalidation({ ...request, commands: [] })), 'HOST_REQUEST_INVALID');
   for (const name of ['applyWorkflowApproval', 'applyWorkflowInvalidation']) assert.equal(errorCode(await h.handlers.get(`whihm:${name}`)({ ...h.event, sender: {} }, {})), 'HOST_SENDER_REJECTED');
 });
+
+for (const [model, endpoint, options, wireVideo] of [
+  ['kling-v3.0-pro-recast', 'kling-v3.0-pro-motion-control', { character_orientation: 'video', keep_original_sound: false }, 'video_url'],
+  ['runway-act-two-recast', 'runway-act-two-i2v', { aspect_ratio: '9:16' }, 'reference_video_url'],
+  ['wan2.2-animate-recast', 'wan2.2-animate', { mode: 'replace', resolution: '720p' }, 'video_url'],
+]) test(`fixed host routes authorized ${model} through shared Recast and lifecycle`, async t => {
+  const f = await fixture(t), h = await transport(t), calls = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId);
+  const changed = structuredClone(f.workflow), node = changed.nodes[0];
+  node.executor.model = model; node.metadata.oga.mode = 'recast'; node.outputs[0].type = 'video';
+  node.parameters = { image_url: 'https://example.com/character.png', video_url: 'https://example.com/driving.mp4', ...options };
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => init.method === 'POST'
+      ? { request_id: 'host-recast' }
+      : { status: 'completed', outputs: ['https://example.com/recast.mp4'] } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = request(opened);
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned'); assert.equal(plan.runtime, 'studio.processRecast');
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0);
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(result.model, model); assert.equal(result.requestId, 'host-recast');
+  assert.equal(calls.length, 2); assert.ok(calls[0].url.endsWith(`/api/v1/${endpoint}`));
+  const payload = JSON.parse(calls[0].body);
+  assert.equal(payload[wireVideo], node.parameters.video_url); assert.equal(payload.image_url, node.parameters.image_url);
+  for (const [key, value] of Object.entries(options)) assert.equal(payload[key], value);
+  if (wireVideo !== 'video_url') assert.equal(Object.hasOwn(payload, 'video_url'), false);
+  assert.ok(calls[1].url.endsWith('/predictions/host-recast/result'));
+  assert.ok(h.statuses.some(s => s.requestId === 'host-recast'));
+  assert.ok(!JSON.stringify(result).includes('test-placeholder'));
+});

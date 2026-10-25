@@ -60,7 +60,7 @@ Conflicting parameter/input values are rejected; unresolved template dependencie
 are rejected, not evaluated. A scheduler or caller must supply resolved values.
 
 `node.metadata.oga.mode` optionally disambiguates `t2i`, `i2i`, `t2v`, `i2v`,
-`audio`, `lipsync`. Without it, catalog lookup must identify exactly one route.
+`audio`, `lipsync`, `recast`. Without it, catalog lookup must identify exactly one route.
 No guessed unknown-model fallback. `executor.provider='muapi'` selects transport;
 model vendor labels such as Google/ByteDance do not change that transport.
 Audio mode preserves `parameters.model` as the audio version and passes canonical
@@ -284,3 +284,53 @@ adapter for project assets, shared static runtime bindings, supplied local snaps
 and external quotes. It calls the existing workflow-core readiness evaluator.
 `resolveExecutionBinding` is shared with execution; no provider calls or local probes
 are made while gathering readiness evidence.
+
+## Recast contract and application parity
+
+Canonical remote nodes may use `metadata.oga.mode: "recast"` with the existing
+`kling-v3.0-pro-recast`, `runway-act-two-recast` or `wan2.2-animate-recast` aliases.
+They resolve to **existing `studio.processRecast`**, using the existing shared
+submit/poll/upload/result lifecycle. The application class also exposes
+`MuapiClient.processRecast(params)` as a thin authenticated delegation to that same
+service. No Body Swap UI is added to desktop and no client/poller is duplicated.
+
+`packages/studio/src/recastInputContracts.js:buildRecastRequest` is a pure shared
+validator/mapper used by service calls and bridge planning. Existing Recast model
+entries remain the source of truth for endpoint and options. Logical video input
+is `video_url`; Act Two maps it to `reference_video_url` and also accepts that
+explicit native field. Conflicting fields reject. Character `image_url` and a
+nonempty driving video are always required. The exact Act Two I2V model also uses
+this contract and declares its driving video in shared media metadata; unrelated
+I2V/V2V behavior is unchanged. The desktop application delegates this exact Act Two
+I2V model to the shared service too, avoiding the older client's dropped driver field.
+
+- Kling preserves prompt/orientation behavior and optionally forwards the boolean
+  `keep_original_sound`. If omitted, provider defaults remain unchanged. Orientation
+  metadata describes the existing 10s image / 30s video limits; this layer does not
+  probe duration or claim frame/camera/audio fidelity.
+- Wan explicitly sends `mode: "animate"` when omitted, preserving prior behavior;
+  `replace` is available nonvisually. Optional prompt and 480p/720p resolution survive.
+  Unsupported modes/settings reject before transport. The existing Studio UX remains
+  unchanged and therefore still uses default animate; there is no new mode selector.
+- Act Two sends the character image and **only `reference_video_url`**, retaining
+  its supported aspect ratio. Unsupported options, including prompts for this
+  backend, reject rather than disappear silently.
+
+Plans expose endpoint, upstream parameter keys, required media roles, supported
+options and effective options (including Wan's default), while preserving canonical
+model/node identity and relative asset references. Missing/invalid inputs produce
+structured `RECAST_*` diagnostics with the relevant field path. Planning never
+looks up credentials, uploads, submits or polls. Existing host/bridge execution
+still requires explicit authorization. Readiness discovers these bindings through
+its existing resolver; it is not a provider availability probe or price quote.
+
+No provider was called to verify output quality or backend acceptance. Contract
+expectations reuse the audited public schemas; tests use fake HTTP/upload/local
+boundaries. No general V2V, Seedance Motion Control, UI, packaging, project-format
+or canonical-schema changes are part of this milestone.
+
+Focused checks:
+
+```sh
+node --test tests/recastExecution.test.mjs tests/whihmExecutionBridge.test.mjs tests/whihmHost.test.mjs tests/whihmReadinessEvidence.test.mjs
+```

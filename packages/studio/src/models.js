@@ -15576,7 +15576,10 @@ export const i2vModels = [
     "family": "runway",
     "imageField": "image_url",
     "hasPrompt": false,
+    "videoField": "reference_video_url",
+    "required": ["image_url", "reference_video_url"],
     "inputs": {
+      "reference_video_url": { "type": "string", "field": "video", "title": "Driving video" },
       "aspect_ratio": {
         "type": "string",
         "title": "Aspect Ratio",
@@ -31701,6 +31704,10 @@ export const recastModels = [
     "videoField": "video_url",
     "imageField": "image_url",
     "hasPrompt": true,
+    "inputs": {
+      "character_orientation": { "type": "string", "enum": ["image", "video"], "description": "Image orientation: up to 10s; video orientation: up to 30s." },
+      "keep_original_sound": { "type": "boolean" }
+    },
     "description": "Transfer the motion from your video onto a character image with maximum fidelity."
   },
   {
@@ -31708,7 +31715,7 @@ export const recastModels = [
     "name": "Runway Act Two",
     "endpoint": "runway-act-two-i2v",
     "family": "runway",
-    "videoField": "video_url",
+    "videoField": "reference_video_url",
     "imageField": "image_url",
     "hasPrompt": false,
     "inputs": {
@@ -31731,6 +31738,10 @@ export const recastModels = [
     "videoField": "video_url",
     "imageField": "image_url",
     "hasPrompt": true,
+    "inputs": {
+      "mode": { "type": "string", "enum": ["animate", "replace"], "default": "animate" },
+      "resolution": { "type": "string", "enum": ["480p", "720p"] }
+    },
     "description": "Wan2.2 Animate is a video-to-video model for animating a character or replacing a character in existing video clips."
   }
 ];

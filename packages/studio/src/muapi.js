@@ -1,4 +1,4 @@
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getRecastModelById, getLipSyncModelById, getAudioModelById, getMotionControlModelById } from './models.js';
+import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById, getAudioModelById, getMotionControlModelById } from './models.js';
 import {
     buildVideoToolPayload,
     serializeVideoToolOptions,
@@ -7,6 +7,7 @@ import { buildImageSizePayload } from './imageSizing.js';
 import { buildImageInputPayload, getImageInputValidationError, normalizePrimaryImageUrls } from './imageInputContracts.js';
 import { pollForGenerationResult } from './utils/generationLifecycle.js';
 import { getModelMediaCapabilities, mapReferenceParams } from './modelCapabilities.js';
+import { buildRecastRequest } from './recastInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 
@@ -176,6 +177,11 @@ export async function generateVideo(apiKey, params) {
 }
 
 export async function generateI2V(apiKey, params) {
+    // Act Two is performance-driven: retain its video role and required-media checks.
+    if (params.model === 'runway-act-two-i2v') {
+        const { endpoint, payload } = buildRecastRequest({ ...params, model: 'runway-act-two-recast' });
+        return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    }
     const modelInfo = getI2VModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     assertRequiredPrompt(modelInfo, params);
@@ -273,22 +279,7 @@ export async function estimateV2VCost(params, signal) {
 }
 
 export async function processRecast(apiKey, params) {
-    const modelInfo = getRecastModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const videoField = modelInfo?.videoField || 'video_url';
-    const payload = { [videoField]: params.video_url };
-    if (modelInfo?.imageField && params.image_url) {
-        payload[modelInfo.imageField] = params.image_url;
-    }
-    if (modelInfo?.hasPrompt && params.prompt) {
-        payload.prompt = params.prompt;
-    }
-    if (params.aspect_ratio) {
-        payload.aspect_ratio = params.aspect_ratio;
-    }
-    if (params.character_orientation) {
-        payload.character_orientation = params.character_orientation;
-    }
+    const { endpoint, payload } = buildRecastRequest(params);
     return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
 

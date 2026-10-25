@@ -1,3 +1,4 @@
+import { processRecast as sharedProcessRecast, generateI2V as sharedGenerateI2V } from '../../packages/studio/src/muapi.js';
 import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById } from './models.js';
 import { pollForGenerationResult } from '../../packages/studio/src/utils/generationLifecycle.js';
 
@@ -5,6 +6,11 @@ export class MuapiClient {
     constructor() {
         // Ideally user provides this in settings
         this.baseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.DEV) ? '' : 'https://api.muapi.ai';
+    }
+
+    // Recast shares the Studio contract, auth context and submit/poll lifecycle.
+    async processRecast(params) {
+        return sharedProcessRecast(this.getKey(), params);
     }
 
     getKey() {
@@ -270,6 +276,8 @@ export class MuapiClient {
      * @param {string} [params.quality]
      */
     async generateI2V(params) {
+        // Exact-model compatibility only: Act Two also consumes a driving video.
+        if (params.model === 'runway-act-two-i2v') return sharedGenerateI2V(this.getKey(), params);
         const key = this.getKey();
         const modelInfo = getI2VModelById(params.model);
         const endpoint = modelInfo?.endpoint || params.model;
