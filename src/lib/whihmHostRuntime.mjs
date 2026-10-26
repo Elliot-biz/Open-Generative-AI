@@ -1,8 +1,8 @@
 // Nonvisual renderer adapter. All HTTP, polling, uploads and IPC inference are upstream.
 import * as studio from '../../packages/studio/src/muapi.js';
 import { localAI } from './localInferenceClient.js';
-import { routes } from '../../lib/whihm-execution/runtime.mjs';
-const methods = new Set(Object.values(routes).map(([, method]) => method));
+import { remoteMethods } from '../../lib/whihm-execution/runtime.mjs';
+const methods = new Set(remoteMethods);
 
 // Sanitize before crossing IPC, where canonical Node validation is unavailable.
 export function transportData(value) {

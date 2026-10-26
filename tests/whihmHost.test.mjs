@@ -709,3 +709,43 @@ for (const [model, mode, parameters, bindings] of [
   assert.equal(calls.length, 2); assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
 });
+
+for (const [model, mode, parameters, bindings] of [
+  ['ai-clipping', 'clipping', { num_highlights: 2, aspect_ratio: '4:5', return_coordinates_only: true }, { video_url: 'clip' }],
+  ['motion-graphics', 'motion_graphics', { operation: 'create', prompt: 'Animate a showcase', category: 'showcase', duration_seconds: 8 }, { images_list: ['picture', 'https://example.com/public.png', 'picture'], video_files: ['clip'] }],
+  ['motion-graphics-edit', 'motion_graphics', { operation: 'edit', request_id: 'completed-motion-generation', edit_prompt: 'Make the title gold' }, {}],
+]) test(`creative service host: ${model} uses fixed methods, passive plans and explicit authorization`, async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow), node = changed.nodes[0];
+  for (const [id, type] of [['clip', 'video'], ['picture', 'image']]) {
+    const imported = await f.project.importAsset({ sourcePath: f.source, assetId: id, contentType: type + '/fixture' });
+    changed.assets.push({ id, type, localPath: imported.asset.path });
+  }
+  node.executor.model = model; node.metadata.oga.mode = mode; node.parameters = parameters; node.outputs[0].type = 'video';
+  node.inputs = Object.keys(bindings).map(id => ({ id, type: id === 'images_list' ? 'image' : 'video' })); node.assetRefs = ['clip', 'picture'];
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { runClipping, runMotionGraphics, runMotionGraphicsEdit } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { runClipping, runMotionGraphics, runMotionGraphicsEdit, async uploadFile(_key, file) {
+    uploaded.push(file.type); return `https://example.com/creative-${uploaded.length}`;
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init }); return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-creative-job' }
+      : { status: 'completed', ...(mode === 'clipping' ? { output: { coordinates: [{ start: 2, end: 5, label: 'Actual selection' }] } } : { output: { video: 'https://example.com/animation.mp4' } }) } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = { ...request(opened), assetBindings: bindings };
+  const plan = await h.host.planNode(args); assert.equal(plan.status, 'planned', JSON.stringify(plan));
+  assert.equal(plan.request.creativeService.modelId, model); assert.equal(calls.length, 0); assert.equal(uploaded.length, 0); assert.equal(h.authReads(), 0);
+  const readiness = await h.host.assessWorkflowReadiness({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-26T20:00:00Z' });
+  assert.equal(readiness.provenance.executors.remote.state, 'AVAILABLE'); assert.equal(h.authReads(), 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  if (bindings.video_url) assert.equal((await h.host.executeNode({ ...args, assetBindings: { video_url: 'picture' }, allowExecution: true })).status, 'rejected');
+  assert.equal(h.authReads(), 0);
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded', JSON.stringify(result)); assert.equal(result.model, model); assert.equal(result.requestId, 'host-creative-job');
+  assert.ok(calls[0].url.endsWith('/api/v1/' + model)); const payload = JSON.parse(calls[0].body);
+  if (mode === 'clipping') { assert.equal(payload.video_url, 'https://example.com/creative-1'); assert.equal(result.clipping.coordinates[0].label, 'Actual selection'); assert.equal(result.outputs.length, 0); }
+  else if (model === 'motion-graphics') { assert.deepEqual(payload.images_list, ['https://example.com/creative-1', 'https://example.com/public.png', 'https://example.com/creative-2']); assert.deepEqual(payload.video_files, ['https://example.com/creative-3']); }
+  else { assert.equal(payload.request_id, parameters.request_id); assert.equal(Object.hasOwn(payload, 'aspect_ratio'), false); assert.equal(Object.hasOwn(payload, 'duration_seconds'), false); assert.equal(uploaded.length, 0); }
+  assert.equal(calls.length, 2); assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+});

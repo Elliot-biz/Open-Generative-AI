@@ -13,6 +13,7 @@ import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
 import { buildAudioRequest, getAudioExecutionModel } from './audioInputContracts.js';
 import { buildAdvancedImageRequest, getAdvancedImageModel, getAdvancedImageStatus, normalizeAdvancedImageResult } from './advancedImageInputContracts.js';
 import { buildVideoInputRequest, getVideoInputModel } from './videoInputContracts.js';
+import { buildCreativeServiceRequest } from './creativeServiceInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 
@@ -954,32 +955,18 @@ export async function deleteMedia(apiKey, requestId) {
 }
 
 export async function runClipping(apiKey, params) {
-    const payload = {
-        video_url: params.video_url,
-        num_highlights: params.num_highlights || 3,
-        aspect_ratio: params.aspect_ratio || "9:16",
-        return_coordinates_only: !!params.return_coordinates_only
-    };
-    return submitAndPoll("ai-clipping", payload, apiKey, params.onRequestId, 900);
+    const { endpoint, payload } = buildCreativeServiceRequest('ai-clipping', params);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
 
 export async function runMotionGraphics(apiKey, params) {
-    const payload = {
-        prompt: params.prompt,
-        aspect_ratio: params.aspect_ratio || "16:9",
-        duration_seconds: params.duration_seconds || 6,
-    };
-    return submitAndPoll("motion-graphics", payload, apiKey, params.onRequestId, 900);
+    const { endpoint, payload } = buildCreativeServiceRequest('motion-graphics', params);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
 
 export async function runMotionGraphicsEdit(apiKey, params) {
-    const payload = {
-        request_id: params.request_id,
-        edit_prompt: params.edit_prompt,
-        aspect_ratio: params.aspect_ratio || "16:9",
-        duration_seconds: params.duration_seconds || 6,
-    };
-    return submitAndPoll("motion-graphics-edit", payload, apiKey, params.onRequestId, 900);
+    const { endpoint, payload } = buildCreativeServiceRequest('motion-graphics-edit', params);
+    return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
 
 export async function upscaleImage(apiKey, { model, image_url, resolution, upscale_factor, onRequestId }) {

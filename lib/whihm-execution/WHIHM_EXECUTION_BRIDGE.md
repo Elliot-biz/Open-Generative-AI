@@ -1017,3 +1017,126 @@ scene, camera, timing or exact pixel preservation.
 | `kling-v2-avatar-standard` | image_url required; audio_url required | prompt: string (default "") |
 | `kling-v2-avatar-pro` | image_url required; audio_url required | prompt: string (default "") |
 | `omnihuman-1-5` | image_url required; audio_url required | output_resolution: ["720","1080"] (default "1080"); prompt: string (default ""); seed: integer (default -1); pe_fast_mode: boolean (default false) |
+
+## Clipping and motion graphics canonical bindings — 2026-10-26
+
+Two additional canonical modes reuse existing shared Studio services. These
+three fixed service endpoints are outside the existing model catalog arrays;
+`creativeServiceInputContracts.js` describes their inputs and admission only.
+It adds no client, uploader, poller, model discovery or arbitrary payload path.
+
+| Canonical mode | executor.model | Operation | Authoritative shared helper |
+| --- | --- | --- | --- |
+| clipping | ai-clipping | highlights | runClipping |
+| motion_graphics | motion-graphics | create | runMotionGraphics |
+| motion_graphics | motion-graphics-edit | edit | runMotionGraphicsEdit |
+
+Use executor.type=`remote-model`, provider=`muapi` and metadata.oga.mode as above.
+The endpoint identity fixes the operation; optional `parameters.operation` must
+match `create` or `edit` for motion graphics. It is plan metadata, not a provider
+wire field. Create and edit share one canonical mode while selecting the existing
+distinct helper. Incorrect mode/identity/action combinations reject. These
+services are not admitted through generic V2V, workflow or agent execution.
+The renderer runtime's fixed method allowlist derives from existing routes and
+these three service contracts, including the edit method; it is not generic RPC.
+
+### Clipping: CLIP_HIGHLIGHTS
+
+`video_url` is required; `num_highlights` is an integer 1–60 (default 3),
+`aspect_ratio` is one of 9:16, 16:9, 1:1, 4:5, 4:3, 3:4 (default 9:16), and
+`return_coordinates_only` is boolean (default false). No prompt, exact in/out,
+clip-duration, resolution, arbitrary provider options, webhook or sync override
+is exposed. Invalid values reject rather than falling through old truthy defaults.
+This is **AI-assisted highlight selection**, not exact deterministic trimming.
+
+A registered project video can bind to video_url through an existing declared
+input port/assetRef. The canonical asset type must be video; relative identity,
+project boundary and existing integrity checks remain authoritative. An already
+resolved HTTP(S) URL can be supplied directly. Source format/duration/accessibility
+are not probed or guaranteed by URL validation.
+
+Canonical results have resultKind=`clipping`; actual returned clip outputs keep
+provider order, and `clipping` contains outputMode, clips, coordinates and
+coordinateSource. Coordinates are retained only from actual array-valued
+output.coordinates, coordinates, output.timings or timings, in that precedence.
+Absent coordinates stay null; array-valued empty coordinates stay empty. Processing
+`timings` objects are not treated as selection intervals. Unknown output.clips
+shapes and all other safe provider metadata remain in upstream without being
+invented into a coordinate schema. Structured clip entries remain JSON rather
+than pretending to be video URLs. No first-clip collapse, source-video fallback,
+placeholder score or fabricated time range is introduced. The existing Clipping
+Studio's synthetic empty-coordinate UI fallback is deliberately not reused by
+the nonvisual canonical path; its UI is unchanged.
+
+Public result metadata does not establish a complete coordinate/crop schema,
+units, frame precision, returned clip count or exact timing fidelity. These are
+**UNVERIFIED**; the binding preserves supplied data without promising those
+semantics. A coordinates-only result can succeed with metadata and no video
+artifact. No clipping output is automatically downloaded or registered.
+
+### Motion graphics: CREATE_REVISE_MOTION_GRAPHICS
+
+Create requires nonblank `prompt`, retains text exactly, accepts integer
+`duration_seconds` 5–30 (default 6) and aspect 16:9 / 9:16 / 1:1 (default 16:9).
+`category` defaults to auto and accepts auto, infographics, text-animation,
+social-media, presentation, logo, product, 3d, slideshow, showcase, reel.
+Optional ordered images_list accepts at most six images; video_files accepts at
+most two videos. Published model detail requires images for slideshow/showcase/
+reel, so these categories require a nonempty images_list. Auto/basic creation
+requires no reference media. There is no supported resolution/seed/free-form
+styling or animation-timeline option beyond prompt/category in this contract.
+
+These verified reference/category fields were previously dropped by the shared
+helper. The same helper now forwards the contract's validated payload through its
+original lifecycle. Reference arrays use the existing bridge asset machinery:
+typed registered assets can mix with resolved URLs, preserving duplicates and
+order; counts, malformed entries and role mismatches reject before upload.
+Plans show logical placeholders and project-relative requiredUploads, not local
+absolute paths. Empty optional parameter lists are permitted; assetBindings must
+contain actual references, and conditional required lists cannot be empty. No arbitrary array binding is exposed.
+
+Edit requires nonblank `request_id` from a completed motion-graphics generation
+and nonblank `edit_prompt`. Only optional duration_seconds (integer 5–30) and the
+same three aspect ratios are newly selectable. Omitted duration/aspect are now
+omitted from the shared helper's wire payload to retain the original generation's
+settings, as current OpenAPI describes; explicit Studio settings still pass
+unchanged. The prior forced 6-second/16:9 edit defaults were a narrow source gap.
+Create prompt/category/media fields reject on edit, and edit target/instruction
+fields reject on create. Revision targets a provider request with saved animation
+code; it is not arbitrary source-video editing, a continuation scheduler or a
+promise that every historic request is editable. Target existence, ownership,
+completion and saved-code availability are **UNVERIFIED** without provider
+execution; supplying an ID is not proof. References are not resubmitted on edit.
+
+Motion graphics is generative AI motion design. Provider metadata describes
+AI-generated React/Remotion rendered remotely; this binding neither evaluates
+provider code locally nor introduces Remotion. Canonical normalization recognizes
+the existing helper/UI's native output.video shape and retains safe metadata,
+resultKind=`motion-graphics` and operation. It does not promise deterministic
+rendering, editable timeline/code delivery or exact preservation.
+
+### Planning, readiness, safety and evidence
+
+`request.creativeService` exposes exact identity/operation/capability, output mode,
+required inputs, typed media/counts/order, providerRequest and caveat. Effective
+options/defaults and inherited edit options are explicit. Validation precedes
+credential lookup/upload/submission. Plan/dry-run neither mutates projects nor
+calls providers. Execution still requires allowExecution through the existing
+fixed project-handle host. Static readiness recognizes each binding via the same
+resolver; eligibility is not approval, budget approval or proof of valid detailed
+node inputs. No approval/readiness rules, Electron flags or generic IPC changed.
+
+**CONFIRMED evidence:** current runClipping/runMotionGraphics/runMotionGraphicsEdit,
+ClippingStudio/VibeMotionStudio request/result handling, existing lifecycle and
+project APIs; plus public read-only inspection on 2026-10-26 of
+[OpenAPI](https://api.muapi.ai/openapi.json) and exact first-party model metadata:
+[ai-clipping](https://api.muapi.ai/api/v1/models/ai-clipping),
+[motion-graphics](https://api.muapi.ai/api/v1/models/motion-graphics),
+[motion-graphics-edit](https://api.muapi.ai/api/v1/models/motion-graphics-edit).
+OpenAPI confirms request shapes/reference caps and inherited edit overrides;
+model details/unchanged UI supply clipping count and create duration bounds
+omitted from their OpenAPI fields. Edit detail UI defaults are superseded by
+OpenAPI's explicit inheritance semantics when overrides are absent. Conditional
+image requirements come from the published model field description. No runtime
+metadata fetching, credentials, estimates, uploads, generation or paid execution
+was used for this verification. All execution/lifecycle tests use fake transport.

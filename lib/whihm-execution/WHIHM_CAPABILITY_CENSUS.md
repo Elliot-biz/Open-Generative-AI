@@ -167,12 +167,12 @@ not upgrade sparse provider contracts. Exact per-route IDs follow in the appendi
 | SWAP_VIDEO_OBJECT_APPEARANCE | Seedance objects_swap; reviewed prompt/reference V2V editors | motion_control/v2v | FULL | CAT |
 | LIP_SYNC | 15 current catalog entries, including InfiniteTalk and Kling avatar | lipsync | PARTIAL | UI |
 | TRANSLATE_VIDEO | heygen-video-translate | v2v | FULL | CAT |
-| CLIP_HIGHLIGHTS | ai-clipping via runClipping | no canonical route | UNBOUND | UI |
+| CLIP_HIGHLIGHTS | ai-clipping via runClipping | clipping | REVIEWED_BOUND (2026-10-26 update) | UI + contract |
 | REFRAME_VIDEO | luma-flash-reframe; clipping aspect control | deferred v2v / Studio service | UNBOUND | CAT |
 | APPLY_VIDEO_WATERMARK | add-video-watermark | unreviewed v2v | UNBOUND | CAT |
 | REMOVE_VIDEO_WATERMARK | video-watermark-remover; Seedance removal variants | unreviewed v2v | UNBOUND | CAT |
 | CAPTION_VIDEO | ai-captions | unreviewed v2v | UNBOUND | CAT |
-| CREATE_REVISE_MOTION_GRAPHICS | motion-graphics; motion-graphics-edit (prior request ID) | Studio services only | UNBOUND | UI |
+| CREATE_REVISE_MOTION_GRAPHICS | motion-graphics; motion-graphics-edit (prior request ID) | motion_graphics (create/edit) | REVIEWED_BOUND (2026-10-26 update) | UI + contract |
 | GENERATE_MUSIC | suno-create-music; minimax-music-3.0; lyria-3-pro/3/2 | audio | FULL | UI |
 | REMIX_MUSIC | suno-remix-music | audio | PARTIAL | UI |
 | EXTEND_MUSIC | suno-extend-music | audio | PARTIAL | UI |
@@ -1194,3 +1194,27 @@ needed for documentation-only changes. Required final checks: `git diff --check`
 verification that `packages/whihm-workflow-core/NEXT_HISTORY_TASK.md` is unchanged
 and excluded. No paid request, generation, agent execution, provider workflow run,
 upload, local inference, model installation or push occurred.
+
+
+## Clipping / motion graphics binding update — 2026-10-26
+
+Historical census counts and hosted-app observations above are unchanged. The
+prior UNBOUND statements for these two intents are superseded by the
+[reviewed canonical bindings](WHIHM_EXECUTION_BRIDGE.md#clipping-and-motion-graphics-canonical-bindings--2026-10-26):
+`clipping` → shared runClipping; `motion_graphics` → shared runMotionGraphics or
+runMotionGraphicsEdit, with exact create/edit endpoint identity. The remote
+canonical mode count is now **11**, adding these two modes to the previous nine;
+three service endpoint identities become explicitly reviewed/bound.
+
+Clipping accepts registered project video or resolved URL, validated highlight
+count/aspect/output mode, and preserves actual clips/selection metadata without
+the Studio's fabricated-coordinate fallback. Motion creation now preserves
+verified optional image/video arrays and category; ordered mixed project references
+use existing integrity/type checks. Revision targets a prior completed request,
+keeps edit instructions distinct, and inherits aspect/duration when overrides are
+omitted. Native output.video and safe metadata are preserved. Plans are passive;
+fixed host execution authorization, approvals and budget semantics are unchanged.
+No Studio layout or controls changed. AI selection/design are not deterministic
+finishing. Exact coordinate schema/precision and prior request editability remain
+unverified; no paid execution was performed. These gaps do not imply generic V2V,
+workflow/agent execution or an animation timeline was added.
