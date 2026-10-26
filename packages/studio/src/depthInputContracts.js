@@ -31,3 +31,11 @@ export function buildDepthRequest(params = {}) {
       caveat: 'Depth artifact only; no metric distance, calibration, masks, segmentation, sequences, point clouds, meshes or deterministic geometry guarantee. Output fidelity is runtime-unverified.' },
   };
 }
+
+export function getDepthInputDescription(id) {
+  if (!getDepthModel(id)) return null;
+  const roles = getDepthMediaInputs();
+  return { capability: 'DEPTH_ESTIMATION', roles,
+    constraints: [{ kind: 'exactly_one', fields: roles.map(r => r.field) }],
+    results: roles.map(r => ({ sourceKind: r.type, kind: `depth-${r.type}`, mediaType: r.type })) };
+}

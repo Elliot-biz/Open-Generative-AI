@@ -141,7 +141,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -873,4 +873,18 @@ test('fixed host guided Suno clone preserves human boundary and separately autho
   assert.equal(result.requestId, 'host-suno-clone'); assert.deepEqual(result.outputs, []); assert.equal(uploads.length, 2);
   assert.ok(calls[3].url.endsWith('/suno-voice-clone/host-suno-clone/confirm'));
   assert.deepEqual(JSON.parse(calls[3].body), { audio_url: 'https://example.com/audio-2.wav' });
+});
+
+test('fixed host capability projection is read-only, project-independent, transport-free and sender-checked', async t => {
+  const f = await fixture(t), h = await transport(t, { remote: new Proxy({}, { get() { throw Error('Remote must not be touched'); } }) });
+  const before = await fs.readFile(path.join(f.root, 'project.json'), 'utf8'); let network = 0;
+  t.mock.method(globalThis, 'fetch', () => { network++; throw Error('Provider forbidden'); });
+  const p = await h.host.getCapabilityProjection(); assert.equal(p.schemaVersion, 1); assert.ok(p.capabilities.some(c => c.id === 'CLONE_VOICE_GUIDED'));
+  assert.equal(h.authReads(), 0); assert.equal(network, 0); assert.equal(h.localCalls.length, 0); assert.equal(h.statuses.length, 0);
+  assert.equal(await fs.readFile(path.join(f.root, 'project.json'), 'utf8'), before);
+  const handler = h.handlers.get('whihm:getCapabilityProjection');
+  assert.equal(errorCode(await handler({ ...h.event, sender: {} }, {})), 'HOST_SENDER_REJECTED');
+  assert.equal(errorCode(await handler(h.event, { source: {} })), 'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await handler(h.event, { allowExecution: true })), 'HOST_REQUEST_INVALID');
+  const second = await h.host.getCapabilityProjection(); assert.deepEqual(second, p);
 });

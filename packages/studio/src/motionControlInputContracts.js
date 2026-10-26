@@ -3,12 +3,26 @@ import { getMotionControlModelById } from './models.js';
 function need(condition, code, path, message) {
   if (!condition) throw Object.assign(new Error(message), { code, path });
 }
+const qualityValues = ['high', 'basic'];
+const seedSchema = { type: 'integer', minimum: -1, maximum: 4294967295 };
 const media = value => typeof value === 'string' && value.trim().length > 0;
 // Existing creative instructions express intent, not measured preservation guarantees.
 const instructions = Object.freeze({
   motion_transfer: 'Extract motion from the reference video and rebuild the scene with the new characters and assets, preserving the original motion, choreography, and camera movements.',
   objects_swap: 'Keep the rest of the scene as filmed, swap the characters, products, or clothes with the reference images.',
 });
+
+export function getMotionControlInputDescription(id) {
+  const model = getMotionControlModelById(id); if (model?.id !== id) return null;
+  return structuredClone({ inputs: { mode: { type: 'string', enum: Object.keys(instructions) }, prompt: { type: 'string' },
+    video_url: { type: 'string', field: 'video' }, images_list: { type: 'array', field: 'image', minItems: 1, maxItems: model.maxImages, items: { type: 'string' } },
+    duration: { type: 'integer', minimum: model.minDuration, maximum: model.maxDuration, default: model.defaultDuration },
+    aspect_ratio: { type: 'string', enum: model.aspectRatios, default: model.defaultAspectRatio },
+    ...(model.supportsAudio ? { generate_audio: { type: 'boolean', default: false } } : {}),
+    ...(model.supportsBitrate ? { high_bitrate: { type: 'boolean', default: false } } : {}),
+    ...(model.supportsQuality ? { quality: { type: 'string', enum: qualityValues, default: 'high' } } : {}),
+    ...(model.supportsSeed ? { seed: seedSchema } : {}) }, required: ['mode', 'video_url', 'images_list'] });
+}
 
 // Feature-specific contract only; model limits stay in the existing Studio catalog.
 export function buildMotionControlRequest(params = {}) {
@@ -49,11 +63,11 @@ export function buildMotionControlRequest(params = {}) {
   }
   if (model.supportsQuality) {
     const quality = params.quality === undefined ? 'high' : params.quality;
-    need(['high', 'basic'].includes(quality), 'MOTION_OPTION_INVALID', 'quality', 'Quality must be high or basic.');
+    need(qualityValues.includes(quality), 'MOTION_OPTION_INVALID', 'quality', 'Quality must be high or basic.');
     payload.quality = quality;
   }
   if (params.seed !== undefined) {
-    need(Number.isInteger(params.seed) && params.seed >= -1 && params.seed <= 4294967295,
+    need(Number.isInteger(params.seed) && params.seed >= seedSchema.minimum && params.seed <= seedSchema.maximum,
       'MOTION_OPTION_INVALID', 'seed', 'Seed must be an integer from -1 to 4294967295.');
     payload.seed = params.seed;
   }

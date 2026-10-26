@@ -46,3 +46,8 @@ export function buildRecastRequest(params = {}) {
     supportedOptions: [...options.map(([field]) => field), ...(model.hasPrompt ? ['prompt'] : [])].sort(),
   };
 }
+
+// Existing shared generateI2V/checkInputs compatibility branch; no new admission.
+export function getRecastCompatibilityModel(id, mode) {
+  return mode === 'i2v' && id === 'runway-act-two-i2v' ? getRecastModelById('runway-act-two-recast') : null;
+}

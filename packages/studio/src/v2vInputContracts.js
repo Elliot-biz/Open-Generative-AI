@@ -32,6 +32,32 @@ export function getV2VMediaInputs(id) {
   for (const [field, spec] of Object.entries(model.inputs || {})) if (['image', 'video', 'audio'].includes(spec.field)) roles.set(field, { field, type: spec.field, isArray: spec.type === 'array' });
   return [...roles.values()];
 }
+// Read-only review disposition; does not alter canonical admission.
+export function getV2VContractStatus(id) {
+  if (getV2VExecutionModel(id)) return { status: 'REVIEWED' };
+  if (!getV2VModelById(id)) return { status: 'UNKNOWN' };
+  if (id === 'mmaudio-v2-video-to-video') return { status: 'PROVIDER_BLOCKED', code: 'MMAUDIO_RESULT_CONTRACT_CONFLICT', capability: 'GENERATE_VIDEO_SOUND', mustRevisit: true };
+  if (/^seedance-2\.5(?:-intl|-spicy)?-video-(edit|extend)-(480p|1080p|4k)$/.test(id)) return { status: 'PROVIDER_BLOCKED', code: 'VIDEO_FIXED_PROFILE_UNVERIFIED' };
+  return { status: 'DEFERRED', code: 'V2V_CONTRACT_NOT_REVIEWED' };
+}
+
+// The same schema/role/required-field assembly is used by execution and discovery.
+export function getV2VInputDescription(id) {
+  const original = getV2VExecutionModel(id); if (!original) return null;
+  const model = structuredClone(original);
+  const capabilities = getModelMediaCapabilities(model);
+  const inputs = { ...model.inputs }, mediaFields = new Map();
+  for (const [type, cap] of Object.entries(capabilities)) {
+    if (!cap.field) continue;
+    mediaFields.set(cap.field, type);
+    inputs[cap.field] ||= { type: cap.isArray ? 'array' : 'string', ...(cap.isArray ? { maxItems: cap.maxItems, items: { type: 'string' } } : {}) };
+  }
+  for (const [field, spec] of Object.entries(inputs)) if (['image', 'video', 'audio'].includes(spec.field)) mediaFields.set(field, spec.field);
+  if (model.hasPrompt) inputs.prompt ||= { type: 'string' };
+  const required = [...new Set([model.videoField, ...(model.required || []).filter(k => k !== 'api_key'),
+    ...(model.promptRequired ? ['prompt'] : []), ...(model.imageField && !model.imageOptional ? [model.imageField] : [])])];
+  return { model, inputs, mediaFields, required };
+}
 function need(condition, code, path) {
   if (!condition) throw Object.assign(new Error(code.replaceAll('_', ' ')), { code, path });
 }
@@ -62,16 +88,7 @@ export function buildV2VRequest(params = {}) {
     need(!Object.hasOwn(params, capabilities.video.field), 'V2V_INPUT_CONFLICT', capabilities.video.field);
     need(false, 'V2V_OPTION_UNSUPPORTED', 'video_url'); // Never flatten/coerce source-video arrays.
   }
-  const inputs = { ...model.inputs }, mediaFields = new Map();
-  for (const [type, cap] of Object.entries(capabilities)) {
-    if (!cap.field) continue;
-    mediaFields.set(cap.field, type);
-    inputs[cap.field] ||= { type: cap.isArray ? 'array' : 'string', ...(cap.isArray ? { maxItems: cap.maxItems, items: { type: 'string' } } : {}) };
-  }
-  for (const [field, spec] of Object.entries(inputs)) {
-    if (['image', 'video', 'audio'].includes(spec.field)) mediaFields.set(field, spec.field);
-  }
-  if (model.hasPrompt) inputs.prompt ||= { type: 'string' };
+  const { inputs, mediaFields, required: requiredFields } = getV2VInputDescription(model.id);
   const options = params.options === undefined ? {} : params.options;
   need(options && typeof options === 'object' && !Array.isArray(options), 'V2V_OPTION_INVALID', 'options');
   const values = {};
@@ -86,8 +103,7 @@ export function buildV2VRequest(params = {}) {
     values[field] = value;
   }
   need(params.onRequestId === undefined || typeof params.onRequestId === 'function', 'V2V_OPTION_INVALID', 'onRequestId');
-  const required = new Set([model.videoField, ...(model.required || []).filter(k => k !== 'api_key'),
-    ...(model.promptRequired ? ['prompt'] : []), ...(model.imageField && !model.imageOptional ? [model.imageField] : [])]);
+  const required = new Set(requiredFields);
   for (const field of required) {
     // Kling requires the wire list field, not a nonempty reference set.
     if (!Object.hasOwn(values, field) && model.payloadDefaults?.[field] !== undefined) {

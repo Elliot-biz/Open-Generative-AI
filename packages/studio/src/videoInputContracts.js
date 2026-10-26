@@ -200,3 +200,15 @@ export function buildVideoInputRequest(mode, params = {}) {
       caveat: 'Role/order validation does not measure media duration or guarantee frame, identity or motion preservation.' },
   };
 }
+
+// Read-only projection of the same reference-choice/combined-limit metadata used above.
+export function getVideoReferenceConstraints(id, mode = 'i2v') {
+  const model = getVideoInputModel(id, mode);
+  if (!model || mode !== 'i2v' || !references.has(id)) return [];
+  const roles = getVideoInputMedia(id, mode), slots = getVideoWorkflowMediaSlots(model, 'references');
+  const constraint = slots.find(slot => slot.combinedLimit);
+  const required = constraint ? slots.filter(slot => (constraint.requiredSlotIds ?? ['referenceImages', 'referenceVideos', 'referenceAudios']).includes(slot.id)) : roles;
+  return [{ kind: 'at_least_one_reference', fields: required.map(r => r.field) },
+    ...(constraint ? [{ kind: 'combined_reference_limit', maximum: constraint.combinedLimit,
+      slots: slots.filter(s => constraint.combinedSlotIds.includes(s.id)).map(s => ({ field: s.field, weight: constraint.slotWeights?.[s.id] ?? 1 })) }] : [])];
+}

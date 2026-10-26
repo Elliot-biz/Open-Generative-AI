@@ -1,6 +1,7 @@
 // Guided singing-voice clone only; ordinary audio generation stays separate.
 import { getAudioModelById } from './models.js';
 import { isVideoInputUrl } from './videoInputContracts.js';
+const actions = ['start', 'confirm', 'poll'];
 export const SUNO_CLONE_CAPABILITY = 'CLONE_VOICE_GUIDED';
 export function getSunoCloneModel(id) { return id === 'suno-voice-clone' ? getAudioModelById(id) : null; }
 export function cloneNeed(condition, code, path = '') {
@@ -22,7 +23,7 @@ export function validateCloneState(state) {
 }
 export function buildSunoCloneRequest(params = {}) {
   cloneNeed(object(params) && getSunoCloneModel(params.model), 'SUNO_CLONE_MODEL_UNSUPPORTED', 'model');
-  cloneNeed(['start', 'confirm', 'poll'].includes(params.action), 'SUNO_CLONE_ACTION_INVALID', 'action');
+  cloneNeed(actions.includes(params.action), 'SUNO_CLONE_ACTION_INVALID', 'action');
   cloneNeed(params._validateOnly === undefined || params._validateOnly === true && params.action !== 'start', 'SUNO_CLONE_OPTION_INVALID', '_validateOnly');
   const model = getSunoCloneModel(params.model), start = params.action === 'start';
   const fields = start ? Object.keys(model.inputs) : params.action === 'confirm' ? ['audio_url', 'recording_origin', 'state'] : ['state'];
@@ -78,4 +79,19 @@ export function normalizeSunoCloneResult(raw, state) {
     phase: waiting ? 'AWAITING_PHRASE_RECORDING' : stage === 'completed' && voiceId ? 'COMPLETED' : failed ? 'FAILED' : state.phase,
     userActionRequired: waiting, nextAction: waiting ? 'confirm' : failed || stage === 'completed' && voiceId ? null : 'poll' },
     upstream: raw, diagnostics: status === 'blocked' ? [{ code: stage === 'completed' ? 'SUNO_CLONE_VOICE_ID_MISSING' : 'SUNO_CLONE_STAGE_UNVERIFIED' }] : [] };
+}
+
+export function getSunoCloneInputDescription(id) {
+  const model = getSunoCloneModel(id); if (!model) return null;
+  return { capability: SUNO_CLONE_CAPABILITY, multiStage: true, humanActionRequired: true, providerLivenessRequired: true,
+    automaticLiveness: false, continuation: 'same_live_runtime_session', actions: [...actions],
+    operations: [
+      { action: 'start', inputs: structuredClone(model.inputs), required: [...model.required], mediaRole: 'initial-voice-sample', projectAssetRequired: false },
+      { action: 'confirm', inputs: { audio_url: { type: 'string', field: 'audio' }, state: { type: 'object' },
+        recording_origin: { type: 'string', enum: ['user_recorded_challenge'] } }, required: ['audio_url', 'state', 'recording_origin'], mediaRole: 'user-challenge-recording', projectAssetRequired: true },
+      { action: 'poll', inputs: { state: { type: 'object' } }, required: ['state'] },
+    ], result: { kind: 'provider-voice-identity', field: 'voiceId', providerField: 'voice_id', projectAsset: false },
+    stages: ['awaiting_phrase', 'generating', 'completed', 'failed'],
+    limitations: ['Exact provider challenge phrase must be recorded by the user; no TTS or approval substitute.',
+      'Lost continuation blocks safely; no automatic retry/restart. Provider verifies content and liveness.'] };
 }

@@ -13,6 +13,7 @@ const services = {
       return_coordinates_only: { type: 'boolean', default: false } },
     caveat: 'AI-assisted highlight selection; not deterministic exact trimming. Selection metadata is preserved only if returned.' },
   'motion-graphics': { mode: 'motion_graphics', method: 'runMotionGraphics', capability: 'CREATE_REVISE_MOTION_GRAPHICS', operation: 'create', required: ['prompt'],
+    conditionalRequired: { field: 'category', values: ['slideshow', 'showcase', 'reel'], required: ['images_list'] },
     inputs: { prompt: { type: 'string', nonempty: true }, aspect_ratio: { ...aspect, default: '16:9' }, duration_seconds: { ...duration, default: 6 },
       category: { type: 'string', enum: ['auto', 'infographics', 'text-animation', 'social-media', 'presentation', 'logo', 'product', '3d', 'slideshow', 'showcase', 'reel'], default: 'auto' },
       images_list: media('image', 6), video_files: media('video', 2) },
@@ -21,6 +22,7 @@ const services = {
     inputs: { request_id: { type: 'string', nonempty: true }, edit_prompt: { type: 'string', nonempty: true }, aspect_ratio: aspect, duration_seconds: duration },
     caveat: 'Revision of a completed motion-graphics request with saved animation code; omitted aspect/duration inherit provider-side. Target editability is unverified until execution.' },
 };
+export const getCreativeServiceModels = () => Object.keys(services).map(id => getCreativeServiceModel(id));
 export const creativeServiceMethods = Object.freeze(Object.values(services).map(s => s.method));
 export function getCreativeServiceModel(id, mode) {
   const value = Object.hasOwn(services, id) ? services[id] : null;

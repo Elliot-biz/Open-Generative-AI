@@ -1,5 +1,12 @@
 # Authoritative foundation → Astra projection handoff
 
+> **Projection v1 implemented:** [Astra capability projection](WHIHM_ASTRA_CAPABILITY_PROJECTION.md)
+> now exposes read-only projectCapabilities() and the fixed host
+> getCapabilityProjection operation. It derives current contracts/bindings and
+> preserves generic, specialized, deferred, provider-blocked and runtime-unverified
+> states. No execution eligibility or provider lifecycle is broadened. The older
+> "implement projection next" milestone below is retained as historical context.
+
 **Foundation status: READY_FOR_ASTRA_PROJECTION.**
 Reconciled 2026-10-26 against source HEAD
 `f70d33c0c3ac4c7441d869b3cc0872db63461343`.
