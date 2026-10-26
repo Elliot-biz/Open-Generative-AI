@@ -1247,3 +1247,29 @@ Next bounded V2V candidates are Gemini Omni multimodal edit, then selected
 extension-control alternatives; completeness is not a reason to bind every profile.
 A read-only Astra projection can proceed against the reviewed subset while keeping
 these evidence gaps explicit. No real generation or paid execution was used.
+
+## High-value remote video wave update — 2026-10-26
+
+Current-state addendum supersedes only affected executor statuses, not historical
+web/census evidence. **35 V2V IDs** are now reviewed/bound (29+6): unsuffixed Spicy
+edit/extend, Gemini Omni edit, LTX2.3 extend, Pixverse6 extend and Standard Seedance1.5
+Pro extend. V2V classes now D28/F16/I8/R19/S4;36 unresolved D/I and4 specialized.
+Five I2V additions bring explicit coverage to **36 IDs** (31+5): Spicy first-last/
+omni, Wan2.2 Spicy image, Wan3 Spicy reference and MiniMax H3 Spicy image. Exact
+roles/control/defaults/limits are in the latest bridge/review addenda.
+
+The required Spicy V2V pair is complete. Ordinary Spicy2.5 T2V and single-image
+I2V remain explicitly deferred: current OpenAPI omits their advertised audio toggle
+and adds draft/finalization; source resolution casing/default differs. No paid
+probe, silent field loss or guessed toggle semantics. All18 fixed Spicy suffixes
+remain excluded; the12 previously generic-eligible T2V/I2V suffixes now fail closed.
+Current structural remote eligibility is530 mode/ID pairs,527 distinct IDs and518
+effective endpoint strings; decreased generic eligibility is intentional and is
+not a decrease in reviewed capabilities. Model catalog row counts remain unchanged.
+
+Provider IDs are distinct from project assets; typed ordered media, keyframes,
+trim bounds and native result metadata remain explicit. Static eligibility is not
+authorization or runtime quality proof. Fast variants need substantive value beyond
+latency; Standard Seedance1.5 alone is admitted despite a possible Fast resolution
+advantage. MMAudio remains parked for mandatory future clarification/revisit.
+No general catalog expansion, new modes, UI redesign, packaging or projection work.

@@ -109,8 +109,8 @@ test('utility defaults and optional image/reference semantics stay explicit', ()
 });
 test('MMAudio/depth and unrelated unresolved/specialized routes do not gain generic admission', async t => {
   const calls = fake(t), bridge = createExecutionBridge();
-  assert.equal(v2vModels.filter(m => getV2VExecutionModel(m.id)).length, 29);
-  for (const id of ['mmaudio-v2-video-to-video', 'depth-anything', 'gemini-omni-video-edit', 'ai-dance-effects', 'remix-video', 'ai-video-upscaler-pro', 'happy-horse-1-video-edit', 'seedance-2.5-video-edit-4k', 'kling-v3.0-pro-motion-control', 'wan2.2-animate', 'infinitetalk-video-to-video', 'volcengine-video-to-video-lip-sync']) {
+  assert.equal(v2vModels.filter(m => getV2VExecutionModel(m.id)).length, 35);
+  for (const id of ['mmaudio-v2-video-to-video', 'depth-anything', 'ai-dance-effects', 'remix-video', 'ai-video-upscaler-pro', 'happy-horse-1-video-edit', 'seedance-2.5-video-edit-4k', 'kling-v3.0-pro-motion-control', 'wan2.2-animate', 'infinitetalk-video-to-video', 'volcengine-video-to-video-lip-sync']) {
     assert.equal(getV2VExecutionModel(id), null); assert.equal(findRemote(id, 'v2v'), null);
     assert.equal((await bridge.plan({ workflow: workflow(id, { video_url: video }), nodeId: 'utility' })).status, 'rejected');
   }
@@ -142,6 +142,6 @@ test('75-row review classifications match exact execution admission without hidd
   const document = await fs.readFile(new URL('../lib/whihm-execution/V2V_CONTRACT_REVIEW.md', import.meta.url), 'utf8');
   const entries = [...document.matchAll(/^\| `([^`]+)`[^|]* \| ([DFIRS]) \|/gm)].map(m => [m[1], m[2]]);
   assert.equal(entries.length, 75); assert.equal(new Set(entries.map(([id]) => id)).size, 75);
-  assert.deepEqual(Object.fromEntries('DFIRS'.split('').map(c => [c, entries.filter(([, value]) => value === c).length])), { D: 33, F: 13, I: 9, R: 16, S: 4 });
+  assert.deepEqual(Object.fromEntries('DFIRS'.split('').map(c => [c, entries.filter(([, value]) => value === c).length])), { D: 28, F: 16, I: 8, R: 19, S: 4 });
   for (const [id, status] of entries) assert.equal(Boolean(getV2VExecutionModel(id)), ['F', 'R'].includes(status), id);
 });

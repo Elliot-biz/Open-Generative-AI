@@ -166,7 +166,7 @@ test('existing Studio logical media aliases retain array roles; conflicting form
 test('unreviewed profiles and specialized routes remain separate without fallback', async t => {
   const calls = fake(t); let auth = 0;
   const bridge = createExecutionBridge({ runtime: createApplicationRuntime({ getApiKey: () => { auth++; return key; } }) });
-  for (const id of [...editVariants, ...fixedExtendVariants, 'seedance-2.5-intl-video-edit', 'seedance-2.5-spicy-video-extend', 'seedance-2.5-intl-video-extend-4k', 'invented']) {
+  for (const id of [...editVariants, ...fixedExtendVariants, 'seedance-2.5-intl-video-edit', 'seedance-2.5-spicy-video-extend-4k', 'seedance-2.5-intl-video-extend-4k', 'invented']) {
     assert.equal(findRemote(id, 'v2v'), null);
     assert.throws(() => buildV2VRequest({ model: id, video_url: video, prompt: 'Edit' }), { code: 'V2V_MODEL_UNSUPPORTED' });
     const request = { workflow: workflow(id, { video_url: video, prompt: 'Edit' }), nodeId: 'transform' };

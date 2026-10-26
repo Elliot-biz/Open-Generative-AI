@@ -68,6 +68,11 @@ function normalizePredictionResult(submitData, result, outputUrl) {
     };
 }
 
+function normalizeNativeVideoResult(result) {
+    const video = result.output?.video ?? result.output?.outputs?.[0];
+    return !result.url && typeof video === 'string' ? normalizePredictionResult(result, result, video) : result;
+}
+
 async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60) {
     const url = `${BASE_URL}/api/v1/${endpoint}`;
     const response = await fetch(url, {
@@ -187,8 +192,9 @@ export async function generateVideo(apiKey, params) {
 
 export async function generateI2V(apiKey, params) {
     if (getVideoInputModel(params.model, 'i2v')) {
-        const { endpoint, payload } = buildVideoInputRequest('i2v', params);
-        return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+        const { endpoint, payload, videoInput } = buildVideoInputRequest('i2v', params);
+        const result = await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+        return videoInput.resultSemantics ? normalizeNativeVideoResult(result) : result;
     }
     // Act Two is performance-driven: retain its video role and required-media checks.
     if (params.model === 'runway-act-two-i2v') {
@@ -234,8 +240,7 @@ export async function processV2V(apiKey, params) {
         const result = await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
         // These utility schemas expose native output.video (or nested outputs).
         // Retain the full response while keeping the existing Studio URL consumer working.
-        const video = v2v.utility && (result.output?.video ?? result.output?.outputs?.[0]);
-        return !result.url && typeof video === 'string' ? normalizePredictionResult(result, result, video) : result;
+        return v2v.utility || v2v.resultSemantics ? normalizeNativeVideoResult(result) : result;
     }
     const modelInfo = getV2VModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;

@@ -557,6 +557,101 @@ for (const id of ["video-watermark-remover", "seedance-2-watermark-remover", "se
       caveat: "AI removal/inpainting/reconstruction; obscured content, identity and exact original pixels cannot be guaranteed. No caller mask or region control." } };
 }
 
+
+// Exact high-value remote video review; no wildcard/profile admission.
+Object.assign(VIDEO_TOOL_OVERRIDES, {
+  "gemini-omni-video-edit": {
+    hasPrompt: true, promptRequired: true, imageOptional: true,
+    required: ["video_url", "prompt"], operation: "edit",
+    inputs: {
+    "image_urls": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "title": "Reference Images",
+        "maxItems": 7,
+        "field": "image"
+    },
+    "trim_start": {
+        "type": "number",
+        "title": "Trim Start (seconds)",
+        "default": 0,
+        "minValue": 0
+    },
+    "trim_end": {
+        "type": "number",
+        "title": "Trim End (seconds)",
+        "default": 10,
+        "minValue": 0
+    },
+    "duration": {
+        "enum": [
+            4,
+            6,
+            8,
+            10
+        ],
+        "type": "int",
+        "title": "Duration (seconds)",
+        "default": 8
+    },
+    "resolution": {
+        "enum": [
+            "720p",
+            "1080p",
+            "4k"
+        ],
+        "type": "string",
+        "title": "Resolution",
+        "default": "1080p"
+    },
+    "aspect_ratio": {
+        "enum": [
+            "16:9",
+            "9:16"
+        ],
+        "type": "string",
+        "title": "Aspect Ratio",
+        "default": "16:9"
+    },
+    "audio_ids": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "title": "Audio IDs",
+        "maxItems": 3,
+        "providerIdentifier": "audio",
+        "projectAsset": false
+    },
+    "seed": {
+        "type": "int",
+        "title": "Seed",
+        "minValue": 0,
+        "maxValue": 2147483647,
+        "default": 0
+    },
+    "character_ids": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "title": "Character IDs",
+        "maxItems": 3,
+        "providerIdentifier": "character",
+        "projectAsset": false
+    }
+},
+  },
+  "seedance-2.5-spicy-video-edit": { hasPrompt: true, promptRequired: true, operation: "edit" },
+  "seedance-2.5-spicy-video-extend": { hasPrompt: true, promptRequired: true, operation: "extend" },
+});
+for (const id of ["seedance-2.5-spicy-video-edit", "seedance-2.5-spicy-video-extend", "gemini-omni-video-edit", "ltx-2.3-video-extend", "pixverse-v6-extend", "seedance-v1.5-pro-video-extend"]) {
+  VIDEO_TOOL_OVERRIDES[id] = { ...VIDEO_TOOL_OVERRIDES[id], strictMedia: true,
+    resultSemantics: { mediaType: "video", caveat: "AI video transformation/continuation; source duration, frame precision, camera/identity fidelity and exact assembled timing are not guaranteed." } };
+}
+
 const ACTION_LABELS = Object.freeze({
   edit: "Edit video",
   extend: "Extend video",

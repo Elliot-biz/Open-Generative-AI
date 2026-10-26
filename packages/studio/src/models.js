@@ -9,8 +9,9 @@ import {
 
 // Verified against https://api.muapi.ai/openapi.json on 2026-09-09.
 // Seedance 2.5 shares common inputs across its Standard, Intl and Spicy routes.
-// Spicy T2V/I2V routes additionally support native resolution and audio
-// generation controls.
+// Spicy T2V/I2V source declarations include native resolution/audio controls.
+// Ordinary Spicy 2.5 generation remains canonically deferred pending the current
+// OpenAPI audio/draft/resolution discrepancy (2026-10-26 contract review).
 const SEEDANCE_25_ASPECT_RATIO_INPUT = Object.freeze({
   enum: Object.freeze(["adaptive", "16:9", "9:16", "1:1", "4:3", "3:4", "21:9", "9:21"]),
   type: "string",
@@ -24075,7 +24076,9 @@ export const i2vModels = [
     "imageField": "images_list",
     "hasPrompt": true,
     "promptRequired": true,
+    "endImageRequired": true,
     "inputs": {
+      "resolution": SEEDANCE_25_VIDEO_RESOLUTION_INPUT,
       "prompt": {
         "examples": [
           "Create a smooth transition from a cloudy sky to a quiet riverside park path, with natural camera movement and realistic lighting."
@@ -24640,6 +24643,7 @@ export const i2vModels = [
     "hasPrompt": true,
     "promptRequired": true,
     "inputs": {
+      "resolution": SEEDANCE_25_VIDEO_RESOLUTION_INPUT,
       "prompt": {
         "examples": [
           "Create a calm cinematic park sequence. Use the images for environment style, the video clips for camera motion and street rhythm, and the audio as mood reference."
@@ -29157,6 +29161,7 @@ export const v2vModels = [
       "video_url"
     ],
     "inputs": {
+      "resolution": SEEDANCE_25_VIDEO_RESOLUTION_INPUT,
       "prompt": {
         "examples": [
           "Change the lighting to golden hour and add light fog to the environment."
@@ -29961,6 +29966,7 @@ export const v2vModels = [
       "video_url"
     ],
     "inputs": {
+      "resolution": SEEDANCE_25_VIDEO_RESOLUTION_INPUT,
       "prompt": {
         "examples": [
           "The car keeps driving down the coastal road as the sun sets, camera slowly pulling back."

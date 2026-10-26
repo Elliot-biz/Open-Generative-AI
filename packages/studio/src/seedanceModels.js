@@ -67,7 +67,7 @@ for (const profile of ["standard", "intl", "spicy"]) {
   for (const { stem, workflowId } of Object.values(MODERN_WORKFLOWS)) {
     for (const resolution of ["default", "480p", "1080p", "4k"]) {
       const usesNativeResolution = resolution === "default" && (
-        (profile === "spicy" && (workflowId === null || workflowId === "animate_image")) ||
+        profile === "spicy" ||
         (profile === "standard" && ["edit_video", "extend_uploaded_video"].includes(workflowId))
       );
       register(

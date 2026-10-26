@@ -56,9 +56,9 @@ function fake(t, poll = false) {
   t.mock.method(globalThis, 'fetch', async (url, init = {}) => { calls.push({ url, ...init }); return { ok: true, json: async () => poll && init.method === 'POST'
     ? { request_id: 'video-input-job' } : { status: 'completed', outputs: ['https://example.com/result.mp4'], cost: 0.5 } }; }); return calls;
 }
-test('review eligibility stays exact: 20 references, 11 keyframes and 15 Lip Sync IDs', () => {
+test('original 20 reference/11 keyframe/15 Lip Sync contracts remain; reviewed I2V inventory grows explicitly', () => {
   assert.equal(references.length, 20); assert.equal(frames.length, 11); assert.equal(lip.length, 15);
-  assert.equal(i2vModels.filter(m => getVideoInputStatus(m.id).status === 'REVIEWED').length, 31);
+  assert.equal(i2vModels.filter(m => getVideoInputStatus(m.id).status === 'REVIEWED').length, 36);
   assert.equal(getVideoInputModel('not-a-model'), null);
   for (const id of ['kling-o1-reference-to-video', 'kling-o1-standard-reference-to-video']) {
     assert.equal(getVideoInputStatus(id).status, 'DEFERRED'); assert.equal(findRemote(id, 'i2v'), null);

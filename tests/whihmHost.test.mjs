@@ -781,3 +781,29 @@ for (const [model, parameters, bindings] of [
   if (model === 'add-video-watermark') { assert.equal(payload.watermark_image_url, 'https://example.com/utility-2'); assert.equal(payload.opacity, 0); } else assert.equal(payload.theme, 'Hormozi_2');
   assert.ok(!JSON.stringify({ plan, result }).includes(f.root)); assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
 });
+
+for (const [model, mode, parameters, bindings] of [
+  ['seedance-2.5-spicy-video-edit','v2v',{prompt:'Change lighting',resolution:'4k',generate_audio:false,seed:0},{video_url:'clip',images_list:['picture','https://example.com/public.png','picture'],audios_list:['sound','sound']}],
+  ['seedance-2.5-spicy-video-extend','v2v',{prompt:'Continue',resolution:'1080p',duration:4,generate_audio:false},{video_url:'clip',last_image:'picture'}],
+  ['gemini-omni-video-edit','v2v',{prompt:'Edit',trim_start:1,trim_end:7,audio_ids:['sound'],character_ids:['picture']},{video_url:'clip',image_urls:['picture','picture']}],
+  ['seedance-2.5-spicy-first-last-frame','i2v',{prompt:'Transition',resolution:'4k',seed:0},{images_list:['picture','picture']}],
+]) test(`final remote video host: ${model} retains exact roles/options and fixed authorization`,async t=>{
+  const f=await fixture(t),calls=[],uploaded=[];const current=await f.project.getProjectWorkflow(f.workflow.workflowId),changed=structuredClone(current.workflow),node=changed.nodes[0];
+  for(const[id,type]of [['clip','video'],['picture','image'],['sound','audio']]){const imported=await f.project.importAsset({sourcePath:f.source,assetId:id,contentType:type+'/fixture'});changed.assets.push({id,type,localPath:imported.asset.path});}
+  node.executor.model=model;node.metadata.oga.mode=mode;node.parameters=parameters;node.outputs[0].type='video';node.assetRefs=['clip','picture','sound'];
+  node.inputs=Object.keys(bindings).map(id=>({id,type:id==='video_url'?'video':id==='audios_list'?'audio':'image'}));
+  assert.equal((await f.project.updateWorkflowInProject({workflow:changed,expectedHash:current.hash})).status,'updated');
+  const {processV2V,generateI2V}=await import('../packages/studio/src/muapi.js');
+  const h=await transport(t,{remote:{processV2V,generateI2V,async uploadFile(_key,file){uploaded.push(file.type);return `https://example.com/final-${uploaded.length}`;}}});
+  t.mock.method(globalThis,'fetch',async(url,init={})=>{calls.push({url,...init});return{ok:true,json:async()=>init.method==='POST'?{request_id:'host-final-video'}:{status:'completed',output:{video:'https://example.com/final.mp4',metadata:{native:true}}}};});
+  const opened=await h.host.openProject({projectRoot:f.root}),args={...request(opened),assetBindings:bindings},plan=await h.host.planNode(args);
+  assert.equal(plan.status,'planned',JSON.stringify(plan));assert.equal(h.authReads(),0);assert.equal(calls.length,0);assert.equal(uploaded.length,0);
+  assert.equal(errorCode(await h.host.executeNode(args)),'EXECUTION_NOT_AUTHORIZED');
+  const result=await h.host.executeNode({...args,allowExecution:true});assert.equal(result.status,'succeeded',JSON.stringify(result));assert.equal(result.model,model);assert.equal(result.requestId,'host-final-video');assert.equal(result.outputs[0].value,'https://example.com/final.mp4');
+  const payload=JSON.parse(calls[0].body);assert.ok(calls[0].url.endsWith('/api/v1/'+model));
+  if(model.endsWith('spicy-video-edit')){assert.deepEqual(payload.images_list,['https://example.com/final-2','https://example.com/public.png','https://example.com/final-3']);assert.deepEqual(payload.audios_list,['https://example.com/final-4','https://example.com/final-5']);assert.equal(payload.seed,0);assert.equal(payload.generate_audio,false);}
+  if(model.endsWith('spicy-video-extend'))assert.equal(payload.last_image,'https://example.com/final-2');
+  if(model==='gemini-omni-video-edit'){assert.deepEqual(payload.audio_ids,['sound']);assert.deepEqual(payload.character_ids,['picture']);assert.equal(uploaded.length,3);assert.equal((await h.host.planNode({...args,assetBindings:{...bindings,audio_ids:['sound']}})).status,'rejected');}
+  if(mode==='i2v')assert.deepEqual(payload.images_list,['https://example.com/final-1','https://example.com/final-2']);
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow,changed);assert.ok(!JSON.stringify({plan,result}).includes(f.root));
+});

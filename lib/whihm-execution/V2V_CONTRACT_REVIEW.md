@@ -24,7 +24,7 @@ Required/optional media in the inventory below is **source declaration**, not a 
 
 ## Complete checked-out inventory
 
-Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READY_FOR_GENERIC_V2V_BINDING; `F` = NEEDS_TARGETED_CONTRACT_FIX (fixed, now bound); `S` = SPECIALIZED_ROUTE_ALREADY_EXISTS; `I` = INSUFFICIENT_EVIDENCE; `D` = DEFER (source inspected, not yet reviewed sufficiently for execution).
+Classes retain the original review and subsequent reviewed-wave results: `R` = READY_FOR_GENERIC_V2V_BINDING; `F` = NEEDS_TARGETED_CONTRACT_FIX (fixed, now bound); `S` = SPECIALIZED_ROUTE_ALREADY_EXISTS; `I` = INSUFFICIENT_EVIDENCE; `D` = DEFER (source inspected, not yet reviewed sufficiently for execution).
 
 | Exact OGA ID (endpoint when different) | Class | Media beyond source video; text | Declared supplemental fields |
 | --- | --- | --- | --- |
@@ -46,21 +46,21 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 | `kling-o1-video-edit-fast` | F | images_list? (0–4; wire default []), prompt required | keep_original_sound, aspect_ratio |
 | `kling-o1-standard-video-edit` | F | images_list? (0–4; wire default []), prompt required | keep_original_sound |
 | `wan2.2-spicy-video-extend` | D | prompt required | resolution, duration |
-| `seedance-v1.5-pro-video-extend` | D | prompt required | resolution, duration, generate_audio, camera_fixed |
+| `seedance-v1.5-pro-video-extend` | R | prompt required | resolution, duration, generate_audio, camera_fixed |
 | `seedance-v1.5-pro-video-extend-fast` | D | prompt required | resolution, duration, generate_audio, camera_fixed |
 | `add-video-watermark` | F | required watermark_image_url (image), source video | position, opacity, scale |
 | `seedance-2-watermark-remover` → `seedance-2.0-watermark-remover` | R | — | — |
 | `ai-captions` | F | required source video | language, theme |
-| `ltx-2.3-video-extend` | D | prompt supported | duration |
+| `ltx-2.3-video-extend` | R | prompt supported | duration |
 | `seedance-2-video-watermark-remover-pro` | R | — | — |
-| `pixverse-v6-extend` | D | prompt required | resolution, duration, generate_audio_switch, negative_prompt, style |
+| `pixverse-v6-extend` | R | prompt required | resolution, duration, generate_audio_switch, negative_prompt, style |
 | `wan2.7-video-extend` | R | audio_url, prompt required | negative_prompt, resolution, duration |
 | `wan2.7-video-edit` | R | images_list?, prompt required | negative_prompt, resolution, duration, audio_setting |
 | `happy-horse-1-video-edit-1080p` | D | images_list (requirement per source), prompt required | audio_setting, seed |
 | `happy-horse-1-video-edit-720p` | D | images_list (requirement per source), prompt required | audio_setting, seed |
 | `happy-horse-1.1-video-edit-1080p` | D | images_list (requirement per source), prompt required | audio_setting, seed |
 | `happy-horse-1.1-video-edit-720p` | D | images_list (requirement per source), prompt required | audio_setting, seed |
-| `gemini-omni-video-edit` | I | image_urls (requirement per source), prompt required | — |
+| `gemini-omni-video-edit` | F | required video_url + prompt; optional ordered image_urls 0–7 | trim_start/end, duration, resolution, aspect_ratio, seed, opaque audio_ids/character_ids |
 | `video-background-remover` | R | — | — |
 | `kling-v2.6-pro-motion-control` | D | image_url (requirement per source), prompt required | character_orientation |
 | `infinitetalk-video-to-video` | S | audio_url, prompt supported | resolution |
@@ -75,7 +75,7 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 | `seedance-2.5-video-extend-1080p` | I | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-video-extend-4k` | I | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-edit` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
-| `seedance-2.5-spicy-video-edit` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
+| `seedance-2.5-spicy-video-edit` | F | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-edit-480p` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-spicy-video-edit-480p` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-edit-1080p` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
@@ -83,7 +83,7 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 | `seedance-2.5-intl-video-edit-4k` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-spicy-video-edit-4k` | D | images_list?, audios_list, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-extend` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
-| `seedance-2.5-spicy-video-extend` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
+| `seedance-2.5-spicy-video-extend` | F | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-extend-480p` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-spicy-video-extend-480p` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
 | `seedance-2.5-intl-video-extend-1080p` | D | last_image?, prompt required | duration, generate_audio, seed, high_bitrate, aspect_ratio |
@@ -104,16 +104,16 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 | `topaz-upscale-video-generative` | F | — | topaz_model (wire model), upscale_factor, target_fps, softness, H264_output |
 | `topaz-upscale-video-precision` | F | — | topaz_model (wire model), upscale_factor, target_fps, compression, noise, halo, grain, recover_detail, H264_output |
 
-Current counts after the utility milestone: **D=33, F=13, I=9, R=16, S=4**; **75 total, 29 bound**, 42 unresolved D/I and four specialized. Before this milestone (Wave 3): D=31, F=11, I=17, R=12, S=4, 23 bound. Six utility IDs are newly bound; three unrelated I entries move to D based on refreshed request evidence only and remain unbound. Six Seedance fixed-resolution variants remain I because naming/metadata/OpenAPI conflict.
+Current counts after the high-value remote video wave: **D=28, F=16, I=8, R=19, S=4**; **75 total, 35 bound**, 36 unresolved D/I and four specialized. Utility milestone historical counts were D33/F13/I9/R16/S4, 29 bound; the appended review records this wave’s exact scope. Before this milestone (Wave 3): D=31, F=11, I=17, R=12, S=4, 23 bound. Six utility IDs are newly bound; three unrelated I entries move to D based on refreshed request evidence only and remain unbound. Six Seedance fixed-resolution variants remain I because naming/metadata/OpenAPI conflict.
 
 ## Deferred/specialized findings
 
 - Kling v3 Pro Motion Control and Wan Animate have the richer existing `recast` aliases; Infinitetalk/Volcengine have `lipsync`. Explicit V2V routing rejects these; it does not silently reroute. Other Kling variants are deferred, not assumed covered by a different alias.
-- Seedance fixed-resolution/profile variants, Happy Horse and the older Gemini Omni edit remain on existing OGA paths, outside canonical admission; Luma Flash Reframe is now admitted below. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
+- Seedance fixed-resolution/profile variants and Happy Horse remain on existing OGA paths outside canonical admission, except the exact unsuffixed Spicy pair admitted in the latest wave. Luma Flash Reframe and conservative Gemini Omni edit are now admitted; see the dated addenda. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
 - `seedance-2-video-edit` is now admitted with native `video_urls`, **exactly one** source under the current provider schema, and ordered optional image/audio arrays. Do not flatten or invent multi-clip support.
 - Topaz generative/precision now use explicit `topaz_model` for provider wire `model`; see Wave 3. The logical endpoint selector remains separate; no raw-field workaround.
 - Depth Anything remains deferred: refreshed metadata confirms alternative image/video roles, while generic V2V requires video and labels outputs as video. Preserve the existing mixed Studio path until a scoped alternative-input contract can be represented without changing image callers.
-- Sparse catalog entries do not prove absent provider functionality. Watermarks/captions now have reviewed contracts below; pro upscaler/remix/dance have refreshed request evidence but remain unbound. MMAudio/Gemini retain specific evidence gaps.
+- Sparse catalog entries do not prove absent provider functionality. Watermarks/captions now have reviewed contracts below; pro upscaler/remix/dance have refreshed request evidence but remain unbound. MMAudio retains its result evidence gap; conservative Gemini Omni edit is now admitted in the latest wave.
 - Existing desktop V2V forwarded only source video, image and prompt. Delegation now preserves shared options and lifecycle, without changing desktop Video Studio controls. Missing UI controls are not invented.
 
 ## Precision and remaining limitations
@@ -399,3 +399,96 @@ Each family's exact detail URL is `https://api.muapi.ai/api/v1/models/<inventory
 No auth, credentials, pricing/estimate POST, upload, generation, agents, inference,
 model download or paid execution occurred. Confirmed request evidence is distinct
 from inferred creative usefulness and unverified backend quality/result fidelity.
+
+## High-value remote video wave — 2026-10-26 (safe partial)
+
+Starting HEAD `ebb589965ad6302c2f552f8c0327d9f971b35b27`.
+Six exact V2V IDs are newly admitted; no generic payload/client/lifecycle is added.
+The previous unresolved-family tables are historical evidence/priority decisions;
+this section supersedes only these six admissions and the Fast prioritization rule.
+Current classes: **D28/F16/I8/R19/S4**, 75 total; **35 bound**, 36 unresolved, 4 S.
+
+| Newly admitted ID | Required / optional media | Controls / defaults / scope |
+| --- | --- | --- |
+| seedance-2.5-spicy-video-edit | video_url + nonblank prompt; optional ordered images_list0–30 and audios_list0–10 | duration integer4–30/default5; resolution480p/720p/1080p/4k/default720p; aspect adaptive/16:9/9:16/1:1/4:3/3:4/21:9/9:21/default16:9; optional seed−1–4294967295, no default; high_bitrate false, generate_audio true. Zero seed/false switches/order/duplicates retained; no extra prompt prefix |
+| seedance-2.5-spicy-video-extend | video_url + nonblank prompt; optional scalar last_image | Same bounded controls/defaults; no edit image/audio lists. Continuation-segment duration, not an assembled final timeline. Optional last_image is a target frame, never a reference list |
+| gemini-omni-video-edit | Canonical V2V requires video_url + nonblank prompt; images optional, ordered image_urls0–7 | trim_start/end nonnegative/default0/10, end≥start; duration4/6/8/10 default8; resolution720p/1080p/4k default1080p; aspect16:9/9:16 default16:9; seed0–2147483647, model-detail product default0. Opaque audio_ids and character_ids0–3 are provider identifiers, not assets/URLs/paths |
+| ltx-2.3-video-extend | video_url required; prompt optional | duration integer enum1…20/default5. No invented resolution/audio/camera control |
+| pixverse-v6-extend | video_url + nonblank prompt | duration integer1–15/default5 from model detail/source; resolution360p/540p/720p/1080p default720p; generate_audio_switch false; optional negative_prompt; style exactly anime/3d_animation/clay/comic/cyberpunk, no default |
+| seedance-v1.5-pro-video-extend | video_url + nonblank prompt | duration integer4–12/default5; resolution480p/720p/default720p; generate_audio true; camera_fixed false. A camera intent flag is not an exact-preservation guarantee |
+
+Spicy native resolution uses the existing shared video-control resolution constant
+and exact unsuffixed family facets. Fixed suffixes receive no native-resolution
+certification. Gemini source metadata's required-image implication is corrected
+in existing videoToolCapabilities, with an explicit conservative video-only V2V
+scope. Model-specific bounds/defaults come from existing schemas plus verified
+first-party fields; no second model registry is introduced. Optional provider null
+forms remain excluded; omission is the supported representation.
+
+Gemini provider schemas require only prompt and permit nullable video. This binding
+deliberately requires source video; it does not expose reference-free generation.
+Opaque ID lists are preserved in order and rejected if blank, URL/path-like or
+containing whitespace/slashes; they are never passed to the project resolver.
+Plans label providerIdentifiers with projectAsset=false. Registered assets with
+coincidentally matching ID strings do not change this interpretation. Trim validation
+does not infer clip duration or frame-perfect editing; a default end10 still means
+start>10 requires an explicit compatible end. Equal start/end is permitted by the
+requested end≥start rule, with provider content behavior unverified.
+
+For these six contracts, existing project binding machinery now validates typed
+source/image/audio roles and allows mixed registered/HTTP array references, retaining
+order and duplicates. Unknown asset fields, especially opaque ID arrays, reject.
+URI shape/length is validated before auth/upload. No source media probing or new
+resolver. Plans expose roles, accepted controls/effective defaults, purpose/result
+caveats and endpoint fields. Existing shared processV2V/application delegation,
+request-ID polling, uploads, authorization and project integrity remain authoritative.
+Native output.video/nested output.outputs are normalized without discarding metadata;
+no audio/identity/trim artifact or exact timing/fidelity guarantee is fabricated.
+
+### Generation/reference companion review
+
+Five I2V models are explicitly reviewed through the existing generateI2V service:
+Seedance2.5 Spicy first-last/omni, Wan2.2 Spicy image, Wan3 Spicy reference and
+MiniMax H3 Spicy image. The bridge documentation records their exact contracts.
+Two requested ordinary generation routes remain **DEFERRED**, not fully hardened:
+seedance-2.5-spicy-text-to-video and seedance-2.5-spicy-image-to-video.
+Current source/model detail declares generate_audio, but OpenAPI omits it and
+introduces draft/draft_request_id finalization. Source generation resolution also
+uses 4K/default1080p while OpenAPI uses 4k/default720p. The existing generic upstream
+path is preserved; canonical admission fails closed with VIDEO_AUDIO_CONTRACT_CONFLICT.
+No unsupported field is silently discarded or certified. Draft/finalization remains
+out of scope and is rejected by the newly reviewed first-last/omni contracts.
+
+All18 Seedance2.5 Spicy fixed suffix IDs remain outside reviewed/canonical execution:
+6 V2V + 3 T2V + 9 I2V. A narrow canonical guard closes previous generic T2V/I2V
+eligibility for those12 ambiguous IDs; upstream catalog/Studio access is not removed.
+No Standard/Intl fixed-profile clarification or automatic admission is attempted.
+
+### Fast/speed-oriented variant policy
+
+Fast/Turbo/Draft/Mini variants are **not** prioritized merely for latency. Prefer
+slower executors when comparable quality/features and lower cost or no production
+need for speed make them preferable. A speed-oriented option needs evidenced cost,
+quality, controls, limits, reliability or input/output value beyond speed to merit
+reviewed coverage. Existing upstream Fast choices are not removed or newly bound.
+
+Inspection found a real non-speed difference for seedance-v1.5-pro-video-extend-fast:
+OpenAPI permits720p/1080p, versus Standard480p/720p; local source currently shares
+the Standard resolution definition with Fast. That is a possible resolution advantage
+and a separate parity issue, **not** proof of better quality/cost/reliability.
+Fast remains unbound/out of this wave; no automatic exception was taken.
+
+MMAudio remains parked, strategically important and subject to mandatory future
+revisit when first-party result/audio-treatment semantics become coherent. Depth,
+Suno, Qwen, alternate Kling, Dance, Happy Horse and specialized routes are untouched.
+
+### Evidence and QA boundary
+
+Public GETs only: one current OpenAPI snapshot and exact model-detail records for
+all13 requested IDs plus Seedance1.5 Fast. Every exact request path was found; no
+authentication, estimates, uploads or jobs. Current generation OpenAPI's draft fields
+are new optional lifecycle information, not permission to widen this wave. Accepted
+contracts reuse source metadata where adequate; unresolved fields stay unavailable.
+Schemas describe requested behavior, not measured media, output fidelity or account
+availability. All execution tests are mocked. No UI components, dependencies,
+packaging, project schema, providers, uploader or poller are added/replaced.

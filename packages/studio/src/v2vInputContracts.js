@@ -18,6 +18,8 @@ const reviewed = new Set([
   'topaz-upscale-video-creative', 'topaz-upscale-video-generative', 'topaz-upscale-video-precision',
   'luma-flash-reframe', 'add-video-watermark', 'video-watermark-remover',
   'seedance-2-watermark-remover', 'seedance-2-video-watermark-remover-pro', 'ai-captions',
+  'seedance-2.5-spicy-video-edit', 'seedance-2.5-spicy-video-extend',
+  'gemini-omni-video-edit', 'ltx-2.3-video-extend', 'pixverse-v6-extend', 'seedance-v1.5-pro-video-extend',
 ]);
 export function getV2VExecutionModel(id) {
   return reviewed.has(id) ? getVideoToolCapabilities(getV2VModelById(id)) : null;
@@ -116,8 +118,12 @@ export function buildV2VRequest(params = {}) {
     if (mediaFields.has(field) && spec.type !== 'array') valid &&= media(value);
     need(valid, 'V2V_OPTION_INVALID', field);
   }
-  if (model.utility) for (const [field] of mediaFields) if (values[field] !== undefined) {
+  if (model.utility || model.strictMedia) for (const [field] of mediaFields) if (values[field] !== undefined) {
     need((Array.isArray(values[field]) ? values[field] : [values[field]]).every(value => isVideoInputUrl(value) && value.length <= 2083), 'V2V_OPTION_INVALID', field);
+  }
+  if (model.id === 'gemini-omni-video-edit') {
+    need(values.trim_end >= values.trim_start, 'V2V_OPTION_INVALID', 'trim_end');
+    for (const field of ['audio_ids', 'character_ids']) if (values[field] !== undefined) need(values[field].every(id => typeof id === 'string' && id.length > 0 && id === id.trim() && !/[\s/\\]/.test(id) && !/^file:/i.test(id)), 'V2V_OPTION_INVALID', field);
   }
   if (model.id === 'topaz-upscale-video-generative' && values.softness !== undefined) {
     need(values.topaz_model === 'Starlight Precise 2.6', 'V2V_OPTION_INVALID', 'softness');
@@ -139,8 +145,9 @@ export function buildV2VRequest(params = {}) {
   return { endpoint: model.endpoint, payload, supportedOptions, effectiveOptions,
     requiredMedia: [...mediaFields].filter(([field]) => mediaRequired(field)).map(([field, type]) => ({ role: field === model.videoField ? 'source-video' : field, field, upstreamField: field, type,
       ...(inputs[field].type === 'array' ? { minimum: inputs[field].minItems ?? 1, maximum: inputs[field].maxItems, ordered: true } : {}) })),
-    v2v: { family: model.family, purpose: model.utility?.caveat ?? model.description, ...(model.utility ? { utility: structuredClone(model.utility) } : {}), operation: model.operation ?? null,
+    v2v: { family: model.family, purpose: model.resultSemantics?.caveat ?? model.utility?.caveat ?? model.description, ...(model.resultSemantics ? { resultSemantics: structuredClone(model.resultSemantics) } : {}), ...(model.utility ? { utility: structuredClone(model.utility) } : {}), operation: model.operation ?? null,
       ...(providerModel ? { providerModel: values.topaz_model, providerModelField: 'model' } : {}),
+      ...(model.id === 'gemini-omni-video-edit' ? { providerIdentifiers: ['audio_ids', 'character_ids'].map(field => ({ field, type: inputs[field].providerIdentifier, isArray: true, maximum: inputs[field].maxItems, projectAsset: false })) } : {}),
       fixedParameters: { ...model.fixedParameters },
       controls: structuredClone(Object.fromEntries(supportedOptions.map(field => [field, inputs[field]]))),
       requiredInputs: [...required].sort(), suppliedInputs: Object.keys(values).sort(),

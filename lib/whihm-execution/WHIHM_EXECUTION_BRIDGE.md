@@ -1200,3 +1200,57 @@ Verification used current source plus public read-only OpenAPI/model metadata;
 no credentials, uploads, estimates, provider execution or paid requests occurred.
 All lifecycle/execution QA uses fake transport. The V2V review also groups all
 42 remaining unresolved models into future waves without implementing them.
+
+## High-value remote video contracts — 2026-10-26
+
+**Safe partial:** eleven requested executors are newly hardened using existing
+services: six V2V + five I2V. No new canonical mode; total remote modes remains11.
+[Exact V2V contracts and evidence](V2V_CONTRACT_REVIEW.md#high-value-remote-video-wave--2026-10-26-safe-partial)
+cover Spicy edit/extend, Gemini Omni edit and LTX/Pixverse/Seedance1.5 continuation.
+All previously reviewed29 V2V models remain, giving **35 reviewed V2V IDs**.
+
+| Newly reviewed I2V ID | Native roles | Controls/defaults |
+| --- | --- | --- |
+| seedance-2.5-spicy-first-last-frame | Required prompt and exactly two ordered images_list entries [start,end]; duplicate frame URLs remain valid | duration4–30/default5; native resolution480p/720p/1080p/4k default720p; aspect adaptive/16:9/9:16/1:1/4:3/3:4/21:9/9:21 default16:9; optional seed−1–4294967295; high_bitrate false. No generate_audio control |
+| seedance-2.5-spicy-omni-reference | Required prompt and at least one reference across ordered images_list0–30/videos_list0–10/audios_list0–10 | Same duration/resolution/aspect/seed/bitrate controls; omni_reference_task_type auto/default or reference only. No edit/extend admission through I2V. No generate_audio toggle |
+| wan2.2-spicy-image-to-video | Required prompt + scalar image_url start frame | duration5/8 default5; resolution480p/720p default480p; no seed/audio/aspect options invented |
+| wan3.0-spicy-reference-to-video | Required prompt and at least one typed reference: images0–10/videos0–5/audios0–5, all ordered | duration2–30/default5; resolution480p/720p/1080p default720p; aspect adaptive/16:9/9:16/1:1/4:3/3:4 default16:9; seed integer/default−1; thinking_mode false; enable_audio true |
+| minimax-h3-image-to-video-spicy | Required scalar image_url start; optional scalar last_image end; prompt optional | resolution480p/768p default480p; duration integer3…15/default5; seed integer/default−1. Aspect follows source; no invented aspect or audio toggle |
+
+The Spicy first-last model's current detail description explicitly requires two
+images. Its missing endImageRequired metadata is corrected for this exact ID;
+existing base Seedance one-frame behavior is unchanged. Exact unsuffixed Spicy
+first-last/omni/edit/extend share the reviewed native-resolution facet. Suffixes
+are unchanged in source; no implicit fixed-output certification.
+
+Reviewed I2V grows31→36:22 references +12 keyframes +2 source-image animations;
+all15 Lip Sync contracts remain. `videoInputContracts` projects existing metadata
+for these exact IDs; it does not confer admission on other Spicy/Wan/MiniMax models.
+Native video results normalize through the existing shared result helper and
+canonical result boundary while retaining all original safe metadata. No generation,
+frame timing, identity, camera, source-audio, stereo, motion or quality claim is
+measured/guaranteed by request validation.
+
+Project bindings retain image/video/audio roles, registered identities/checksums,
+array order, duplicates and mixed resolved URLs. Gemini opaque IDs are explicitly
+non-assets, even when strings match registered asset IDs. Plan/dry-run uses logical
+references, declared controls and effective defaults; no auth/upload/poll/provider
+call. Real execution still requires the existing allowExecution boundary.
+
+**Not promoted:** ordinary seedance-2.5-spicy-text-to-video and
+seedance-2.5-spicy-image-to-video. Source/detail audio toggle conflicts with current
+OpenAPI (plus casing/default resolution differences); canonical status is DEFERRED
+with VIDEO_AUDIO_CONTRACT_CONFLICT, while existing upstream generic service paths
+remain intact. Draft/draft_request_id is not implemented. All18 Spicy fixed suffixes
+remain canonically unavailable, explicitly VIDEO_FIXED_PROFILE_UNVERIFIED for T2V/
+I2V. This includes closing their previous structural generic eligibility, not
+removing upstream models. Shared architecture is adequate; the two ordinary render
+contracts need first-party clarification before claiming complete requested coverage.
+
+Fast priority requires a non-latency advantage; the review notes Fast Seedance1.5's
+possible1080p limit difference but admits only Standard. MMAudio remains a mandatory
+high-value future revisit, not a deleted/low-priority intent. No parked family,
+packaging, workflow/agent, projection, media-inspection or finishing implementation
+is introduced. No UI component/layout change; reviewed metadata can drive existing
+option controls. Current OpenAPI and14 public model-detail GETs were read-only;
+execution/upload/polling tests use fake transport exclusively.

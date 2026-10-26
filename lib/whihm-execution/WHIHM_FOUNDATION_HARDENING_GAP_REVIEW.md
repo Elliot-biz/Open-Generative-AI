@@ -1,5 +1,17 @@
 # WHIHM final foundation-hardening gap review
 
+> **Current-wave addendum (2026-10-26; starting HEAD ebb589965ad6302c2f552f8c0327d9f971b35b27):**
+> Original G01 is complete: both unsuffixed Spicy V2V executors are bound. Six V2V
+> and five I2V executors gained reviewed contracts. Expanded wave result is PARTIAL:
+> ordinary Spicy T2V/single-image I2V need first-party audio-toggle/draft/resolution
+> clarification. For the expanded priority set, retain **READY_AFTER_1_FOCUSED_TASKS**:
+> resolve those two ordinary-render contracts and harden only the coherent subset.
+> This is a provider-evidence task, not a new architectural blocker. A read-only
+> projection can alternatively represent them as explicitly deferred; do not claim
+> complete requested Spicy generation coverage. Historical review/ledger below is
+> preserved; this note and the latest execution/V2V addenda supersede affected statuses.
+
+
 Inspected source HEAD: `07b3fd3bad1329ef0210a4e15f5137e773bb6cb6`.
 Inspection/public metadata refresh: **2026-10-26**.
 **Review outcome: PASS. Foundation exit gate: READY_AFTER_1_FOCUSED_TASKS.**
@@ -659,3 +671,47 @@ Vite build, model downloads, private data access and paid provider jobs were not
 Final QA verified source-ID/count/classification coverage, intended-document-only
 Git changes, clean/unchanged submodules and unchanged NEXT_HISTORY_TASK.md.
 The staged document is checked with git diff --check before the documentation commit.
+
+
+## Expanded remote video wave disposition — 2026-10-26
+
+- G01 completed: exact Spicy edit/extend use shared processV2V, reviewed native
+  resolution and distinct edit arrays/extend last-frame semantics. No suffix admission.
+- G05 completed for a conservative Gemini source-video-required subset, including
+  optional references, ordered nonnegative trim, native controls and opaque IDs.
+- G06 partially completed: Standard Seedance1.5, LTX2.3 and Pixverse6 extensions
+  admitted; Fast remains excluded. Evidence shows Fast720p/1080p versus Standard
+  480p/720p (source Fast metadata still differs); this non-speed distinction is
+  recorded without automatically binding/prioritizing Fast.
+- G14/G27 partly advanced: Spicy first-last/omni, Wan2.2 Spicy image, Wan3 Spicy
+  references and MiniMax H3 Spicy image now have exact contracts. First-last needs
+  two frames; MiniMax prompt is optional and start/end roles remain separate.
+- New evidence item G41: **NEEDS_PROVIDER_CLARIFICATION** for ordinary
+  seedance-2.5-spicy-text-to-video and seedance-2.5-spicy-image-to-video. Source/detail
+  exposes generate_audio, while current OpenAPI omits it and introduces draft /
+  draft_request_id lifecycle forms; source uses4K/default1080p versus OpenAPI
+  4k/default720p. No paid test or ignored flag is used as a substitute for a coherent
+  contract. Canonical availability is explicitly deferred; existing upstream generic
+  UI/services remain. Core first-last/omni do not accept draft/finalization either.
+- G02/G15 unchanged in evidence: all18 Spicy fixed suffixes still need provider
+  clarification. Their12 generic T2V/I2V canonical paths are now closed explicitly;
+  source catalogs are preserved. The original42-ID Spicy inventory remains exact,
+  but newly reviewed, deferred and generic status columns must be read with this addendum.
+- Remaining V2V inventory is D28/F16/I8/R19/S4 (35 bound,36 unresolved,4 specialized).
+  No other historical priority is implicitly authorized. Existing Audio/Image/
+  Recast/Motion/Lip/Clipping/Motion Graphics remain intact.
+
+**Before Depth Anything:** finish or explicitly accept deferral of the two G41
+ordinary-render gaps for the intended initial scope, then proceed with the planned
+read-only capability projection. Depth's separate XOR image/video input + correctly
+typed image/video-result contract remains a future bounded task; it does not require
+binding every residual V2V profile. MMAudio remains parked and strategically important,
+with mandatory revisit once first-party output/audio-treatment evidence is coherent.
+No new general architecture blocker or reason to replace OGA was found. Release
+packaging/local staging/runtime-fidelity gates remain as documented, outside this wave.
+
+**Prioritization rule:** Fast/Turbo/Draft/Mini are not preferred merely for latency.
+Require meaningful cost, quality, controls, limits, reliability or input/output value;
+prefer a slower comparable executor when lower cost or lack of speed value warrants
+it. Do not remove upstream choices, automatically bind speed variants or implement
+ranking as part of hardening.

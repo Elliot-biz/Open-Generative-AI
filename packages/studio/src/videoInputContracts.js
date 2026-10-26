@@ -12,14 +12,17 @@ const references = new Set([
   'gemini-omni-image-to-video', 'gemini-omni-flash-1-1-reference-to-video',
   'minimax-h3-reference-to-video', 'minimax-h3-open-reference-to-video',
   'wan2.1-reference-video', 'wan2.7-reference-to-video', 'wan3.0-reference-to-video',
+  'seedance-2.5-spicy-omni-reference', 'wan3.0-spicy-reference-to-video',
 ]);
 const keyframes = new Set([
   'seedance-2-first-last-frame', 'seedance-2-first-last-frame-fast',
   'seedance-2-vip-first-last-frame', 'seedance-2-vip-first-last-frame-fast', 'seedance-2.5-first-last-frame',
   'vidu-q2-pro-start-end-video', 'vidu-q2-turbo-start-end-video',
   'vidu-q3-pro-first-last-frames', 'vidu-q3-turbo-first-last-frames',
-  'flux-3-start-end-to-video', 'gemini-omni-flash-1-1-image-to-video',
+  'flux-3-start-end-to-video', 'gemini-omni-flash-1-1-image-to-video', 'seedance-2.5-spicy-first-last-frame',
 ]);
+const animations = new Set(['wan2.2-spicy-image-to-video', 'minimax-h3-image-to-video-spicy']);
+const wave = new Set([...animations, 'seedance-2.5-spicy-first-last-frame', 'seedance-2.5-spicy-omni-reference', 'wan3.0-spicy-reference-to-video']);
 const lipSync = new Set([
   'infinitetalk-image-to-video', 'wan2.2-speech-to-video', 'ltx-2.3-lipsync', 'ltx-2-19b-lipsync',
   'sync-lipsync', 'latent-sync', 'creatify-lipsync', 'veed-lipsync', 'infinitetalk-video-to-video',
@@ -27,11 +30,13 @@ const lipSync = new Set([
   'kling-v2-avatar-standard', 'kling-v2-avatar-pro', 'omnihuman-1-5',
 ]);
 export function getVideoInputStatus(id, mode = 'i2v') {
+  if (['i2v', 't2v'].includes(mode) && /^seedance-2\.5-spicy-(text-to-video|image-to-video|first-last-frame|omni-reference)-(480p|1080p|4k)$/.test(id)) return { status: 'DEFERRED', code: 'VIDEO_FIXED_PROFILE_UNVERIFIED' };
+  if ((mode === 't2v' && id === 'seedance-2.5-spicy-text-to-video') || (mode === 'i2v' && id === 'seedance-2.5-spicy-image-to-video')) return { status: 'DEFERRED', code: 'VIDEO_AUDIO_CONTRACT_CONFLICT' };
   if (mode === 'lipsync') return { status: lipSync.has(id) ? 'REVIEWED' : 'UNREVIEWED', capability: 'LIP_SYNC' };
   if (mode !== 'i2v') return { status: 'UNREVIEWED' };
   if (['kling-o1-reference-to-video', 'kling-o1-standard-reference-to-video'].includes(id)) return { status: 'DEFERRED', code: 'VIDEO_REFERENCE_CONTRACT_CONFLICT' };
-  return references.has(id) || keyframes.has(id)
-    ? { status: 'REVIEWED', capability: references.has(id) ? 'REFERENCE_GUIDED_VIDEO' : 'CONTROL_VIDEO_KEYFRAMES' }
+  return references.has(id) || keyframes.has(id) || animations.has(id)
+    ? { status: 'REVIEWED', capability: references.has(id) ? 'REFERENCE_GUIDED_VIDEO' : animations.has(id) ? 'ANIMATE_IMAGE' : 'CONTROL_VIDEO_KEYFRAMES' }
     : { status: 'UNREVIEWED' };
 }
 const mediaSpec = (type, array = false, maximum) => array
@@ -57,7 +62,8 @@ export function getVideoInputModel(id, mode = 'i2v') {
     }
     return model;
   }
-  model.required = ['prompt'];
+  model.required = id === 'minimax-h3-image-to-video-spicy' ? [] : ['prompt'];
+  if (wave.has(id)) model.resultSemantics = { mediaType: 'video', caveat: 'AI generation from explicit media roles; no frame, identity, camera or exact timing guarantee.' };
   const caps = getModelMediaCapabilities(model);
   for (const [type, cap] of Object.entries(caps)) {
     if (!cap.field) continue;
@@ -74,6 +80,8 @@ export function getVideoInputModel(id, mode = 'i2v') {
       inputs[last] ||= mediaSpec('image');
       if (id !== 'gemini-omni-flash-1-1-image-to-video') model.required.push(last);
     }
+  } else if (animations.has(id)) {
+    model.required.push(caps.image.field);
   } else if (!model.imageOptional && !id.startsWith('minimax-h3-') && !id.startsWith('wan2.7-') && !id.startsWith('wan3.0-') && !id.startsWith('seedance-2-omni-') && !id.startsWith('seedance-2-vip-') && id !== 'gemini-omni-flash-1-1-reference-to-video') {
     model.required.push(caps.image.field);
   }
@@ -81,7 +89,7 @@ export function getVideoInputModel(id, mode = 'i2v') {
     type: 'string', enum: id.startsWith('seedance-2.5-') || id === 'seedance-2-omni-reference' ? ['480p', '720p', '1080p', '4k'] : ['720p', '1080p', '4k'], default: '720p',
   };
   if (id === 'vidu-q4-reference-to-video') inputs.audios_list = mediaSpec('audio', true, 3);
-  if (id === 'seedance-2.5-omni-reference') inputs.omni_reference_task_type.enum = ['auto', 'reference']; // No V2V edit/extend admission here.
+  if (['seedance-2.5-omni-reference', 'seedance-2.5-spicy-omni-reference'].includes(id)) inputs.omni_reference_task_type.enum = ['auto', 'reference']; // No V2V edit/extend admission here.
   return model;
 }
 export function getVideoInputMedia(id, mode = 'i2v') {
@@ -91,7 +99,7 @@ export function getVideoInputMedia(id, mode = 'i2v') {
   for (const [field, spec] of Object.entries(model.inputs)) {
     const type = ['image', 'video', 'audio'].find(t => [t, `${t}s_list`].includes(spec.field) || caps[t].field === field || t === 'image' && model.lastImageField === field);
     if (!type) continue;
-    const frames = keyframes.has(id) && mode === 'i2v';
+    const frames = (keyframes.has(id) || animations.has(id)) && mode === 'i2v';
     result.push({ field, type, role: mode === 'lipsync' ? type === 'audio' ? 'speech-audio' : 'source-' + type
       : frames ? field === caps.image.field ? 'start-frame' : 'end-frame'
       : id === 'wan2.7-reference-to-video' && field === 'image_url' ? 'anchor-frame' : 'reference-' + type,
@@ -169,7 +177,7 @@ export function buildVideoInputRequest(mode, params = {}) {
     need(valid, 'VIDEO_INPUT_OPTION_INVALID', field);
     payload[field] = structuredClone(value);
   }
-  for (const role of roles) if (payload[role.field] !== undefined) need((role.isArray ? payload[role.field] : [payload[role.field]]).every(isVideoInputUrl), 'VIDEO_INPUT_MEDIA_INVALID', role.field);
+  for (const role of roles) if (payload[role.field] !== undefined) need((role.isArray ? payload[role.field] : [payload[role.field]]).every(value => isVideoInputUrl(value) && (!wave.has(model.id) || value.length <= 2083)), 'VIDEO_INPUT_MEDIA_INVALID', role.field);
   if (references.has(model.id) && mode === 'i2v') {
     const slots = getVideoWorkflowMediaSlots(model, 'references');
     const constraint = slots.find(slot => slot.combinedLimit);
@@ -186,7 +194,7 @@ export function buildVideoInputRequest(mode, params = {}) {
   const supportedOptions = Object.keys(model.inputs).filter(f => !roles.some(r => r.field === f)).sort();
   return { endpoint: model.endpoint || model.id, payload, requiredMedia: roles, supportedOptions,
     effectiveOptions: Object.fromEntries(supportedOptions.filter(f => Object.hasOwn(payload, f)).map(f => [f, payload[f]])),
-    videoInput: { ...getVideoInputStatus(model.id, mode), mode, modelId: model.id, requiredInputs: model.required,
+    videoInput: { ...getVideoInputStatus(model.id, mode), mode, modelId: model.id, requiredInputs: model.required, ...(model.resultSemantics ? { resultSemantics: model.resultSemantics } : {}),
       media: roles.map(r => ({ ...r, ...(r.isArray ? { count: payload[r.field]?.length ?? 0 } : {}), supplied: payload[r.field] !== undefined })),
       providerRequest: { endpoint: model.endpoint || model.id, payload: structuredClone(payload) },
       caveat: 'Role/order validation does not measure media duration or guarantee frame, identity or motion preservation.' },
