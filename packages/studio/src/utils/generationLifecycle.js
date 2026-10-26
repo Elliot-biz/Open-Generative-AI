@@ -36,6 +36,7 @@ export async function pollForGenerationResult({
   interval = 2000,
   onAuthRequired,
   fetchImpl = fetch,
+  stopWhen,
 }) {
   const pollUrl = `${baseUrl}/api/v1/predictions/${requestId}/result`;
 
@@ -70,8 +71,10 @@ export async function pollForGenerationResult({
       continue;
     }
 
+    if (stopWhen?.(result)) return result;
     const status = result.status?.toLowerCase();
-    if (SUCCESS_STATUSES.has(status)) return result;
+    // A guided lifecycle may have an incomplete stage inside a successful envelope.
+    if (!stopWhen && SUCCESS_STATUSES.has(status)) return result;
     if (FAILURE_STATUSES.has(status)) throw createGenerationError(result, requestId);
   }
 

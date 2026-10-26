@@ -1293,3 +1293,31 @@ not blanket contract certification). Catalog counts and other route coverage are
 unchanged. Earlier census rows/counts are historical. Depth no longer blocks the
 requested program; Suno Guided Voice Clone remains planned next. MMAudio stays
 parked for mandatory provider-result clarification/revisit.
+
+## Guided Suno clone current-state update — 2026-10-26
+
+**CLONE_VOICE_GUIDED** now has exact canonical mode voice_clone_guided, executor
+suno-voice-clone and shared runSunoVoiceClone. It remains unavailable as a generic
+one-shot `audio` model. The existing 22 reviewed audio contracts, including MiniMax
+single-request clone, remain unchanged. Thus all23 audio catalog IDs have an
+explicit reviewed route/lifecycle, with different semantics and assurance limits.
+Structural remote eligibility adds one: **532 mode/ID pairs,529 logical IDs,520
+effective endpoints**; static eligibility is not runtime/provider certification.
+No catalog row count changes. This adds a distinct guided semantic intent, not
+another music-generation executor or generic voice-management capability.
+
+START sample → provider phrase → awaiting_user → separate human recording and
+CONFIRM → generating/poll → completed with real opaque voice_id. The phrase is
+preserved exactly, never synthesized or translated. Registered confirmation assets
+must have the audio role and distinct identity/checksum; plans are passive and
+retain logical project references. Execution rechecks live provider stage/phrase.
+WHIHM authorization and provider liveness verification remain separate. No audio
+artifact is fabricated; source-confirmed metadata and explicit operation state
+survive. Runtime/liveness success is UNVERIFIED; tests only use fixtures.
+
+Continuation is safe within the same live runtime session. Lost session/request-
+ID-only recovery blocks, never restarts. Confirm POST uncertainty permits poll-only
+continuation, not automatic retry. Expiry/account/ownership/retry behavior and
+actual source duration/content need future evidence. See the bridge addendum for
+full action/media/state contracts. No UI, project schema, V6, private voice lists,
+voice deletion or MiniMax changes. MMAudio remains parked for mandatory revisit.

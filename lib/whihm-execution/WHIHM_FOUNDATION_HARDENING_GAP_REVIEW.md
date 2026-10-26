@@ -1,5 +1,15 @@
 # WHIHM final foundation-hardening gap review
 
+> **Guided Suno addendum (2026-10-26; starting HEAD b99c8e7911b3334099d20ad55f56af011e3bc060):**
+> G17 is now canonically implemented as CLONE_VOICE_GUIDED / voice_clone_guided.
+> Provider phrase/liveness and a distinct human recording remain mandatory; no
+> ordinary approval or TTS substitutes for verification. This supersedes the
+> historical "Suno planned next" note below. The desired pre-projection capability
+> program is **ready for final reconciliation**, not a declaration of runtime,
+> packaged-release or all-catalog readiness. Other explicit provider conflicts,
+> local staging limits and packaging gaps remain unresolved as documented.
+
+
 > **Depth addendum (2026-10-26):** G13 is implemented through dedicated canonical
 > `depth`, preserving XOR image/video roles and typed artifacts via shared processV2V.
 > Contract availability and mocked QA do not verify provider fidelity. The historical
@@ -741,3 +751,29 @@ Next requested milestone is **Suno Guided Voice Clone**, preserving provider
 confirmation/liveness and explicit multi-stage lifecycle. No Suno behavior changes
 in this task. Ordinary Spicy provider conflicts, MMAudio's mandatory future revisit,
 packaging and all other historical exclusions remain explicit, not silently resolved.
+
+## G17 implemented — guided Suno lifecycle (2026-10-26)
+
+Exact suno-voice-clone uses new narrow voice_clone_guided coordination through
+shared runSunoVoiceClone and the existing submit/poll/upload/host infrastructure.
+START captures the provider request ID and fresh phrase; awaiting_user is an
+explicit incomplete, successful pause. CONFIRM requires a distinct registered
+human-recorded project asset, separately authorized execution, active in-memory
+continuation and a fresh provider stage/phrase check. No TTS, fallback phrase,
+verification bypass or synthetic audio artifact. Completion requires actual
+voice_id, kept as an opaque provider identity. Generic audio/MiniMax unchanged.
+
+No project schema or durable scheduler was required. Continuation is deliberately
+limited to a live runtime session; state loss/restart blocks rather than guessing
+or creating duplicate clones. Uncertain confirm POST permits poll only; automatic
+retry is excluded. Expiry, ownership, provider verification, sample duration and
+real media fidelity remain unverified. This is not private voice management or
+Suno V6 support. Detailed contracts/evidence are in the bridge addendum.
+
+The strategically requested Depth + guided Suno milestones are available at
+contract/mocked-QA level. Recommended next task: **final foundation reconciliation**
+against exact current bindings/contracts, explicitly retaining provider-clarification,
+local runtime and packaging boundaries, then deciding projection readiness. Do not
+automatically implement another catalog wave. MMAudio remains mandatory future
+revisit once first-party result semantics are coherent. No runtime fidelity claim
+or packaged production-readiness declaration is made.

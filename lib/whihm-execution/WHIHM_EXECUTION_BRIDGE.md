@@ -1309,3 +1309,115 @@ shared upload/request-ID/poll delegation and no generic V2V admission. The targe
 (including the two new cases). Syntax checks and ESLint pass for all seven touched
 JS/MJS files; Vite production build passes with its chunk-size advisory. All
 transports/uploads are fixtures; only the two public metadata GETs were live.
+
+## Guided Suno singing-voice clone — 2026-10-26
+
+Exact model `suno-voice-clone`, canonical mode **voice_clone_guided**, capability
+**CLONE_VOICE_GUIDED**, shared method **runSunoVoiceClone**. This is deliberately
+separate from `audio`/generateAudio and MiniMax's single-request CLONE_VOICE.
+All 22 ordinary reviewed audio contracts and their payloads remain unchanged.
+There was no existing Suno confirmation wrapper: the new narrow shared wrapper
+reuses the existing submitAndPoll, pollForGenerationResult, authentication,
+uploader and renderer host delegation; it is not another client or HTTP stack.
+No UI, schema, workflow scheduler or voice-management API is introduced.
+
+### Actions and wire contract
+
+- **start:** audio_url required; optional voice_name, description, style;
+  language en/zh/es/fr/pt/de/ja/ko/hi/ru, default en; integer vocal_start_s0–60
+  default0 and vocal_end_s1–60 default10, end>start. The 60s bounds preserve the
+  existing product/model-detail contract; OpenAPI has only lower bounds. The
+  provider asks for a clean approximately 10-second sample. A URL is not evidence
+  of actual duration, ownership or content; no probing/enforcement is invented.
+  POST /api/v1/suno-voice-clone; capture request ID, poll existing prediction
+  endpoint until a meaningful stage or interruption. A successful envelope is
+  not sufficient completion while its stage is generating.
+- **confirm:** state + distinct registered project audio asset + explicit
+  recording_origin=`user_recorded_challenge`. Wire body is ONLY audio_url;
+  POST /api/v1/suno-voice-clone/{request_id}/confirm. No start controls, raw body,
+  webhook, team/account or arbitrary provider options. The request ID is never
+  taken from a caller-controlled endpoint. Only conservative route-safe IDs are
+  accepted; unsupported ID shapes fail closed rather than changing the identifier.
+- **poll:** state only; GET existing /api/v1/predictions/{request_id}/result.
+  Resumes that operation; never creates/restarts a clone job.
+
+### Human boundary and continuation
+
+Provider stage **awaiting_phrase** and the exact returned phrase are retained
+without rewriting/translation/TTS/fallback wording. Canonical status is
+**awaiting_user**, operationState.userActionRequired=true, nextAction=confirm.
+This is neither failure nor completion. The only continuation is an explicit,
+separately authorized action after the human records the challenge.
+
+Canonical confirmation requires a registered typed audio asset, an explicit user
+recording declaration, and a reference/checksum distinct from the original sample
+where its checksum exists. Identical bytes under another asset ID are rejected.
+The uploader/project resolver, registry MIME, logical port role, project boundary
+and checksum checks remain authoritative. Initial samples may also be safe remote
+URLs; without local initial bytes, local checksum comparison cannot prove content
+novelty. The provider remains the liveness/content verifier. A caller's declaration
+is not proof that the recording is human or matches the phrase. No synthesizer,
+TTS call, fabricated recording or automatic confirmation path is added.
+
+A narrow in-memory session retains only identity/stage/phrase/source fingerprint,
+confirmation-attempt guard and an opaque continuation ID. No credentials or raw
+provider payloads are cached. Returned state is detached from trusted session
+records. Before uploads, an internal fixed-service check verifies that continuation
+is active; before the confirmation POST, an authenticated prediction GET must
+still report awaiting_phrase with the identical phrase. Caller-supplied stage,
+phrase, source checksum or normal WHIHM approval cannot replace that check.
+
+operationState includes capability, modelId, requestId, continuationId, stage,
+phrase, sourceSample(logical reference/checksum), phase, userActionRequired,
+nextAction and voiceId. Project schema is unchanged; callers retain this portable
+state for the **same live runtime session**. A renderer/process restart or lost
+session blocks confirmation/resume with SUNO_CLONE_CONTINUATION_UNAVAILABLE.
+Request-ID-only recovery/reattachment, expiry handling, cancellation and durable
+cross-restart recovery are not implemented. Never silently restart after state loss.
+
+A confirmation attempt is marked before POST. If transport fails or confirmation
+is interrupted, state becomes blocked/poll-only; no automatic second confirmation
+or initial submission. Replayed confirms are refused, including while provider
+still says awaiting_phrase. Any manual retry/recovery needs a later evidenced
+policy. Provider rejection/expiry/ownership/account behavior remains runtime-
+unverified. Confirmation-stage revalidation failures do not create a new job.
+
+### Results, planning and authorization
+
+Provider documented stages are awaiting_phrase, generating, completed and failed.
+Canonical phase adds PROCESSING_INITIAL_SAMPLE/AWAITING_PHRASE_RECORDING/VERIFYING/
+COMPLETED/FAILED as coordination labels, not invented provider stage guarantees.
+Unknown stages stay preserved/blocked with poll as the only next operation;
+provider failures stay failed. Completed requires an actual nonblank opaque
+voice_id; a missing or invalid identity blocks success. Voice IDs remain opaque
+strings (not assets/paths/URLs). Completed artifact is a **provider voice identity**:
+outputs=[] always; no fake audio URL or generated file. All safe actual provider
+metadata remains in upstream. Request ID spans both stages; mismatch fails closed.
+
+Pure plans validate declared state/media/options, expose action, lifecycle,
+effective defaults, exact intended request and human-boundary caveat. They retain
+logical project references, never authenticate/upload/poll or mutate project state.
+Plans cannot certify a live renderer session or fresh provider state. Static
+readiness means binding available, not input validity, authorization, ownership,
+liveness verification or provider success. Each start/confirm/poll execute still
+requires its own allowExecution=true. WHIHM approval permits an action; it is
+**not** provider liveness confirmation. Source identity is host-derived internal
+metadata; canonical callers cannot inject _sampleIdentity or _validateOnly.
+
+Evidence: current OGA source/catalog and 2026-10-26 public unauthenticated GETs of
+[OpenAPI](https://api.muapi.ai/openapi.json) and
+[exact model detail](https://api.muapi.ai/api/v1/models/suno-voice-clone).
+No private account/voice listing, authentication, upload, provider POST or paid run
+was performed. Contract/lifecycle tests are mocked; runtime verification remains
+UNVERIFIED. MMAudio is unchanged and parked for mandatory future clarification.
+
+Guided-clone QA: **48 new cases** (47 focused contracts/lifecycle cases plus one
+fixed Electron-host end-to-end fixture). The targeted seven-file Node regression
+passes **346 tests**: sunoCloneExecution, audioExecution, depthExecution,
+highValueVideoExecution, whihmExecutionBridge, whihmReadinessEvidence and
+whihmReadinessClient. Full whihmHost passes **59 tests**; the new guided host case
+was rerun after the final scoped guards. **405 unique targeted/host tests pass.**
+Syntax checks and ESLint pass for all seven touched JS/MJS files; Vite production
+build passes with the existing chunk-size advisory. git diff --check passes.
+All uploads/provider execution are mocked. Only two public unauthenticated
+metadata GETs were real; no provider POST, private listing or paid operation.

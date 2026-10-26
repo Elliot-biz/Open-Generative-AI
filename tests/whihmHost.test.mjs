@@ -836,3 +836,41 @@ for (const kind of ['image', 'video']) test(`fixed host depth ${kind}: logical p
   assert.deepEqual(JSON.parse(calls[0].body), { [field]: 'https://example.com/source' });
   assert.ok(calls[1].url.endsWith('/predictions/host-depth/result'));
 });
+
+test('fixed host guided Suno clone preserves human boundary and separately authorizes confirmation', async t => {
+  const f = await fixture(t), calls = [], uploads = [];
+  const second = path.join(path.dirname(f.root), 'challenge.txt'); await fs.writeFile(second, 'fresh human recording fixture');
+  const assets = [];
+  for (const [assetId, sourcePath] of [['clone_sample', f.source], ['clone_recording', second]]) {
+    const imported = await f.project.importAsset({ sourcePath, assetId, contentType: 'audio/wav' });
+    assets.push({ id: assetId, type: 'audio', localPath: imported.asset.path });
+  }
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  changed.assets.push(...assets); const node = changed.nodes[0];
+  node.executor.model = 'suno-voice-clone'; node.metadata.oga.mode = 'voice_clone_guided'; node.outputs[0].type = 'json';
+  node.inputs = [{ id: 'audio_url', type: 'audio' }, { id: 'action', type: 'text' }, { id: 'state', type: 'json' }, { id: 'recording_origin', type: 'text' }];
+  node.assetRefs = assets.map(a => a.id); node.parameters = {};
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { runSunoVoiceClone } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { runSunoVoiceClone, async uploadFile(_key, file) { uploads.push(await file.text()); return `https://example.com/audio-${uploads.length}.wav`; } } });
+  const phrase = '  Fresh provider phrase — exactly.  ';
+  const waiting = { status: 'processing', output: { stage: 'awaiting_phrase', phrase } };
+  const replies = [{ request_id: 'host-suno-clone' }, waiting, waiting, {}, { status: 'completed', output: { stage: 'completed', voice_id: 'voice_host_123' } }];
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => { calls.push({ url, ...init }); assert.ok(replies.length); return { ok: true, json: async () => replies.shift() }; });
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  const args = { ...request(opened), inputs: { action: 'start' }, assetBindings: { audio_url: 'clone_sample' } };
+  const plan = await h.host.planNode(args); assert.equal(plan.status, 'planned', JSON.stringify(plan));
+  assert.equal(plan.runtime, 'studio.runSunoVoiceClone'); assert.equal(h.authReads(), 0); assert.equal(uploads.length, 0); assert.equal(calls.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const first = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(first.status, 'awaiting_user', JSON.stringify(first)); assert.equal(first.operationState.phrase, phrase); assert.deepEqual(first.outputs, []);
+  assert.ok(!JSON.stringify(first.operationState).includes(f.root));
+  const confirm = { ...request(opened), inputs: { action: 'confirm', state: first.operationState, recording_origin: 'user_recorded_challenge' }, assetBindings: { audio_url: 'clone_recording' } };
+  const confirmPlan = await h.host.planNode(confirm); assert.equal(confirmPlan.status, 'planned', JSON.stringify(confirmPlan)); assert.equal(calls.length, 2);
+  assert.equal(errorCode(await h.host.executeNode(confirm)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...confirm, allowExecution: true });
+  assert.equal(result.status, 'succeeded', JSON.stringify(result)); assert.equal(result.operationState.voiceId, 'voice_host_123');
+  assert.equal(result.requestId, 'host-suno-clone'); assert.deepEqual(result.outputs, []); assert.equal(uploads.length, 2);
+  assert.ok(calls[3].url.endsWith('/suno-voice-clone/host-suno-clone/confirm'));
+  assert.deepEqual(JSON.parse(calls[3].body), { audio_url: 'https://example.com/audio-2.wav' });
+});

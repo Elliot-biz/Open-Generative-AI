@@ -13,6 +13,7 @@ import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
 import { buildAudioRequest, getAudioExecutionModel } from './audioInputContracts.js';
 import { buildAdvancedImageRequest, getAdvancedImageModel, getAdvancedImageStatus, normalizeAdvancedImageResult } from './advancedImageInputContracts.js';
 import { buildVideoInputRequest, getVideoInputModel } from './videoInputContracts.js';
+import { buildSunoCloneRequest, normalizeSunoCloneResult, cloneNeed } from './sunoCloneInputContracts.js';
 import { buildDepthRequest } from './depthInputContracts.js';
 import { buildCreativeServiceRequest } from './creativeServiceInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
@@ -49,7 +50,7 @@ function includeRequiredArrayDefaults(model, payload) {
     return Object.keys(defaults).length > 0 ? { ...defaults, ...payload } : payload;
 }
 
-async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000) {
+async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000, lifecycle = {}) {
     return pollForGenerationResult({
         baseUrl: BASE_URL,
         requestId,
@@ -57,6 +58,7 @@ async function pollForResult(requestId, key, maxAttempts = 900, interval = 2000)
         maxAttempts,
         interval,
         onAuthRequired: notifyAuthRequired,
+        ...lifecycle,
     });
 }
 
@@ -74,7 +76,7 @@ function normalizeNativeVideoResult(result) {
     return !result.url && typeof video === 'string' ? normalizePredictionResult(result, result, video) : result;
 }
 
-async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60) {
+async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 60, lifecycle = {}) {
     const url = `${BASE_URL}/api/v1/${endpoint}`;
     const response = await fetch(url, {
         method: 'POST',
@@ -87,10 +89,10 @@ async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 
         throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
     }
     const submitData = await response.json();
-    const requestId = submitData.request_id || submitData.id;
+    const requestId = submitData.request_id || submitData.id || lifecycle.requestId;
     if (!requestId) return submitData;
     if (onRequestId) onRequestId(requestId);
-    const result = await pollForResult(requestId, key, maxAttempts);
+    const result = lifecycle.stopWhen?.(submitData) ? submitData : await pollForResult(requestId, key, maxAttempts, 2000, lifecycle);
     const outputUrl = result.outputs?.[0] || result.url || result.output?.url;
     return normalizePredictionResult(submitData, result, outputUrl);
 }
@@ -325,6 +327,76 @@ export async function processMotionControl(apiKey, params) {
 export async function processLipSync(apiKey, params) {
     const { endpoint, payload } = buildVideoInputRequest('lipsync', params);
     return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+}
+
+// In-memory continuation evidence, never credentials or arbitrary provider payloads.
+// A renderer/process restart deliberately blocks confirmation rather than guessing.
+const sunoCloneSessions = new Map();
+const cloneStop = result => {
+    const stage = result.output?.stage ?? result.stage;
+    return stage !== undefined && stage !== 'generating' || ['failed', 'error', 'cancelled', 'canceled'].includes(result.status)
+        || stage !== 'generating' && ['completed', 'succeeded', 'success'].includes(result.status);
+};
+export async function runSunoVoiceClone(apiKey, params) {
+    params = { ...params, ...(params?.state ? { state: structuredClone(params.state) } : {}), ...(params?._sampleIdentity ? { _sampleIdentity: structuredClone(params._sampleIdentity) } : {}) };
+    const contract = buildSunoCloneRequest(params);
+    let active;
+    if (params.action !== 'start') {
+        active = sunoCloneSessions.get(params.state.continuationId);
+        if (params._validateOnly) {
+            const identity = params._sampleIdentity ?? { reference: params.audio_url };
+            const available = active && active.requestId === params.state.requestId;
+            const eligible = params.action !== 'confirm' || available && !active.confirmAttempted && active.stage === 'awaiting_phrase' && active.phrase === params.state.phrase
+                && identity.reference !== active.sourceSample.reference && (!identity.checksum || identity.checksum !== active.sourceSample.checksum);
+            return { continuationValid: Boolean(available && eligible) };
+        }
+        cloneNeed(active && active.requestId === params.state.requestId, 'SUNO_CLONE_CONTINUATION_UNAVAILABLE', 'state');
+        if (params.action === 'confirm') {
+            cloneNeed(!active.confirmAttempted && active.stage === 'awaiting_phrase' && active.phrase === params.state.phrase, 'SUNO_CLONE_CONTINUATION_BLOCKED', 'state');
+            const identity = params._sampleIdentity ?? { reference: params.audio_url };
+            cloneNeed(identity.reference !== active.sourceSample.reference && (!identity.checksum || identity.checksum !== active.sourceSample.checksum), 'SUNO_CLONE_DISTINCT_RECORDING_REQUIRED', 'audio_url');
+            const fresh = await pollForResult(active.requestId, apiKey, 1, 0, { stopWhen: () => true });
+            cloneNeed((fresh.output?.stage ?? fresh.stage) === 'awaiting_phrase' && (fresh.output?.phrase ?? fresh.phrase) === active.phrase, 'SUNO_CLONE_PROVIDER_CHALLENGE_CHANGED', 'state');
+            // Recheck after the asynchronous provider read: concurrent confirms
+            // must not both pass the same earlier local check.
+            cloneNeed(!active.confirmAttempted, 'SUNO_CLONE_CONTINUATION_BLOCKED', 'state');
+            // An uncertain POST must not be retried automatically. Poll instead.
+            active.confirmAttempted = true;
+            active.phase = 'VERIFYING';
+        }
+    }
+    const continuationId = params.action === 'start' ? crypto.randomUUID() : params.state.continuationId;
+    const capture = requestId => {
+        cloneNeed(/^[A-Za-z0-9_-]{1,200}$/.test(requestId), 'SUNO_CLONE_REQUEST_ID_INVALID');
+        if (active) cloneNeed(active.requestId === requestId, 'SUNO_CLONE_REQUEST_ID_CHANGED');
+        else active = { capability: 'CLONE_VOICE_GUIDED', modelId: 'suno-voice-clone', requestId, continuationId, stage: null, phrase: null,
+            sourceSample: structuredClone(params._sampleIdentity ?? { reference: params.audio_url }), voiceId: null, userActionRequired: false, nextAction: 'poll', phase: 'PROCESSING_INITIAL_SAMPLE' };
+        sunoCloneSessions.set(continuationId, active);
+        params.onRequestId?.(requestId);
+    };
+    try {
+        const raw = params.action === 'poll'
+            ? await pollForResult(active.requestId, apiKey, 900, 2000, { stopWhen: cloneStop })
+            : await submitAndPoll(contract.endpoint, contract.payload, apiKey, capture, 900, { stopWhen: cloneStop, ...(active ? { requestId: active.requestId } : {}) });
+        cloneNeed(active, 'SUNO_CLONE_REQUEST_ID_MISSING');
+        cloneNeed(!(raw.request_id ?? raw.id) || (raw.request_id ?? raw.id) === active.requestId, 'SUNO_CLONE_REQUEST_ID_CHANGED');
+        const result = normalizeSunoCloneResult(raw, structuredClone(active));
+        if (active.confirmAttempted && result.status === 'awaiting_user') {
+            result.status = 'blocked';
+            result.operationState.userActionRequired = false;
+            result.operationState.nextAction = 'poll';
+            result.diagnostics = [{ code: 'SUNO_CLONE_CONFIRM_ALREADY_ATTEMPTED' }];
+        }
+        Object.assign(active, structuredClone(result.operationState));
+        // Internal replay guard is not portable canonical state.
+        delete result.operationState.confirmAttempted;
+        return result;
+    } catch (error) {
+        if (!active) throw error;
+        const state = structuredClone(active); delete state.confirmAttempted;
+        return { status: 'blocked', request_id: active.requestId, operationState: { ...state, userActionRequired: false, nextAction: 'poll' },
+            diagnostics: [{ code: 'SUNO_CLONE_INTERRUPTED_POLL_ONLY' }], upstream: error.generationResult ?? null };
+    }
 }
 
 export async function generateAudio(apiKey, params) {
