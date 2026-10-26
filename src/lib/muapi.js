@@ -1,5 +1,6 @@
-import { processV2V as sharedProcessV2V, processRecast as sharedProcessRecast, processMotionControl as sharedProcessMotionControl, generateI2V as sharedGenerateI2V } from '../../packages/studio/src/muapi.js';
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getLipSyncModelById } from './models.js';
+import { processV2V as sharedProcessV2V, processRecast as sharedProcessRecast, processMotionControl as sharedProcessMotionControl, generateI2V as sharedGenerateI2V, processLipSync as sharedProcessLipSync } from '../../packages/studio/src/muapi.js';
+import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById } from './models.js';
+import { getVideoInputModel } from '../../packages/studio/src/videoInputContracts.js';
 import { pollForGenerationResult } from '../../packages/studio/src/utils/generationLifecycle.js';
 
 export class MuapiClient {
@@ -280,8 +281,8 @@ export class MuapiClient {
      * @param {string} [params.quality]
      */
     async generateI2V(params) {
-        // Exact-model compatibility only: Act Two also consumes a driving video.
-        if (params.model === 'runway-act-two-i2v') return sharedGenerateI2V(this.getKey(), params);
+        // Shared exact-model contracts preserve native media and controls; Act Two also consumes a driving video.
+        if (params.model === 'runway-act-two-i2v' || getVideoInputModel(params.model, 'i2v')) return sharedGenerateI2V(this.getKey(), params);
         const key = this.getKey();
         const modelInfo = getI2VModelById(params.model);
         const endpoint = modelInfo?.endpoint || params.model;
@@ -422,52 +423,7 @@ export class MuapiClient {
      * @param {Function} [params.onRequestId] - Called when request_id is received
      */
     async processLipSync(params) {
-        const key = this.getKey();
-        const modelInfo = getLipSyncModelById(params.model);
-        const endpoint = modelInfo?.endpoint || params.model;
-        const url = `${this.baseUrl}/api/v1/${endpoint}`;
-
-        const finalPayload = {};
-
-        if (params.audio_url) finalPayload.audio_url = params.audio_url;
-        if (params.image_url) finalPayload.image_url = params.image_url;
-        if (params.video_url) finalPayload.video_url = params.video_url;
-        if (modelInfo?.hasPrompt) finalPayload.prompt = params.prompt || '';
-        if (params.resolution) finalPayload.resolution = params.resolution;
-        if (params.seed !== undefined && params.seed !== -1) finalPayload.seed = params.seed;
-
-        console.log('[Muapi] LipSync Request:', url);
-        console.log('[Muapi] LipSync Payload:', finalPayload);
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': key },
-                body: JSON.stringify(finalPayload)
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                console.error('[Muapi] LipSync API Error:', errText);
-                throw new Error(`API Request Failed: ${response.status} ${response.statusText} - ${errText.slice(0, 100)}`);
-            }
-
-            const submitData = await response.json();
-            console.log('[Muapi] LipSync Submit Response:', submitData);
-
-            const requestId = submitData.request_id || submitData.id;
-            if (!requestId) return submitData;
-
-            if (params.onRequestId) params.onRequestId(requestId);
-
-            const result = await this.pollForResult(requestId, key, 900, 2000);
-            const videoUrl = result.outputs?.[0] || result.url || result.output?.url;
-            console.log('[Muapi] LipSync Result URL:', videoUrl);
-            return { ...result, url: videoUrl };
-        } catch (error) {
-            console.error('Muapi LipSync Error:', error);
-            throw error;
-        }
+        return sharedProcessLipSync(this.getKey(), params);
     }
 
     getDimensionsFromAR(ar) {

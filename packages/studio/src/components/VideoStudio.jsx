@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, useId } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { generateVideo, generateI2V, processV2V, uploadFile } from "../muapi.js";
+import { getVideoInputModel } from "../videoInputContracts.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import DrawModal from "./DrawModal.jsx";
@@ -2226,7 +2227,8 @@ export default function VideoStudio({
           ...referenceParams,
         };
         if (trimmedPrompt) i2vParams.prompt = trimmedPrompt;
-        const aspectRatios = getAspectRatiosForI2VModel(selectedModel);
+        const aspectRatios = getVideoInputModel(selectedModel, 'i2v')
+          ? currentModel.inputs?.aspect_ratio?.enum || [] : getAspectRatiosForI2VModel(selectedModel);
         if (!grouped && aspectRatios.length > 0) i2vParams.aspect_ratio = selectedAr;
         const durations = getDurationsForI2VModel(selectedModel);
         if (!grouped && durations.length > 0) i2vParams.duration = selectedDuration;

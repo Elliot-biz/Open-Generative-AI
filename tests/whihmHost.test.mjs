@@ -660,3 +660,52 @@ for (const [model, parameters, bindings, layer] of [
   assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
 });
+
+for (const [model, mode, parameters, bindings] of [
+  ['seedance-2.5-omni-reference', 'i2v', { prompt: 'Use ordered references', duration: 5 }, { images_list: ['picture', 'https://example.com/public.png', 'picture'], videos_list: ['clip'], audios_list: ['speech'] }],
+  ['flux-3-start-end-to-video', 'i2v', { prompt: 'Connect the named frames', duration: 8 }, { image_url: 'picture', end_image_url: 'picture' }],
+  ['volcengine-video-to-video-lip-sync', 'lipsync', { mode: 'basic', open_scenedet: true, separate_vocal: true }, { video_url: 'clip', audio_url: 'speech' }],
+  ['omnihuman-1-5', 'lipsync', { prompt: 'Speak naturally', output_resolution: '720', seed: -1, pe_fast_mode: true }, { image_url: 'picture', audio_url: 'speech' }],
+]) test(`advanced video fixed host: ${model} preserves media roles and authorization`, async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow), node = changed.nodes[0];
+  for (const [id, type] of [['picture', 'image'], ['clip', 'video'], ['speech', 'audio']]) {
+    const imported = await f.project.importAsset({ sourcePath: f.source, assetId: id, contentType: `${type}/fixture` });
+    assert.equal(imported.status, 'imported'); changed.assets.push({ id, type, localPath: imported.asset.path });
+  }
+  node.executor.model = model; node.metadata.oga.mode = mode; node.parameters = parameters; node.outputs[0].type = 'video';
+  const { getVideoInputMedia } = await import('../packages/studio/src/videoInputContracts.js');
+  const roles = getVideoInputMedia(model, mode);
+  node.inputs = Object.keys(bindings).map(id => ({ id, type: roles.find(r => r.field === id).type }));
+  node.assetRefs = ['picture', 'clip', 'speech'];
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { generateI2V, processLipSync } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { generateI2V, processLipSync, async uploadFile(_key, file) {
+    uploaded.push(file.type); return `https://example.com/asset-${uploaded.length}`;
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init }); return { ok: true, json: async () => init.method === 'POST'
+      ? { request_id: 'host-video-inputs' } : { status: 'completed', outputs: ['https://example.com/result.mp4'] } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = { ...request(opened), assetBindings: bindings };
+  const plan = await h.host.planNode(args); assert.equal(plan.status, 'planned', JSON.stringify(plan));
+  assert.equal(plan.request.videoInput.modelId, model); assert.equal(plan.request.videoInput.mode, mode);
+  assert.equal(calls.length, 0); assert.equal(uploaded.length, 0); assert.equal(h.authReads(), 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const missing = { ...args, assetBindings: {} };
+  assert.equal((await h.host.executeNode({ ...missing, allowExecution: true })).status, 'rejected');
+  assert.equal(h.authReads(), 0); assert.equal(calls.length, 0);
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded', JSON.stringify(result)); assert.equal(result.model, model); assert.equal(result.requestId, 'host-video-inputs');
+  const payload = JSON.parse(calls[0].body);
+  if (model === 'seedance-2.5-omni-reference') {
+    assert.deepEqual(payload.images_list, ['https://example.com/asset-1', 'https://example.com/public.png', 'https://example.com/asset-2']);
+    assert.deepEqual(payload.videos_list, ['https://example.com/asset-3']); assert.deepEqual(payload.audios_list, ['https://example.com/asset-4']);
+  } else if (model === 'flux-3-start-end-to-video') {
+    assert.equal(payload.image_url, 'https://example.com/asset-1'); assert.equal(payload.end_image_url, 'https://example.com/asset-2');
+  } else if (model === 'volcengine-video-to-video-lip-sync') {
+    assert.equal(payload.mode, 'basic'); assert.equal(payload.open_scenedet, true); assert.equal(payload.align_audio, undefined);
+  } else { assert.equal(payload.output_resolution, '720'); assert.equal(payload.pe_fast_mode, true); assert.equal(payload.seed, -1); }
+  assert.equal(calls.length, 2); assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+});

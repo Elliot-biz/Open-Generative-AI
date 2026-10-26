@@ -848,3 +848,172 @@ uploads, provider execution or image generation occurred. Source schemas/public
 metadata agree on Topaz engines and bounds; Qwen disagreement is explicitly
 contained instead of generalized. No new image-provider catalog or contract
 framework for unrelated models was introduced.
+
+## Advanced video input contracts — 2026-10-26
+
+**Reviewed request contracts:** 20 reference-guided I2V IDs, 11 keyframe I2V IDs,
+and all 15 current Lip Sync catalog IDs. `videoInputContracts.js` projects the
+existing Studio catalogs/capability schemas; it is an exact admission list, not
+another discovery catalog. `i2v` still calls shared **generateI2V** and `lipsync`
+still calls shared **processLipSync**, using their existing submit/poll/result
+lifecycle. Desktop application calls delegate to those shared services for the
+reviewed I2V subset and Lip Sync. No extra uploader/poller or provider is added.
+
+The inventory below is the reviewed subset, not blanket certification of all 184
+I2V entries. Other I2V models keep their existing path. Two reviewed candidates,
+`kling-o1-reference-to-video` and `kling-o1-standard-reference-to-video`, are
+**DEFERRED from canonical execution**: local catalog metadata requires images,
+but workflow/reference metadata and nullable public media schemas allow a video
+reference without images. This milestone does not manufacture image references
+or decide that conflict. Legacy Studio access remains unchanged. Resolution,
+Intl/Spicy or other profiles are not admitted by wildcard. No general V2V scope
+is added through these I2V contracts; Seedance 2.5 Omni task types `edit`/`extend`
+are rejected here (`auto`/`reference` only).
+
+### Media, frames and project references
+
+Every reviewed media field is typed and named in `getVideoInputMedia`; native
+fields remain distinct. For example, Wan 2.7's optional `image_url` anchor does
+not substitute for its image/video reference list. MiniMax reference image,
+video and audio roles remain separate; Gemini voice/character identifiers are
+opaque IDs, never project asset references. Single-source aliases are accepted
+only for the model's actual role, and conflicting aliases reject.
+
+Ordered image/video/audio project arrays reuse the bridge's existing asset
+binding and project integrity machinery. Only declared reviewed media roles can
+use arrays. Entries may mix registered asset IDs with public HTTP(S) URLs; order
+and duplicates are preserved. Each registered entry must match its canonical
+asset media type and project-relative identity and pass existing integrity
+checks. Missing, malformed, empty required, oversized or role-mismatched input
+rejects before authentication/upload/submission. Plans use logical placeholders
+and project-relative requiredUploads, never transient absolute upload paths.
+No media files or workflows are modified by assessment/planning/execution.
+
+Reference counts come from existing model metadata, with existing workflow
+combined constraints reused: Wan 2.7 image/video references total at most five;
+MiniMax image/video/audio references total at most twelve, with a visual reference
+required for official H3 while Open H3 permits audio-only reference input. Native
+Gemini media fields are checked directly because workflow UI aliases differ.
+Seedance 2.5 Omni requires at least one native image/video/audio reference.
+No request is silently truncated, deduplicated or clamped by this contract.
+
+Keyframes use the exact first/end fields or ordered `[start, end]` field required
+by each model. Seedance 2/2.5 base first-last endpoints permit one start frame;
+Seedance 2 fast and VIP base/fast retain the existing product's stricter two-frame
+requirement (`endImageRequired`), even though public schema accepts one. Vidu
+start/end and Flux require both frames. Gemini Flash requires first_frame_url
+and permits an optional last_frame_url. Unrelated references cannot substitute
+for a missing last frame. Identical start/end URLs are permitted and retained.
+No interpolation quality, measured chronology or exact frame preservation is
+inferred from URL positions.
+
+### Lip Sync roles, controls and scope
+
+Lip Sync validates the selected model's source type and audio before transport.
+Portrait+audio models cannot accept video in place of the portrait; video+audio
+models cannot accept an image instead of video. Prompt/resolution/seed are
+accepted only where declared by the reviewed model. LTX keeps its existing
+portrait product scope; audio-only generation allowed by a broader provider
+schema is not newly exposed here.
+
+Volcengine preserves `mode` (`lite`/`basic`), `separate_vocal`, scene detection
+and Lite alignment/template controls. Scene detection cannot be enabled in Lite.
+Explicit Lite-only alignment/template values reject in Basic, and their defaults
+are omitted from Basic requests. Reverse audio alignment requires alignment.
+`templ_start_seconds` is numeric 0–60, including fractions. `separate_vocal` is a
+provider preprocessing setting, not a new stem-separation capability.
+OmniHuman preserves native `output_resolution` (`720`/`1080`), `pe_fast_mode`
+and integer seed; its mask array remains **UNVERIFIED/unsupported** because the
+public schema does not establish safe mask/source association semantics.
+No speculative duration, alignment or vocal options are accepted universally.
+
+### Planning, parity and evidence
+
+Plans add `request.videoInput`: exact logical model/mode, semantic capability,
+required inputs, native media roles/counts/order, accepted controls/effective
+defaults and intended provider endpoint/payload. Invalid requests return existing
+structured diagnostics with a machine code and offending path. Input planning
+is authoritative for detailed contract validity; whole-workflow readiness still
+reports static binding availability and does not replace node input planning.
+Plan/dry-run needs no credentials, upload, estimate, submission or polling.
+Execution still requires existing authorization and project-handle checks.
+Electron security, IPC, readiness semantics and production persistence are unchanged.
+
+The only Video Studio change is a request-construction guard: do not inject a
+fallback aspect ratio into a reviewed model that has no aspect control. No
+layout/control or navigation changes were made. Native reviewed Seedance
+resolution fields and Vidu Q4 audio references are preserved by the shared
+contract even where the older catalog/UI under-declares them. UI-only reference
+selection helpers retain their existing behavior; the strict service/canonical
+boundary receives and validates supplied arrays without their truncating helpers.
+
+**CONFIRMED evidence:** current Studio models, modelCapabilities, videoWorkflows,
+Video/LipSync Studio request construction, shared/application services, bridge
+and focused mocked tests. Public read-only inspection on 2026-10-26 used
+[MuAPI OpenAPI](https://api.muapi.ai/openapi.json) request schemas for the source
+candidates and all 15 Lip Sync endpoints, plus
+`GET https://api.muapi.ai/api/v1/models/{endpoint}` for Lip Sync detail (14 successes;
+`latentsync-video` detail returned 404, but its request path/schema exists in
+OpenAPI). These are metadata GETs only, without authentication. Provider-required
+fields and admitted control enums/bounds were compared against the projected
+contracts. Product restrictions may deliberately be narrower. No credentials,
+estimates, generation, uploads, agents or inference were used during QA.
+Actual media format/duration constraints, output fidelity and provider success
+remain **UNVERIFIED** by mocked tests. These contracts do not promise identity,
+scene, camera, timing or exact pixel preservation.
+
+### i2v exact reviewed inventory
+
+| Logical ID / endpoint alias | Media roles | Accepted controls / defaults |
+| --- | --- | --- |
+| `vidu-q1-reference` | images_list [1–7] | prompt: string; aspect_ratio: ["16:9","9:16","1:1"] (default "1:1") |
+| `seedance-lite-reference-video` → `seedance-lite-reference-to-video` | images_list [1–4] | prompt: string; resolution: ["480p","720p"] (default "480p"); duration: 3–12 (default 5) |
+| `wan2.1-reference-video` | images_list [1–5] | prompt: string; resolution: ["480p","720p"] (default "480p"); aspect_ratio: ["16:9","9:16"] (default "16:9"); duration: 5–10 (default 5) |
+| `vidu-q2-reference` | images_list [1–7] | prompt: string; resolution: ["360p","540p","720p","1080p"] (default "720p"); aspect_ratio: ["16:9","9:16","4:3","3:4","1:1"] (default "16:9"); duration: 2–8 (default 5); movement_amplitude: ["auto","small","medium","large"] (default "auto") |
+| `vidu-q2-turbo-start-end-video` | image_url required; last_image required | prompt: string; resolution: ["720p","1080p"] (default "720p"); duration: 2–8 (default 5); bgm: boolean (default true); movement_amplitude: ["auto","small","medium","large"] (default "auto") |
+| `vidu-q2-pro-start-end-video` | image_url required; last_image required | prompt: string; resolution: ["540p","720p","1080p"] (default "720p"); duration: 1–8 (default 5); bgm: boolean (default true); movement_amplitude: ["auto","small","medium","large"] (default "auto") |
+| `kling-v3.0-omni-standard-image-to-video` | images_list [1–4] | prompt: string; aspect_ratio: ["9:16","16:9","1:1"] (default "16:9"); duration: [3,4,5,6,7,8,9,10,11,12,13,14,15] (default 5); generate_audio: boolean (default false) |
+| `kling-v3.0-omni-pro-image-to-video` | images_list [1–4] | prompt: string; aspect_ratio: ["9:16","16:9","1:1"] (default "16:9"); duration: [3,4,5,6,7,8,9,10,11,12,13,14,15] (default 5); generate_audio: boolean (default false) |
+| `kling-v3.0-omni-4k-image-to-video` | images_list [1–4] | prompt: string; aspect_ratio: ["9:16","16:9","1:1"] (default "16:9"); duration: [3,4,5,6,7,8,9,10,11,12,13,14,15] (default 5) |
+| `seedance-2-omni-reference` → `seedance-2.0-omni-reference` | images_list [0–9]; video_files [0–3]; audio_files [0–3] | prompt: string; aspect_ratio: ["21:9","16:9","4:3","1:1","3:4","9:16"] (default "16:9"); quality: ["high","basic"] (default "high"); duration: 4–15 (default 5); resolution: ["480p","720p","1080p","4k"] (default "720p") |
+| `wan2.7-reference-to-video` | images_list [0–4]; videos_list [0–4]; image_url optional | prompt: string; aspect_ratio: ["16:9","9:16","1:1","4:3","3:4"] (default "16:9"); resolution: ["720p","1080p"] (default "720p"); duration: 2–10 (default 5); negative_prompt: string |
+| `seedance-2-first-last-frame` | images_list [1–2] | prompt: string; aspect_ratio: ["adaptive","21:9","16:9","4:3","1:1","3:4","9:16"] (default "adaptive"); duration: 4–15 (default 5); high_bitrate: boolean (default false); resolution: ["720p","1080p","4k"] (default "720p") |
+| `seedance-2-first-last-frame-fast` | images_list [2–2] | prompt: string; aspect_ratio: ["adaptive","21:9","16:9","4:3","1:1","3:4","9:16"] (default "adaptive"); duration: 4–15 (default 5); high_bitrate: boolean (default false); resolution: ["720p","1080p","4k"] (default "720p") |
+| `seedance-2-omni-reference-no-video` | images_list [1–9]; audio_files [0–3] | prompt: string; aspect_ratio: ["16:9","9:16","4:3","3:4"] (default "16:9"); duration: 4–15 (default 5) |
+| `seedance-2-omni-reference-no-video-fast` | images_list [1–9]; audio_files [0–3] | prompt: string; aspect_ratio: ["16:9","9:16","4:3","3:4"] (default "16:9"); duration: 4–15 (default 5) |
+| `seedance-2-vip-first-last-frame` | images_list [2–2] | prompt: string; aspect_ratio: ["adaptive","21:9","16:9","4:3","1:1","3:4","9:16"] (default "adaptive"); duration: 4–15 (default 5); high_bitrate: boolean (default false); resolution: ["720p","1080p","4k"] (default "720p") |
+| `seedance-2-vip-first-last-frame-fast` | images_list [2–2] | prompt: string; aspect_ratio: ["adaptive","21:9","16:9","4:3","1:1","3:4","9:16"] (default "adaptive"); duration: 4–15 (default 5); high_bitrate: boolean (default false); resolution: ["720p","1080p","4k"] (default "720p") |
+| `seedance-2-vip-omni-reference` | images_list [0–9]; video_files [0–3]; audio_files [0–3] | prompt: string; aspect_ratio: ["21:9","16:9","4:3","1:1","3:4","9:16"] (default "16:9"); duration: 4–15 (default 5); high_bitrate: boolean (default false); resolution: ["720p","1080p","4k"] (default "720p") |
+| `seedance-2-vip-omni-reference-fast` | images_list [0–9]; video_files [0–3]; audio_files [0–3] | prompt: string; aspect_ratio: ["21:9","16:9","4:3","1:1","3:4","9:16"] (default "16:9"); duration: 4–15 (default 5); high_bitrate: boolean (default false); resolution: ["720p","1080p","4k"] (default "720p") |
+| `vidu-q3-pro-first-last-frames` | image_url required; last_image required | prompt: string; resolution: ["540p","720p","1080p"] (default "720p"); aspect_ratio: ["16:9","9:16","4:3","3:4","1:1"] (default "16:9"); duration: 1–16 (default 5); audio: boolean (default false) |
+| `vidu-q3-turbo-first-last-frames` | image_url required; last_image required | prompt: string; resolution: ["360p","540p","720p","1080p"] (default "720p"); aspect_ratio: ["16:9","9:16","4:3","3:4","1:1"] (default "16:9"); duration: 1–16 (default 5); audio: boolean (default false) |
+| `vidu-q4-reference-to-video` | images_list [1–15]; audios_list [0–3] | prompt: string; aspect_ratio: ["16:9","9:16","1:1","4:3","3:4"] (default "16:9"); resolution: ["540p","720p","1080p","2k","4k"] (default "720p"); duration: 3–16 (default 5); audio: boolean (default true) |
+| `gemini-omni-image-to-video` | image_urls [1–7] | prompt: string; duration: [4,6,8,10] (default 8); resolution: ["720p","1080p","4k"] (default "1080p"); aspect_ratio: ["16:9","9:16"] (default "16:9"); audio_ids: array; seed: 0–2147483647 (default 0); character_ids: array |
+| `seedance-2.5-first-last-frame` | images_list [1–2] | prompt: string; duration: 4–30 (default 5); seed: -1–4294967295; high_bitrate: boolean (default false); aspect_ratio: ["adaptive","16:9","9:16","1:1","4:3","3:4","21:9","9:21"] (default "16:9"); resolution: ["480p","720p","1080p","4k"] (default "720p") |
+| `seedance-2.5-omni-reference` | images_list [0–30]; videos_list [0–10]; audios_list [0–10] | prompt: string; duration: 4–30 (default 5); aspect_ratio: ["adaptive","16:9","9:16","1:1","4:3","3:4","21:9","9:21"] (default "16:9"); seed: -1–4294967295; omni_reference_task_type: ["auto","reference"] (default "auto"); high_bitrate: boolean (default false); resolution: ["480p","720p","1080p","4k"] (default "720p") |
+| `minimax-h3-reference-to-video` | reference_images [0–9]; reference_videos [0–3]; reference_audios [0–3] | prompt: string; aspect_ratio: ["21:9","16:9","4:3","1:1","3:4","9:16"] (default "16:9"); resolution: ["2k"] (default "2k"); duration: [5,6,7,8,9,10,11,12,13,14,15] (default 5) |
+| `minimax-h3-open-reference-to-video` | images_list [0–9]; videos_list [0–3]; audios_list [0–3] | prompt: string; aspect_ratio: ["16:9","9:16","1:1","4:3","3:4","21:9","9:21"] (default "16:9"); resolution: ["480p","768p"] (default "480p"); duration: [5,6,7,8,9,10,11,12,13,14,15] (default 5); seed: integer (default -1) |
+| `wan3.0-reference-to-video` | images_list [0–10]; videos_list [0–5]; audios_list [0–5] | prompt: string; resolution: ["480p","720p","1080p"] (default "720p"); aspect_ratio: ["adaptive","16:9","9:16","1:1","4:3","3:4"] (default "16:9"); duration: 2–30 (default 5); thinking_mode: boolean (default false); enable_audio: boolean (default true); seed: integer (default -1) |
+| `flux-3-start-end-to-video` | image_url required; end_image_url required | prompt: string; aspect_ratio: ["16:9","9:16","1:1","4:3","3:4","21:9"] (default "16:9"); resolution: ["720p","1080p"] (default "720p"); duration: 5–20 (default 5); generate_audio: boolean (default true) |
+| `gemini-omni-flash-1-1-image-to-video` | first_frame_url required; last_frame_url optional | prompt: string; duration: [4,6,8,10] (default 8); aspect_ratio: ["16:9","9:16"] (default "16:9"); resolution: ["720p","1080p","4k"] (default "720p"); seed: 0–2147483647 (default 0) |
+| `gemini-omni-flash-1-1-reference-to-video` | image_urls [0–7]; reference_video_urls [0–3] | prompt: string; aspect_ratio: ["16:9","9:16"] (default "16:9"); resolution: ["360p","720p","1080p","4k"] (default "720p"); duration: 3–10 (default 8) |
+
+### lipsync exact reviewed inventory
+
+| Logical ID / endpoint alias | Media roles | Accepted controls / defaults |
+| --- | --- | --- |
+| `infinitetalk-image-to-video` | image_url required; audio_url required | resolution: ["480p","720p"] (default "480p"); prompt: string (default "") |
+| `wan2.2-speech-to-video` | image_url required; audio_url required | resolution: ["480p","720p"] (default "480p"); prompt: string (default "") |
+| `ltx-2.3-lipsync` | image_url required; audio_url required | resolution: ["480p","720p","1080p"] (default "720p"); prompt: string (default ""); seed: integer (default -1) |
+| `ltx-2-19b-lipsync` | image_url required; audio_url required | resolution: ["480p","720p","1080p"] (default "720p"); prompt: string (default "") |
+| `sync-lipsync` | video_url required; audio_url required |  |
+| `latent-sync` → `latentsync-video` | video_url required; audio_url required |  |
+| `creatify-lipsync` | video_url required; audio_url required |  |
+| `veed-lipsync` | video_url required; audio_url required |  |
+| `infinitetalk-video-to-video` | video_url required; audio_url required | resolution: ["480p","720p"] (default "480p"); prompt: string (default "") |
+| `volcengine-video-to-video-lip-sync` | video_url required; audio_url required | mode: ["lite","basic"] (default "lite"); separate_vocal: boolean (default false); open_scenedet: boolean (default false); align_audio: boolean (default true); align_audio_reverse: boolean (default false); templ_start_seconds: 0–60 (default 0) |
+| `kling-v1-avatar-standard` | image_url required; audio_url required | prompt: string (default "") |
+| `kling-v1-avatar-pro` | image_url required; audio_url required | prompt: string (default "") |
+| `kling-v2-avatar-standard` | image_url required; audio_url required | prompt: string (default "") |
+| `kling-v2-avatar-pro` | image_url required; audio_url required | prompt: string (default "") |
+| `omnihuman-1-5` | image_url required; audio_url required | output_resolution: ["720","1080"] (default "1080"); prompt: string (default ""); seed: integer (default -1); pe_fast_mode: boolean (default false) |

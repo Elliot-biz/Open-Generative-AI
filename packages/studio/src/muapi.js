@@ -1,4 +1,4 @@
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getLipSyncModelById, getAudioModelById } from './models.js';
+import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getAudioModelById } from './models.js';
 import {
     buildVideoToolPayload,
     serializeVideoToolOptions,
@@ -12,6 +12,7 @@ import { buildRecastRequest } from './recastInputContracts.js';
 import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
 import { buildAudioRequest, getAudioExecutionModel } from './audioInputContracts.js';
 import { buildAdvancedImageRequest, getAdvancedImageModel, getAdvancedImageStatus, normalizeAdvancedImageResult } from './advancedImageInputContracts.js';
+import { buildVideoInputRequest, getVideoInputModel } from './videoInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 
@@ -184,6 +185,10 @@ export async function generateVideo(apiKey, params) {
 }
 
 export async function generateI2V(apiKey, params) {
+    if (getVideoInputModel(params.model, 'i2v')) {
+        const { endpoint, payload } = buildVideoInputRequest('i2v', params);
+        return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    }
     // Act Two is performance-driven: retain its video role and required-media checks.
     if (params.model === 'runway-act-two-i2v') {
         const { endpoint, payload } = buildRecastRequest({ ...params, model: 'runway-act-two-recast' });
@@ -300,15 +305,7 @@ export async function processMotionControl(apiKey, params) {
 }
 
 export async function processLipSync(apiKey, params) {
-    const modelInfo = getLipSyncModelById(params.model);
-    const endpoint = modelInfo?.endpoint || params.model;
-    const payload = {};
-    if (params.audio_url) payload.audio_url = params.audio_url;
-    if (params.image_url) payload.image_url = params.image_url;
-    if (params.video_url) payload.video_url = params.video_url;
-    if (modelInfo?.hasPrompt) payload.prompt = params.prompt || '';
-    if (params.resolution) payload.resolution = params.resolution;
-    if (params.seed !== undefined && params.seed !== -1) payload.seed = params.seed;
+    const { endpoint, payload } = buildVideoInputRequest('lipsync', params);
     return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
 }
 

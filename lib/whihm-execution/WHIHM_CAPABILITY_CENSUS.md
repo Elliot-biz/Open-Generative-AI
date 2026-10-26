@@ -375,6 +375,20 @@ local primitive simply by seeing an Apps card or object eraser.
 
 ## Video census and specialized route reconciliation
 
+**Advanced Video Input Contracts update (2026-10-26):** historical census counts
+remain unchanged. [Reviewed video input contracts](WHIHM_EXECUTION_BRIDGE.md#advanced-video-input-contracts--2026-10-26)
+now explicitly validate 20 reference-guided I2V IDs, 11 keyframe I2V IDs and all
+15 Lip Sync request contracts, through existing `i2v`/`lipsync` services. Ordered
+mixed project image/video/audio references, distinct first/end frames and
+model-specific Lip Sync source roles/controls are supported. These three intents
+have **reviewed executable subsets**, not certification of every I2V profile:
+Kling O1 reference routes remain canonically deferred for conflicting image
+requirements; unreviewed variants retain legacy behavior. OmniHuman mask-array
+semantics and broader LTX audio-only scope remain unexposed. Detailed node plans
+validate input contracts; static readiness availability alone does not certify
+inputs or preservation quality. No provider execution was used to establish
+output fidelity. See the linked exact-ID inventory and limitations.
+
 Current **111 T2V / 184 I2V / 75 V2V** entries are present in both local catalogs
 and hosted bundle. Grouping profiles collapses those into meaningful generation,
 reference animation, edit, extend, motion, recast and enhancement intents. Exact
