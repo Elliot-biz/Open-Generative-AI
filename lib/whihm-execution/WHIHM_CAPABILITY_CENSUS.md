@@ -300,6 +300,12 @@ availability does not certify a portable packaged release.
 
 ## Audio census and proposed Audio Wave 1 scope
 
+**Audio Wave 1 update (2026-10-26):** the original census/counts below remain a
+2026-10-25 snapshot. The subsequent [reviewed audio contracts](WHIHM_EXECUTION_BRIDGE.md#audio-wave-1--reviewed-shared-contracts-2026-10-26)
+admit 22 of these 23 models with ordered project audio arrays and nested dialogue
+validation; Suno multi-step cloning is now explicitly deferred from canonical
+execution. The old generic/partial audio assessments below are historical.
+
 All **23** local Audio IDs are also in the hosted catalog and were individually
 visible in its dropdown. There is **no confirmed web-only audio addition** to
 backport. The absence of a desktop Audio tab does not mean audio execution is

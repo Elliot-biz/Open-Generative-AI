@@ -571,3 +571,55 @@ for (const [model, parameters, engine] of [
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
   assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
 });
+
+test('Audio Wave 1 fixed host preserves ordered project tracks and reviewed provider options', async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const audio = await f.project.importAsset({ sourcePath: f.source, assetId: 'track', contentType: 'audio/wav' });
+  assert.equal(audio.status, 'imported');
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  changed.assets.push({ id: 'track', type: 'audio', localPath: audio.asset.path });
+  const node = changed.nodes[0]; node.executor.model = 'suno-generate-mashup'; node.metadata.oga.mode = 'audio';
+  node.outputs[0].type = 'audio'; node.inputs = [{ id: 'audios_list', type: 'audio', required: true }]; node.assetRefs = ['track'];
+  node.parameters = { style: 'Jazz', model: 'V5' };
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { generateAudio } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { generateAudio, async uploadFile(_key, file) {
+    uploaded.push(await file.text()); return `https://example.com/track-${uploaded.length}.wav`;
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-audio' }
+      : { status: 'completed', outputs: ['https://example.com/mix.wav'] } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root });
+  const args = { ...request(opened), assetBindings: { audios_list: ['track', 'track'] } };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned', JSON.stringify(plan)); assert.equal(plan.request.audio.capability, 'MASHUP_MUSIC');
+  assert.equal(h.authReads(), 0); assert.equal(uploaded.length, 0); assert.equal(calls.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded'); assert.equal(result.requestId, 'host-audio'); assert.equal(result.model, 'suno-generate-mashup');
+  assert.equal(uploaded.length, 2); assert.equal(calls.length, 2);
+  assert.deepEqual(JSON.parse(calls[0].body).audios_list, ['https://example.com/track-1.wav', 'https://example.com/track-2.wav']);
+  assert.equal(JSON.parse(calls[0].body).model, 'V5'); assert.ok(!Object.hasOwn(JSON.parse(calls[0].body), '_modelId'));
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+});
+
+test('Audio Wave 1 host rejects malformed dialogue and leaves Suno clone unavailable without execution', async t => {
+  const f = await fixture(t), h = await transport(t);
+  t.mock.method(globalThis, 'fetch', async () => { assert.fail('Readiness/planning must not use network'); });
+  for (const [model, parameters] of [['gemini-3-1-flash-tts', { speakers: [], dialogue_turns: [] }], ['suno-voice-clone', { audio_url: 'https://example.com/sample.wav' }]]) {
+    const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+    changed.nodes[0].executor.model = model; changed.nodes[0].metadata.oga.mode = 'audio'; changed.nodes[0].parameters = parameters;
+    assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+    const opened = await h.host.openProject({ projectRoot: f.root }), args = request(opened);
+    assert.equal((await h.host.planNode(args)).status, 'rejected');
+    assert.equal((await h.host.executeNode({ ...args, allowExecution: true })).status, 'rejected');
+    if (model === 'suno-voice-clone') {
+      const evidence = await h.host.assessWorkflowReadiness({ projectHandle: opened.projectHandle, workflowId: f.workflow.workflowId, evaluatedAt: '2026-10-26T12:00:00Z' });
+      assert.equal(evidence.provenance.executors.remote.state, 'UNAVAILABLE');
+    }
+  }
+  assert.equal(h.authReads(), 0);
+});

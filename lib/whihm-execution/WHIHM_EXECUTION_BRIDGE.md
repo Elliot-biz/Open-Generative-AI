@@ -593,3 +593,121 @@ H264_output is boolean. Defaults remain explicit and FPS omission stays omitted.
 These are AI enhancement/reconstruction paths with no exact preservation guarantee.
 Plans show the caveat; no workflow executes automatically when planning/readiness
 succeeds. Existing authorization and passive planning behavior remain unchanged.
+
+## Audio Wave 1 — reviewed shared contracts (2026-10-26)
+
+`packages/studio/src/audioInputContracts.js` adds pure `buildAudioRequest(modelId,
+params)`, `getAudioExecutionModel`, `getAudioMediaInputs` and
+`getAudioContractStatus`. Endpoints/schemas/options/defaults come from the existing
+Studio audio catalog; the new intent/admission list does not discover models or
+implement transport. **22 of 23 current catalog entries are reviewed and admitted**
+to the existing canonical `audio` route. `generateAudio` validates those same
+contracts before its existing submit/poll/result lifecycle. Unreviewed application
+calls retain the existing generic implementation; this is not canonical admission.
+No Audio Studio UI or desktop request builder was added or changed.
+
+| Intent | Reviewed exact IDs | Requirements / scoped controls |
+| --- | --- | --- |
+| GENERATE_MUSIC | `suno-create-music` | Nonempty style; existing prompt/version/persona/instrumental and bounded weights. Existing catalog V5 default remains explicit |
+| REMIX_MUSIC | `suno-remix-music` | Source audio + style; prompt/title and existing Suno settings |
+| EXTEND_MUSIC | `suno-extend-music` | Source audio + prompt + style; integer continue_at 1–60 retained from current product contract. Source duration compatibility remains unmeasured |
+| MASHUP_MUSIC | `suno-generate-mashup` | Ordered audios_list 1–2, style; prompt also required when instrumental=false. Duplicates preserved |
+| ADD_VOCALS | `suno-add-vocals` | Source audio + prompt/style/title (catalog title default allowed); not vocal extraction |
+| ADD_INSTRUMENTAL | `suno-add-instrumental` | Source audio + tags/title (catalog title default allowed); not stem separation |
+| GENERATE_SOUND | `suno-generate-sounds` | Prompt ≤500 chars, existing loop/tempo 1–300/key/lyrics controls; no invented duration or TTS semantics |
+| GENERATE_SOUND | `mmaudio-v2-text-to-audio` → `mmaudio-v2/text-to-audio` | Prompt; integer duration 1–30, default 8. No video-to-audio admission |
+| CLONE_VOICE | `minimax-voice-clone` | Source audio, custom_voice_id and preview prompt; preview engine is separate from executor ID, accuracy/noise/volume options validated |
+| SYNTHESIZE_SPEECH | `minimax-speech-2.6-hd`, `minimax-speech-2.6-turbo` | Nonempty prompt; supplied/default voice ID, including custom clones; speed 0.5–2, volume 0.1–10, integer pitch −12–12, enums for emotion/language/audio format settings |
+| SYNTHESIZE_SPEECH | `elevenlabs-tts-turbo-2-5` | Prompt ≤40000; suggested or custom voice ID; stability/similarity 0–1; speed 0.7–1.2; catalog language enum |
+| SYNTHESIZE_DIALOGUE | `elevenlabs-text-to-dialogue-v3` | Nonempty ordered dialogue array; every object requires nonblank text + voice_id; custom IDs accepted; stability 0–1 and language enum |
+| SYNTHESIZE_DIALOGUE | `gemini-3-1-flash-tts`, `gemini-2-5-pro-tts` | Nonempty speakers and dialogue_turns; recursive declared fields/types/enums/defaults, unique Speaker N IDs, every turn references a defined speaker; turn text ≤10000; temperature 0–2 |
+| CONVERT_SUNO_WAV | `suno-convert-to-wav` | Nonblank task_id + audio_id of an existing Suno track. Not arbitrary URL/file conversion |
+| GENERATE_MUSIC | `minimax-music-3.0` | Prompt + lyrics 10–3000 chars (also for current instrumental product form); existing bitrate/sample_rate/is_instrumental |
+| SYNTHESIZE_SPEECH | `elevenlabs-v4`, `fish-s2-1-pro` | Prompt max 2000 / 10000; respective catalog voice choices/defaults |
+| GENERATE_MUSIC | `lyria-3-pro`, `lyria-3`, `lyria-2` | Nonblank prompt ≤2000; no borrowed Suno controls |
+
+**Deferred:** `suno-voice-clone` requires a first sample, a fresh random phrase,
+and a confirmation recording. Public OpenAPI also exposes
+`/api/v1/suno-voice-clone/{request_id}/confirm`, but the current shared generic
+submit/poll path does not implement that interaction. Canonical lookup/readiness
+therefore reports this model unavailable; direct contract construction returns
+`AUDIO_CLONE_LIFECYCLE_UNSUPPORTED`. The existing application generic request is
+preserved without claiming it completes cloning. No confirmation flow, voice
+management, liveness bypass, or clone persistence system was implemented.
+
+### Identity, defaults and validation
+
+Canonical executor.model always identifies the endpoint. The shared transport's
+`_modelId` carries that identity and is never sent to MuAPI. `params.model` may
+only be a declared Suno version or MiniMax preview-engine option. It cannot select
+a different canonical executor, and unknown options/option bags/raw payloads or
+nested fields reject. Existing application callers using model alone as endpoint
+selector remain compatible; `_modelId` callers retain the established provider
+version distinction. Provider defaults are not guessed: existing catalog defaults
+are explicitly materialized, preserving valid current settings rather than
+silently adopting newer provider defaults.
+
+Schemas are derived from current source, with narrow validated corrections:
+MiniMax clone preview prompt is required per OpenAPI; custom voice IDs are allowed
+for MiniMax speech and ElevenLabs suggestion lists; description-only string/TTS
+bounds are enforced; Gemini required/default nested properties and cross-speaker
+references are checked. No schema is supplied by callers. Numeric types/bounds,
+primitive enums, nonempty required arrays/text and nested objects reject before
+canonical authentication/upload/submission. No clamping, list truncation, coercion,
+reference reordering or dialogue flattening occurs. UI widget step sizes do not
+become invented provider quantization. Unselected optional '' enum / null values
+from the existing Studio state are omission, with declared defaults where present;
+required values still reject. Valid strings and media order remain unchanged.
+
+### Ordered project audio assets and passive planning
+
+Reviewed scalar audio fields and mashup's `audios_list` can use the existing
+project assetBindings. Array bindings must be arrays of registered, declared audio
+asset IDs on the declared input port; preserve order and duplicates. Each resolves
+through existing project path/checksum validation. Empty arrays, malformed roles,
+wrong asset type, missing/corrupt records, scalar/array mismatch and competing
+parameter/asset bindings reject. Already-resolved URL arrays are also valid;
+URL values are not interpreted as filesystem paths or asset IDs. This adds no
+arbitrary array-binding permission outside reviewed audio roles.
+
+Plans expose `request.audio` with intent, canonical modelId, separate providerModel,
+required inputs/media, array counts/limits/order, and providerRequest endpoint /
+normalized payload. Registered files appear as logical placeholders and relative
+requiredUploads, never transient absolute paths. effectiveOptions show declared
+applied defaults. Planning/readiness performs no auth, upload, estimate, request
+submission or polling. Execution still needs explicit allowExecution and uses the
+same host File loader, Studio uploader and shared generateAudio lifecycle. Output,
+voice ID, request ID, cost/refund and upstream metadata retain existing result
+normalization; no new persistence or scheduler is introduced.
+
+Media URL validation checks nonempty HTTP(S) references without embedded userinfo;
+canonical validation additionally protects secret-bearing/unsafe references.
+Neither URL inspection nor a project checksum proves audio content, duration,
+channels, licensing, voice ownership or successful provider acceptance. In
+particular, source clip duration limits and continue_at < actual source duration
+remain provider/media-inspection constraints, not falsely measured here.
+
+### Contract evidence and deliberate limits
+
+Read-only public inspection: 2026-10-26,
+[MuAPI OpenAPI](https://api.muapi.ai/openapi.json) request schemas for all 23 exact
+audio endpoints and `GET https://api.muapi.ai/api/v1/models/{id}` for the catalog
+entries. 22 detail GETs succeeded; the slash-form MMAudio detail URL returned 404,
+so its exact execution endpoint/schema was verified in OpenAPI. No authentication,
+upload, estimate or execution call occurred. OpenAPI confirms the Suno clone
+confirmation path; no confirmation request was sent.
+
+The provider surface is ahead in a few optional areas: Suno V6 versions,
+duration/reference options and a V6 default; sounds V5_5; mashup V4_5ALL. These are
+**not** added by this wave. Existing catalog versions/defaults remain a reviewed
+subset. Provider add-vocals/add-instrumental source audio is nullable and extend
+prompt optional in OpenAPI, while the current product requires them; this wave
+keeps the narrower source-based transform/continuation contracts, not a new
+reference-free capability. Mashup's metadata limits uploads to two although its
+OpenAPI description discusses more; the existing two-track product limit remains
+explicit. MiniMax source default emotion remains explicit (surprised), a valid
+choice even though OpenAPI's omitted-field default is happy. No source/provider
+identity conflict required a new lifecycle or catalog rewrite.
+
+No transcription, separation, MMAudio V2V, lip-sync, clipping, FFmpeg/conversion,
+voice-management service, Audio Studio redesign or Astra projection was added.

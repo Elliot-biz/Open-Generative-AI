@@ -10,6 +10,7 @@ import { getModelMediaCapabilities, mapReferenceParams } from './modelCapabiliti
 import { buildMotionControlRequest } from './motionControlInputContracts.js';
 import { buildRecastRequest } from './recastInputContracts.js';
 import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
+import { buildAudioRequest, getAudioExecutionModel } from './audioInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 
@@ -309,6 +310,12 @@ export async function processLipSync(apiKey, params) {
 
 export async function generateAudio(apiKey, params) {
     const modelId = params._modelId || params.model;
+    if (getAudioExecutionModel(modelId)) {
+        const { endpoint, payload } = buildAudioRequest(modelId, params);
+        return submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+    }
+    // Preserve existing application paths for unreviewed / multi-step models.
+    // Canonical admission is narrower; this does not certify their lifecycles.
     const modelInfo = getAudioModelById(modelId);
     const endpoint = modelInfo?.endpoint || modelId;
     const payload = {};
