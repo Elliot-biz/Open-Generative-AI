@@ -1,5 +1,15 @@
 # WHIHM final foundation-hardening gap review
 
+> **Current foundation reconciliation — 2026-10-26, HEAD f70d33c0c3ac4c7441d869b3cc0872db63461343:**
+> **READY_FOR_ASTRA_PROJECTION** (source/development only). The
+> [authoritative Astra handoff](WHIHM_ASTRA_PROJECTION_HANDOFF.md) supersedes older
+> counts, exit gates and deferred labels below where later implementations changed
+> them. Current counts: 13 remote modes,35 reviewed V2V,36 registry-reviewed I2V
+> (+Act Two compatibility),22 ordinary audio contracts plus guided Suno; Depth and
+> Suno guided cloning are implemented. Historical milestones remain preserved.
+> MMAudio/ordinary Spicy generation/fixed-profile conflicts remain explicit;
+> runtime fidelity is unverified and packaging remains a high-severity shipping blocker.
+
 > **Guided Suno addendum (2026-10-26; starting HEAD b99c8e7911b3334099d20ad55f56af011e3bc060):**
 > G17 is now canonically implemented as CLONE_VOICE_GUIDED / voice_clone_guided.
 > Provider phrase/liveness and a distinct human recording remain mandatory; no

@@ -1,5 +1,15 @@
 # WHIHM → existing application execution bridge
 
+> **Current foundation reconciliation — 2026-10-26, HEAD f70d33c0c3ac4c7441d869b3cc0872db63461343:**
+> **READY_FOR_ASTRA_PROJECTION** (source/development only). The
+> [authoritative Astra handoff](WHIHM_ASTRA_PROJECTION_HANDOFF.md) supersedes older
+> counts, exit gates and deferred labels below where later implementations changed
+> them. Current counts: 13 remote modes,35 reviewed V2V,36 registry-reviewed I2V
+> (+Act Two compatibility),22 ordinary audio contracts plus guided Suno; Depth and
+> Suno guided cloning are implemented. Historical milestones remain preserved.
+> MMAudio/ordinary Spicy generation/fixed-profile conflicts remain explicit;
+> runtime fidelity is unverified and packaging remains a high-severity shipping blocker.
+
 Open Generative AI is the application foundation. Reuse its clients, catalogs,
 polling, uploads, IPC and inference engines before adding infrastructure. This
 module is application integration, **not** another workflow core or execution engine.
