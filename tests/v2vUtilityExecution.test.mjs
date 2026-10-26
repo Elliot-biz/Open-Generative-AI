@@ -142,6 +142,6 @@ test('75-row review classifications match exact execution admission without hidd
   const document = await fs.readFile(new URL('../lib/whihm-execution/V2V_CONTRACT_REVIEW.md', import.meta.url), 'utf8');
   const entries = [...document.matchAll(/^\| `([^`]+)`[^|]* \| ([DFIRS]) \|/gm)].map(m => [m[1], m[2]]);
   assert.equal(entries.length, 75); assert.equal(new Set(entries.map(([id]) => id)).size, 75);
-  assert.deepEqual(Object.fromEntries('DFIRS'.split('').map(c => [c, entries.filter(([, value]) => value === c).length])), { D: 28, F: 16, I: 8, R: 19, S: 4 });
+  assert.deepEqual(Object.fromEntries('DFIRS'.split('').map(c => [c, entries.filter(([, value]) => value === c).length])), { D: 28, F: 16, I: 7, R: 19, S: 5 });
   for (const [id, status] of entries) assert.equal(Boolean(getV2VExecutionModel(id)), ['F', 'R'].includes(status), id);
 });

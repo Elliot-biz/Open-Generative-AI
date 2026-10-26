@@ -807,3 +807,32 @@ for (const [model, mode, parameters, bindings] of [
   if(mode==='i2v')assert.deepEqual(payload.images_list,['https://example.com/final-1','https://example.com/final-2']);
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow,changed);assert.ok(!JSON.stringify({plan,result}).includes(f.root));
 });
+
+for (const kind of ['image', 'video']) test(`fixed host depth ${kind}: logical project plan, authorization and typed shared lifecycle`, async t => {
+  const f = await fixture(t), calls = [], uploads = [];
+  const imported = await f.project.importAsset({ sourcePath: f.source, assetId: 'depth_source', contentType: kind + '/fixture' });
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow);
+  changed.assets.push({ id: 'depth_source', type: kind, localPath: imported.asset.path });
+  const node = changed.nodes[0], field = kind + '_url';
+  node.executor.model = 'depth-anything'; node.metadata.oga.mode = 'depth'; node.parameters = {};
+  node.outputs[0].type = kind; node.inputs = [{ id: field, type: kind }]; node.assetRefs = ['depth_source'];
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { processV2V } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { processV2V, async uploadFile(_key, file) { uploads.push(await file.text()); return 'https://example.com/source'; } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init }); return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-depth' }
+      : { status: 'completed', output: { video: 'https://example.com/depth', timings: { inference: 1 } } } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = { ...request(opened), assetBindings: { [field]: 'depth_source' } };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned', JSON.stringify(plan)); assert.equal(plan.mediaType, kind);
+  assert.equal(plan.request.depth.sourceKind, kind); assert.equal(plan.runtime, 'studio.processV2V');
+  assert.ok(!JSON.stringify(plan).includes(f.root)); assert.equal(uploads.length, 0); assert.equal(calls.length, 0); assert.equal(h.authReads(), 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded', JSON.stringify(result)); assert.equal(result.resultKind, 'depth-' + kind);
+  assert.equal(result.outputs[0].mediaType, kind); assert.equal(result.upstream.output.video, 'https://example.com/depth');
+  assert.equal(result.requestId, 'host-depth'); assert.equal(uploads.length, 1);
+  assert.deepEqual(JSON.parse(calls[0].body), { [field]: 'https://example.com/source' });
+  assert.ok(calls[1].url.endsWith('/predictions/host-depth/result'));
+});

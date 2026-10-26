@@ -94,7 +94,7 @@ Classes retain the original review and subsequent reviewed-wave results: `R` = R
 | `flux-3-video-upscaler` | R | prompt supported | upscale_factor, creativity |
 | `flux-3-video-extend-draft` | R | prompt required | aspect_ratio, duration, generate_audio |
 | `gemini-omni-flash-1-1-edit` | R | prompt required | resolution |
-| `depth-anything` | I | image_url? | — |
+| `depth-anything` | S | image_url XOR video_url; dedicated depth mode | — |
 | `runway-act-two-v2v` | F | reference_video_url required | aspect_ratio |
 | `luma-flash-reframe` | R | image_url?, prompt supported | aspect_ratio, duration |
 | `seedance-2-video-edit` → `seedance-v2.0-video-edit` | F | source video_urls [exactly 1], images_list?, audio_files?, prompt required | aspect_ratio, quality, duration |
@@ -104,7 +104,7 @@ Classes retain the original review and subsequent reviewed-wave results: `R` = R
 | `topaz-upscale-video-generative` | F | — | topaz_model (wire model), upscale_factor, target_fps, softness, H264_output |
 | `topaz-upscale-video-precision` | F | — | topaz_model (wire model), upscale_factor, target_fps, compression, noise, halo, grain, recover_detail, H264_output |
 
-Current counts after the high-value remote video wave: **D=28, F=16, I=8, R=19, S=4**; **75 total, 35 bound**, 36 unresolved D/I and four specialized. Utility milestone historical counts were D33/F13/I9/R16/S4, 29 bound; the appended review records this wave’s exact scope. Before this milestone (Wave 3): D=31, F=11, I=17, R=12, S=4, 23 bound. Six utility IDs are newly bound; three unrelated I entries move to D based on refreshed request evidence only and remain unbound. Six Seedance fixed-resolution variants remain I because naming/metadata/OpenAPI conflict.
+Current counts after dedicated Depth admission: **D=28, F=16, I=7, R=19, S=5**; **75 total, 35 generic V2V bound**, 35 unresolved D/I and five specialized. The depth route adds no generic V2V eligibility. Utility milestone historical counts were D33/F13/I9/R16/S4, 29 bound; the appended review records this wave’s exact scope. Before this milestone (Wave 3): D=31, F=11, I=17, R=12, S=4, 23 bound. Six utility IDs are newly bound; three unrelated I entries move to D based on refreshed request evidence only and remain unbound. Six Seedance fixed-resolution variants remain I because naming/metadata/OpenAPI conflict.
 
 ## Deferred/specialized findings
 
@@ -492,3 +492,19 @@ contracts reuse source metadata where adequate; unresolved fields stay unavailab
 Schemas describe requested behavior, not measured media, output fidelity or account
 availability. All execution tests are mocked. No UI components, dependencies,
 packaging, project schema, providers, uploader or poller are added/replaced.
+
+## Dedicated Depth Anything contract — 2026-10-26
+
+Starting HEAD `f69a2c98b2b42270c7bba55377305ace4444c8a4`. Depth moves I→S:
+**D28/F16/I7/R19/S5**, 75 entries, 35 generic V2V bound, 35 unresolved, 5 specialized.
+The earlier depth-I conclusions remain historical. Exact canonical `depth` uses
+shared processV2V but is never eligible for generic `v2v`. Image_url XOR video_url
+is enforced; image input yields typed depth-image, video yields depth-video.
+No new model catalog or transport. See the dedicated bridge contract addendum.
+Public unauthenticated GETs refreshed [model detail](https://api.muapi.ai/api/v1/models/depth-anything)
+and [OpenAPI](https://api.muapi.ai/openapi.json). Both URL fields are nullable in
+OpenAPI; detail descriptions explicitly supply XOR and dual result semantics.
+No extra request controls are documented except webhook_url, deliberately excluded.
+The native output.video field is documented for either media kind; it is retained
+without fabricating image_url/video_url outputs. Runtime fidelity remains UNVERIFIED.
+MMAudio remains I, parked for mandatory future revisit; no other entry changes.

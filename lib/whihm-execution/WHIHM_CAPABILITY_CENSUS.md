@@ -1273,3 +1273,23 @@ authorization or runtime quality proof. Fast variants need substantive value bey
 latency; Standard Seedance1.5 alone is admitted despite a possible Fast resolution
 advantage. MMAudio remains parked for mandatory future clarification/revisit.
 No general catalog expansion, new modes, UI redesign, packaging or projection work.
+
+## Depth Anything current-state update — 2026-10-26
+
+ESTIMATE_DEPTH is now contract-reviewed/canonically available through exact
+`depth` → shared processV2V. Image_url XOR video_url supports depth-image and
+depth-video typing without broadening generic V2V or routing image callers there.
+Typed registered image/video assets retain integrity checks and logical passive
+plans. Source kind, expected result kind, provider request and caveats are exposed.
+Native output.video may contain either kind; original safe metadata survives.
+Unknown output shapes create no synthetic artifact. No metric/calibrated geometry,
+segmentation, masks, sequence or 3D claims. Tests are mocked; runtime fidelity and
+provider account availability remain UNVERIFIED.
+
+V2V inventory now **D28/F16/I7/R19/S5**, 75 rows, 35 generic bound, 35 unresolved,
+5 specialized; depth moves I→S. Remote mode/ID eligibility increases by one to
+531 pairs / 528 logical IDs / 519 effective endpoint strings (structural eligibility,
+not blanket contract certification). Catalog counts and other route coverage are
+unchanged. Earlier census rows/counts are historical. Depth no longer blocks the
+requested program; Suno Guided Voice Clone remains planned next. MMAudio stays
+parked for mandatory provider-result clarification/revisit.

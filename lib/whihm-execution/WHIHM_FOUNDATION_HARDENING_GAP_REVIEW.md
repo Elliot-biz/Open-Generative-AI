@@ -1,5 +1,12 @@
 # WHIHM final foundation-hardening gap review
 
+> **Depth addendum (2026-10-26):** G13 is implemented through dedicated canonical
+> `depth`, preserving XOR image/video roles and typed artifacts via shared processV2V.
+> Contract availability and mocked QA do not verify provider fidelity. The historical
+> gap ledger below is superseded only for G13. The desired pre-projection program
+> is **not yet declared complete**: Suno Guided Voice Clone remains planned next.
+> Existing provider clarification, local staging and packaging caveats remain.
+
 > **Current-wave addendum (2026-10-26; starting HEAD ebb589965ad6302c2f552f8c0327d9f971b35b27):**
 > Original G01 is complete: both unsuffixed Spicy V2V executors are bound. Six V2V
 > and five I2V executors gained reviewed contracts. Expanded wave result is PARTIAL:
@@ -715,3 +722,22 @@ Require meaningful cost, quality, controls, limits, reliability or input/output 
 prefer a slower comparable executor when lower cost or lack of speed value warrants
 it. Do not remove upstream choices, automatically bind speed variants or implement
 ranking as part of hardening.
+
+## G13 implemented — dedicated Depth Anything contract (2026-10-26)
+
+Starting HEAD f69a2c98b2b42270c7bba55377305ace4444c8a4. Exact canonical depth
+route now supports image_url XOR video_url, typed project assets, transport-free
+plans and depth-image/depth-video semantic results. Existing shared processV2V,
+upload/auth/poll/results remain authoritative; generic V2V stays video-only.
+Public model detail explicitly describes dual input/output and native output.video
+for either kind; OpenAPI lacks XOR, so scoped validation enforces it. No paid test.
+Unknown output metadata is preserved without synthetic artifacts. No metric depth,
+calibration, masks, segmentation, sequences, 3D or fidelity guarantee is claimed.
+
+G13 contract/binding gap is closed; real execution/fidelity remains UNVERIFIED
+and belongs to a future authorized execution check, not a claim of VERIFIED runtime.
+V2V classification is now D28/F16/I7/R19/S5; generic35 unchanged, depth specialized.
+Next requested milestone is **Suno Guided Voice Clone**, preserving provider
+confirmation/liveness and explicit multi-stage lifecycle. No Suno behavior changes
+in this task. Ordinary Spicy provider conflicts, MMAudio's mandatory future revisit,
+packaging and all other historical exclusions remain explicit, not silently resolved.

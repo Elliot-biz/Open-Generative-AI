@@ -1254,3 +1254,58 @@ packaging, workflow/agent, projection, media-inspection or finishing implementat
 is introduced. No UI component/layout change; reviewed metadata can drive existing
 option controls. Current OpenAPI and14 public model-detail GETs were read-only;
 execution/upload/polling tests use fake transport exclusively.
+
+## Dedicated Depth Anything route — 2026-10-26
+
+Canonical `metadata.oga.mode: "depth"`, provider muapi, exact executor
+`depth-anything` delegates to existing shared **processV2V**. A dedicated route is
+necessary because generic `v2v` requires video and labels its artifacts video;
+that contract and its 35 reviewed IDs are unchanged. No new client, uploader,
+poller, IPC surface, UI or project schema. Studio/application processV2V callers
+continue through the same lifecycle, with this exact tool's explicit validation.
+
+`depthInputContracts.js` projects the existing catalog entry and permits only
+**image_url XOR video_url** (scalar HTTP(S), nonblank, no embedded credentials).
+Neither/both, null, arrays, paths, unknown controls, raw/provider_options and model
+overrides reject. There are no exposed depth options/defaults. Canonical safety
+also rejects signed/credential URLs and fragments through existing portable-data
+validation. Remote roles are declarations: no content download/probe proves MIME.
+Typed registered project assets use the existing resolver/integrity checks; workflow
+asset type, input port type and registry MIME must match the selected role. No
+arbitrary file paths. Plans retain logical project placeholders and relative
+upload descriptions; transient host paths appear only internally during execution.
+
+Plans show sourceKind=image|video, expectedMediaType=image|video, resultKind=
+depth-image|depth-video, selected required role, exact providerRequest, empty
+effective options and limitations. Static readiness means BRIDGE_ROUTE_PLANNABLE,
+not input validity, account availability, spend authorization or runtime success.
+The mode-neutral static binding uses json because source kind is not yet known;
+a validated plan supplies the concrete media type. Plan does no authentication,
+upload, submission or polling. Existing allowExecution and host security remain.
+
+Results identify capability ESTIMATE_DEPTH, sourceKind and resultKind. Actual
+outputs/output.video/output.outputs/url/output.url are preserved in returned order
+where supplied. The provider explicitly documents output.video for **both** media
+kinds: an image source types that artifact image; a video source types it video.
+Objects stay JSON and all safe native fields remain in upstream. The shared URL
+consumer normalizer derives url only from actual native output, never an invented
+image_url/video_url. Unrecognized shape yields no invented artifacts; safe raw
+metadata survives. This is semantic typing from the validated request and provider
+declaration, not byte-level output verification.
+
+No metric depth, absolute units, calibration, masks, segmentation, image sequence,
+point cloud, mesh, deterministic geometry, fidelity or encoding guarantee. Evidence:
+2026-10-26 unauthenticated public GET [model detail](https://api.muapi.ai/api/v1/models/depth-anything)
+and [OpenAPI](https://api.muapi.ai/openapi.json), current source and mocked tests.
+OpenAPI alone lacks XOR; detail text explicitly confirms it. No provider execution.
+Runtime/provider fidelity remains **UNVERIFIED**. Suno Guided Voice Clone is planned
+next; this capability does not declare the entire pre-projection program complete.
+
+Depth QA: 33 focused depth tests plus two fixed Electron-host depth cases cover
+XOR/URL/option rejection, both typed results, native and unknown metadata, ordered
+actual outputs, project MIME/role/integrity boundaries, passive plans, authorization,
+shared upload/request-ID/poll delegation and no generic V2V admission. The targeted
+11-file regression command passes 622 tests; the full host file passes 58 tests
+(including the two new cases). Syntax checks and ESLint pass for all seven touched
+JS/MJS files; Vite production build passes with its chunk-size advisory. All
+transports/uploads are fixtures; only the two public metadata GETs were live.

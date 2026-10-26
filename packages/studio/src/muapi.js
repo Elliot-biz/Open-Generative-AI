@@ -13,6 +13,7 @@ import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
 import { buildAudioRequest, getAudioExecutionModel } from './audioInputContracts.js';
 import { buildAdvancedImageRequest, getAdvancedImageModel, getAdvancedImageStatus, normalizeAdvancedImageResult } from './advancedImageInputContracts.js';
 import { buildVideoInputRequest, getVideoInputModel } from './videoInputContracts.js';
+import { buildDepthRequest } from './depthInputContracts.js';
 import { buildCreativeServiceRequest } from './creativeServiceInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
@@ -235,6 +236,13 @@ export async function generateMarketingStudioAd(apiKey, params) {
 }
 
 export async function processV2V(apiKey, params) {
+    if (params?.model === 'depth-anything') {
+        const { endpoint, payload } = buildDepthRequest(params);
+        const result = await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
+        // Provider output.video contains either an image or a video for this exact tool.
+        // Keep the existing URL consumer working without renaming the native field.
+        return normalizeNativeVideoResult(result);
+    }
     if (getV2VExecutionModel(params?.model)) {
         const { endpoint, payload, v2v } = buildV2VRequest(params);
         const result = await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 900);
