@@ -749,3 +749,35 @@ for (const [model, mode, parameters, bindings] of [
   assert.equal(calls.length, 2); assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
   assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
 });
+
+for (const [model, parameters, bindings] of [
+  ['add-video-watermark', { position: 'center', opacity: 0, scale: 0.25 }, { video_url: 'clip', watermark_image_url: 'logo' }],
+  ['ai-captions', { language: 'Spanish', theme: 'Hormozi_2' }, { video_url: 'clip' }],
+]) test(`V2V utility host: ${model} validates typed media, preserves native result and requires authorization`, async t => {
+  const f = await fixture(t), uploaded = [], calls = [];
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow), node = changed.nodes[0];
+  for (const [id, type] of [['clip', 'video'], ['logo', 'image']]) {
+    const imported = await f.project.importAsset({ sourcePath: f.source, assetId: id, contentType: type + '/fixture' });
+    changed.assets.push({ id, type, localPath: imported.asset.path });
+  }
+  node.executor.model = model; node.metadata.oga.mode = 'v2v'; node.parameters = parameters; node.outputs[0].type = 'video';
+  node.inputs = Object.keys(bindings).map(id => ({ id, type: id === 'video_url' ? 'video' : 'image' })); node.assetRefs = ['clip', 'logo'];
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { processV2V } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { processV2V, async uploadFile(_key, file) { uploaded.push(file.type); return `https://example.com/utility-${uploaded.length}`; } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init }); return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-v2v-utility' }
+      : { status: 'completed', output: { video: 'https://example.com/utility.mp4', metadata: { provider_value: 'preserved' } } } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = { ...request(opened), assetBindings: bindings }, plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned', JSON.stringify(plan)); assert.equal(calls.length, 0); assert.equal(uploaded.length, 0); assert.equal(h.authReads(), 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  assert.equal((await h.host.executeNode({ ...args, assetBindings: { ...bindings, video_url: 'logo' }, allowExecution: true })).status, 'rejected');
+  assert.equal(h.authReads(), 0);
+  const result = await h.host.executeNode({ ...args, allowExecution: true }); assert.equal(result.status, 'succeeded', JSON.stringify(result));
+  assert.equal(result.model, model); assert.equal(result.requestId, 'host-v2v-utility'); assert.equal(result.resultKind, 'v2v-utility'); assert.equal(result.upstream.output.metadata.provider_value, 'preserved');
+  assert.equal(result.outputs[0].value, 'https://example.com/utility.mp4'); assert.ok(calls[0].url.endsWith('/api/v1/' + model));
+  const payload = JSON.parse(calls[0].body); assert.equal(payload.video_url, 'https://example.com/utility-1');
+  if (model === 'add-video-watermark') { assert.equal(payload.watermark_image_url, 'https://example.com/utility-2'); assert.equal(payload.opacity, 0); } else assert.equal(payload.theme, 'Hormozi_2');
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root)); assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+});

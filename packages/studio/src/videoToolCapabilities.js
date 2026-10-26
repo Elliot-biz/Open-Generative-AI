@@ -445,6 +445,118 @@ for (const id of HAPPY_HORSE_EDIT_TOOL_IDS) {
   };
 }
 
+
+// Reviewed utility controls from public MuAPI schemas (2026-10-26).
+// Endpoints/media identity remain in the existing Studio catalog.
+Object.assign(VIDEO_TOOL_OVERRIDES, {
+  "add-video-watermark": {
+    hasPrompt: false, operation: "watermark-add",
+    inputs: {
+      position: { type: "string", enum: ["top-left", "top-right", "bottom-left", "bottom-right", "center"], default: "bottom-right", configurable: true },
+      opacity: { type: "number", minimum: 0, maximum: 1, default: 0.7, configurable: true },
+      scale: { type: "number", minimum: 0.1, maximum: 1, default: 0.15, configurable: true },
+    },
+    utility: { capability: "APPLY_VIDEO_WATERMARK", classification: "DETERMINISTIC_UTILITY", outputRole: "watermarked-video",
+      caveat: "Remote structured watermark composition; no exact output encoding, timing or pixel-preservation guarantee." },
+  },
+  "ai-captions": {
+    hasPrompt: false, operation: "caption",
+    inputs: {
+    "language": {
+        "type": "string",
+        "title": "Language",
+        "default": "English",
+        "enum": [
+            "English",
+            "English (USA)",
+            "English (UK)",
+            "English (Australia)",
+            "English (Canada)",
+            "Japanese",
+            "Chinese",
+            "German",
+            "Hindi",
+            "French",
+            "French (France)",
+            "French (Canada)",
+            "Korean",
+            "Portuguese (Brazil)",
+            "Portuguese (Portugal)",
+            "Portuguese",
+            "Spanish (Spain)",
+            "Spanish (Mexico)",
+            "Italian",
+            "Spanish",
+            "Indonesian",
+            "Dutch",
+            "Turkish",
+            "Filipino",
+            "Polish",
+            "Swedish",
+            "Bulgarian",
+            "Romanian",
+            "Arabic (Saudi Arabia)",
+            "Arabic (UAE)",
+            "Arabic",
+            "Czech",
+            "Greek",
+            "Finnish",
+            "Croatian",
+            "Malay",
+            "Slovak",
+            "Danish",
+            "Tamil",
+            "Telugu",
+            "Ukrainian",
+            "Russian",
+            "Hungarian",
+            "Norwegian",
+            "Vietnamese"
+        ],
+        "configurable": true
+    },
+    "theme": {
+        "type": "string",
+        "title": "Caption Theme",
+        "default": "Hormozi_1",
+        "enum": [
+            "Hormozi_1",
+            "Hormozi_2",
+            "Hormozi_3",
+            "Beast",
+            "Ali",
+            "Noah",
+            "Karl",
+            "Luke",
+            "Devin",
+            "Celine",
+            "Maya",
+            "Ella",
+            "Dan",
+            "David",
+            "Tracy",
+            "Umi",
+            "Iman",
+            "William"
+        ],
+        "configurable": true
+    }
+},
+    utility: { capability: "CAPTION_VIDEO", classification: "CONTROLLED_AI", outputRole: "captioned-video",
+      caveat: "AI captions burned into video; no standalone transcript, subtitle-file or timestamp output is promised." },
+  },
+  "luma-flash-reframe": {
+    operation: "reframe",
+    utility: { capability: "REFRAME_VIDEO", classification: "GENERATIVE_AI", outputRole: "reframed-video",
+      caveat: "AI expansion/reframing with optional first-frame guidance; not deterministic crop, exact subject preservation or timeline editing." },
+  },
+});
+for (const id of ["video-watermark-remover", "seedance-2-watermark-remover", "seedance-2-video-watermark-remover-pro"]) {
+  VIDEO_TOOL_OVERRIDES[id] = { ...VIDEO_TOOL_OVERRIDES[id], hasPrompt: false, operation: "watermark",
+    utility: { capability: "REMOVE_VIDEO_WATERMARK", classification: "CONTROLLED_AI", outputRole: "reconstructed-video",
+      caveat: "AI removal/inpainting/reconstruction; obscured content, identity and exact original pixels cannot be guaranteed. No caller mask or region control." } };
+}
+
 const ACTION_LABELS = Object.freeze({
   edit: "Edit video",
   extend: "Extend video",

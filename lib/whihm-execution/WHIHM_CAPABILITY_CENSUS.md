@@ -168,10 +168,10 @@ not upgrade sparse provider contracts. Exact per-route IDs follow in the appendi
 | LIP_SYNC | 15 current catalog entries, including InfiniteTalk and Kling avatar | lipsync | PARTIAL | UI |
 | TRANSLATE_VIDEO | heygen-video-translate | v2v | FULL | CAT |
 | CLIP_HIGHLIGHTS | ai-clipping via runClipping | clipping | REVIEWED_BOUND (2026-10-26 update) | UI + contract |
-| REFRAME_VIDEO | luma-flash-reframe; clipping aspect control | deferred v2v / Studio service | UNBOUND | CAT |
-| APPLY_VIDEO_WATERMARK | add-video-watermark | unreviewed v2v | UNBOUND | CAT |
-| REMOVE_VIDEO_WATERMARK | video-watermark-remover; Seedance removal variants | unreviewed v2v | UNBOUND | CAT |
-| CAPTION_VIDEO | ai-captions | unreviewed v2v | UNBOUND | CAT |
+| REFRAME_VIDEO | luma-flash-reframe | v2v | REVIEWED_BOUND (2026-10-26 update) | contract |
+| APPLY_VIDEO_WATERMARK | add-video-watermark | v2v | REVIEWED_BOUND (2026-10-26 update) | contract |
+| REMOVE_VIDEO_WATERMARK | video-watermark-remover; two Seedance removal variants | v2v | REVIEWED_BOUND (2026-10-26 update) | contract |
+| CAPTION_VIDEO | ai-captions | v2v | REVIEWED_BOUND (2026-10-26 update) | contract |
 | CREATE_REVISE_MOTION_GRAPHICS | motion-graphics; motion-graphics-edit (prior request ID) | motion_graphics (create/edit) | REVIEWED_BOUND (2026-10-26 update) | UI + contract |
 | GENERATE_MUSIC | suno-create-music; minimax-music-3.0; lyria-3-pro/3/2 | audio | FULL | UI |
 | REMIX_MUSIC | suno-remix-music | audio | PARTIAL | UI |
@@ -1218,3 +1218,32 @@ No Studio layout or controls changed. AI selection/design are not deterministic
 finishing. Exact coordinate schema/precision and prior request editability remain
 unverified; no paid execution was performed. These gaps do not imply generic V2V,
 workflow/agent execution or an animation timeline was added.
+
+
+## V2V utility hardening update — 2026-10-26
+
+Historical catalog/web totals remain unchanged. Six existing V2V executors now
+upgrade four intents through the shared processV2V: REFRAME_VIDEO (Luma Flash),
+APPLY_VIDEO_WATERMARK, REMOVE_VIDEO_WATERMARK (three distinct removers), and
+CAPTION_VIDEO (burned-in captions). Exact roles, enums, results and limitations
+are in the [utility contract review](V2V_CONTRACT_REVIEW.md#utility-contracts-and-unresolved-family-review--2026-10-26).
+Typed project source/watermark/reference roles remain distinct. Plans are passive;
+actual safe metadata/output order survives and no subtitle/transcript/depth/audio
+artifacts are fabricated. No new canonical mode, Studio or provider was added.
+
+V2V now has **29 reviewed/bound IDs**; the 75-row review classes are D33/F13/I9/R16/S4.
+Forty-two unresolved entries remain grouped into future waves, with four specialized
+entries retained. Pro upscaler, remix and dance moved I→D because refreshed public
+request schemas establish their roles/options; they remain unbound and unchanged
+in code. Fixed-resolution Seedance ambiguity persists; generic Happy Horse and
+other alternate upscalers/remix are low priority absent concrete production need.
+
+GENERATE_VIDEO_SOUND remains unbound: MMAudio request fields/slash endpoint are
+confirmed, but conflicting public audio/video output labels and sound-replacement
+semantics remain unresolved. ESTIMATE_DEPTH also remains unbound because preserving
+its image/video alternatives needs a scoped input/result contract instead of a
+mandatory generic video request. Neither capability is declared missing at MuAPI.
+Next bounded V2V candidates are Gemini Omni multimodal edit, then selected
+extension-control alternatives; completeness is not a reason to bind every profile.
+A read-only Astra projection can proceed against the reviewed subset while keeping
+these evidence gaps explicit. No real generation or paid execution was used.

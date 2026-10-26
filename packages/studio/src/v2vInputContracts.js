@@ -1,3 +1,4 @@
+import { isVideoInputUrl } from './videoInputContracts.js';
 import { getV2VModelById } from './models.js';
 import { getModelMediaCapabilities, mapReferenceParams } from './modelCapabilities.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
@@ -15,9 +16,19 @@ const reviewed = new Set([
   'gemini-omni-flash-1-1-edit', 'flux-3-video-extend',
   'flux-3-video-extend-draft', 'flux-3-video-upscaler',
   'topaz-upscale-video-creative', 'topaz-upscale-video-generative', 'topaz-upscale-video-precision',
+  'luma-flash-reframe', 'add-video-watermark', 'video-watermark-remover',
+  'seedance-2-watermark-remover', 'seedance-2-video-watermark-remover-pro', 'ai-captions',
 ]);
 export function getV2VExecutionModel(id) {
   return reviewed.has(id) ? getVideoToolCapabilities(getV2VModelById(id)) : null;
+}
+// Typed media projection for reviewed utility project bindings. Not another catalog.
+export function getV2VMediaInputs(id) {
+  const model = getV2VExecutionModel(id); if (!model) return [];
+  const roles = new Map();
+  for (const [type, cap] of Object.entries(getModelMediaCapabilities(model))) if (cap.field) roles.set(cap.field, { field: cap.field, type, isArray: cap.isArray });
+  for (const [field, spec] of Object.entries(model.inputs || {})) if (['image', 'video', 'audio'].includes(spec.field)) roles.set(field, { field, type: spec.field, isArray: spec.type === 'array' });
+  return [...roles.values()];
 }
 function need(condition, code, path) {
   if (!condition) throw Object.assign(new Error(code.replaceAll('_', ' ')), { code, path });
@@ -105,6 +116,9 @@ export function buildV2VRequest(params = {}) {
     if (mediaFields.has(field) && spec.type !== 'array') valid &&= media(value);
     need(valid, 'V2V_OPTION_INVALID', field);
   }
+  if (model.utility) for (const [field] of mediaFields) if (values[field] !== undefined) {
+    need((Array.isArray(values[field]) ? values[field] : [values[field]]).every(value => isVideoInputUrl(value) && value.length <= 2083), 'V2V_OPTION_INVALID', field);
+  }
   if (model.id === 'topaz-upscale-video-generative' && values.softness !== undefined) {
     need(values.topaz_model === 'Starlight Precise 2.6', 'V2V_OPTION_INVALID', 'softness');
   }
@@ -125,7 +139,7 @@ export function buildV2VRequest(params = {}) {
   return { endpoint: model.endpoint, payload, supportedOptions, effectiveOptions,
     requiredMedia: [...mediaFields].filter(([field]) => mediaRequired(field)).map(([field, type]) => ({ role: field === model.videoField ? 'source-video' : field, field, upstreamField: field, type,
       ...(inputs[field].type === 'array' ? { minimum: inputs[field].minItems ?? 1, maximum: inputs[field].maxItems, ordered: true } : {}) })),
-    v2v: { family: model.family, purpose: model.description, operation: model.operation ?? null,
+    v2v: { family: model.family, purpose: model.utility?.caveat ?? model.description, ...(model.utility ? { utility: structuredClone(model.utility) } : {}), operation: model.operation ?? null,
       ...(providerModel ? { providerModel: values.topaz_model, providerModelField: 'model' } : {}),
       fixedParameters: { ...model.fixedParameters },
       controls: structuredClone(Object.fromEntries(supportedOptions.map(field => [field, inputs[field]]))),

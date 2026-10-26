@@ -28,31 +28,31 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 
 | Exact OGA ID (endpoint when different) | Class | Media beyond source video; text | Declared supplemental fields |
 | --- | --- | --- | --- |
-| `video-watermark-remover` | I | — | — |
+| `video-watermark-remover` | R | — | — |
 | `kling-v2.6-std-motion-control` | D | image_url (requirement per source), prompt required | character_orientation |
 | `kling-v3.0-std-motion-control` | D | image_url (requirement per source), prompt supported | character_orientation, keep_original_sound |
 | `kling-v3.0-pro-motion-control` | S | image_url (requirement per source), prompt supported | character_orientation, keep_original_sound |
 | `ai-video-face-swap` | R | image_url (requirement per source) | — |
 | `mmaudio-v2-video-to-video` → `mmaudio-v2/video-to-video` | I | prompt supported | — |
 | `runway-aleph-v2v` | R | prompt required | aspect_ratio |
-| `ai-dance-effects` | I | image_url (requirement per source), prompt supported | — |
+| `ai-dance-effects` | D | image_url (requirement per source), prompt supported | — |
 | `ai-video-upscaler` | R | — | resolution, copy_audio |
 | `wan2.2-edit-video` | F | prompt required | resolution |
 | `heygen-video-translate` | R | — | language |
 | `topaz-video-upscale` | R | — | upscale_factor |
-| `ai-video-upscaler-pro` | I | — | — |
-| `remix-video` | I | — | — |
+| `ai-video-upscaler-pro` | D | — | — |
+| `remix-video` | D | — | — |
 | `kling-o1-video-edit` | F | images_list? (0–4; wire default []), prompt required | keep_original_sound, aspect_ratio |
 | `kling-o1-video-edit-fast` | F | images_list? (0–4; wire default []), prompt required | keep_original_sound, aspect_ratio |
 | `kling-o1-standard-video-edit` | F | images_list? (0–4; wire default []), prompt required | keep_original_sound |
 | `wan2.2-spicy-video-extend` | D | prompt required | resolution, duration |
 | `seedance-v1.5-pro-video-extend` | D | prompt required | resolution, duration, generate_audio, camera_fixed |
 | `seedance-v1.5-pro-video-extend-fast` | D | prompt required | resolution, duration, generate_audio, camera_fixed |
-| `add-video-watermark` | I | watermark_image_url (requirement per source) | — |
-| `seedance-2-watermark-remover` → `seedance-2.0-watermark-remover` | I | — | — |
-| `ai-captions` | I | — | — |
+| `add-video-watermark` | F | required watermark_image_url (image), source video | position, opacity, scale |
+| `seedance-2-watermark-remover` → `seedance-2.0-watermark-remover` | R | — | — |
+| `ai-captions` | F | required source video | language, theme |
 | `ltx-2.3-video-extend` | D | prompt supported | duration |
-| `seedance-2-video-watermark-remover-pro` | I | — | — |
+| `seedance-2-video-watermark-remover-pro` | R | — | — |
 | `pixverse-v6-extend` | D | prompt required | resolution, duration, generate_audio_switch, negative_prompt, style |
 | `wan2.7-video-extend` | R | audio_url, prompt required | negative_prompt, resolution, duration |
 | `wan2.7-video-edit` | R | images_list?, prompt required | negative_prompt, resolution, duration, audio_setting |
@@ -96,7 +96,7 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 | `gemini-omni-flash-1-1-edit` | R | prompt required | resolution |
 | `depth-anything` | I | image_url? | — |
 | `runway-act-two-v2v` | F | reference_video_url required | aspect_ratio |
-| `luma-flash-reframe` | D | image_url?, prompt supported | aspect_ratio, duration |
+| `luma-flash-reframe` | R | image_url?, prompt supported | aspect_ratio, duration |
 | `seedance-2-video-edit` → `seedance-v2.0-video-edit` | F | source video_urls [exactly 1], images_list?, audio_files?, prompt required | aspect_ratio, quality, duration |
 | `happy-horse-1-video-edit` | D | images_list?, prompt required | resolution, audio_setting, seed |
 | `happy-horse-1.1-video-edit` | D | images_list?, prompt required | resolution, audio_setting, seed |
@@ -104,16 +104,16 @@ Classes retain the original review and subsequent Wave 1/2/3 results: `R` = READ
 | `topaz-upscale-video-generative` | F | — | topaz_model (wire model), upscale_factor, target_fps, softness, H264_output |
 | `topaz-upscale-video-precision` | F | — | topaz_model (wire model), upscale_factor, target_fps, compression, noise, halo, grain, recover_detail, H264_output |
 
-Counts after Wave 3: **D=31, F=11, I=17, R=12, S=4**; 75 total, **23 now bound** (nine original + seven Wave 1 + four Wave 2 + three Wave 3). Six reviewed Seedance fixed-resolution variants moved from D to I because metadata/OpenAPI disagree.
+Current counts after the utility milestone: **D=33, F=13, I=9, R=16, S=4**; **75 total, 29 bound**, 42 unresolved D/I and four specialized. Before this milestone (Wave 3): D=31, F=11, I=17, R=12, S=4, 23 bound. Six utility IDs are newly bound; three unrelated I entries move to D based on refreshed request evidence only and remain unbound. Six Seedance fixed-resolution variants remain I because naming/metadata/OpenAPI conflict.
 
 ## Deferred/specialized findings
 
 - Kling v3 Pro Motion Control and Wan Animate have the richer existing `recast` aliases; Infinitetalk/Volcengine have `lipsync`. Explicit V2V routing rejects these; it does not silently reroute. Other Kling variants are deferred, not assumed covered by a different alias.
-- Seedance fixed-resolution/profile variants, Happy Horse, other Gemini entries and Luma paths remain on existing OGA paths, outside canonical admission. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
+- Seedance fixed-resolution/profile variants, Happy Horse and the older Gemini Omni edit remain on existing OGA paths, outside canonical admission; Luma Flash Reframe is now admitted below. No wildcard family permission. See Wave 1 for the specific Seedance conflict.
 - `seedance-2-video-edit` is now admitted with native `video_urls`, **exactly one** source under the current provider schema, and ordered optional image/audio arrays. Do not flatten or invent multi-clip support.
 - Topaz generative/precision now use explicit `topaz_model` for provider wire `model`; see Wave 3. The logical endpoint selector remains separate; no raw-field workaround.
-- Depth Anything can have alternative image/video roles. Source-only validation would fabricate a mandatory video contract; defer.
-- Sparse catalog entries do not prove absent provider functionality. Watermarks/captions/pro upscaler/remix/MMAudio/dance/Gemini need contract evidence before canonical admission.
+- Depth Anything remains deferred: refreshed metadata confirms alternative image/video roles, while generic V2V requires video and labels outputs as video. Preserve the existing mixed Studio path until a scoped alternative-input contract can be represented without changing image callers.
+- Sparse catalog entries do not prove absent provider functionality. Watermarks/captions now have reviewed contracts below; pro upscaler/remix/dance have refreshed request evidence but remain unbound. MMAudio/Gemini retain specific evidence gaps.
 - Existing desktop V2V forwarded only source video, image and prompt. Delegation now preserves shared options and lifecycle, without changing desktop Video Studio controls. Missing UI controls are not invented.
 
 ## Precision and remaining limitations
@@ -268,3 +268,134 @@ Existing desktop V2V delegation, shared processV2V, uploader, request-ID callbac
 The shared source namespace also keeps the existing web parameter builder compatible. Only the existing metadata-driven control key/title changes; no Studio component/layout changes. Invalid shared/canonical requests reject before transport; existing web picker/parameter-helper normalization remains UI behavior, not a provider passthrough.
 
 Plans expose media, optional prompt, factor/FPS/H264, family controls/defaults, engine identity and enhancement caveat without authentication, asset-byte loading, uploads, submissions or polling. All QA uses fake transports. Existing 20 V2V bindings plus Recast/Motion/Lip Sync remain separate, with no schema, project/history, packaging, dependency or Electron security changes.
+
+## Utility contracts and unresolved-family review — 2026-10-26
+
+Starting HEAD `30e28bcc12161b7fbc6038f527071e7b8adde851`.
+**Safe partial admission:** six exact IDs add four semantic intents through shared
+processV2V. MMAudio/video sound and depth remain unbound. No new mode, client,
+uploader, poller, local media tools or specialized-route migration.
+
+### Exact utility contracts / results
+
+| Logical ID → endpoint | Classification / result | Verified accepted request |
+| --- | --- | --- |
+| luma-flash-reframe | R; GENERATIVE_AI reframed video | required video_url; optional prompt and first-frame image_url; aspect enum 16:9/9:16/1:1/4:3/3:4/21:9/9:21, default 1:1; duration integer enum 5/8/10, default 5. AI expansion, not exact crop or guaranteed subject preservation. Metadata marks aspect required but both source and OpenAPI provide 1:1 default; omission explicitly uses it |
+| add-video-watermark | F (metadata gap fixed); DETERMINISTIC_UTILITY remote composition | required video_url + distinct watermark_image_url; position top-left/top-right/bottom-left/bottom-right/center, default bottom-right; opacity number 0–1/default .7; scale number .1–1/default .15. Fractions and zero opacity retained; no timing/mask/region/resolution/size controls. OpenAPI width/height fields are not exposed: model metadata does not establish their video-composition semantics |
+| video-watermark-remover | R; CONTROLLED_AI removal/reconstruction | required video_url only; no prompt, mask, region, duration or reference field. Exact restored pixels/hidden content are not promised |
+| seedance-2-watermark-remover → seedance-2.0-watermark-remover | R; CONTROLLED_AI inpainting | required video_url only. Metadata describes Seedance watermark detection and LaMa per-frame inpainting. Logical metadata GET succeeds, wire-name detail GET is 404; exact dotted wire path is confirmed in OpenAPI. No automatic source-model verification or universal logo-removal guarantee |
+| seedance-2-video-watermark-remover-pro | R; CONTROLLED_AI reconstruction | required video_url only; distinct endpoint, no fallback. Metadata says SD2-powered reconstruction, ≤100 MB input. URL-only validation cannot measure size, quality or exact restoration |
+| ai-captions | F (metadata gap fixed); CONTROLLED_AI captioned video | required video_url; language enum 45 published names/default English, theme enum 18 published names/default Hormozi_1. Exact enums now live in existing videoToolCapabilities overrides. No response_format, arbitrary subtitle styling, transcript or subtitle-file option |
+
+Media must be nonempty HTTP(S) URLs without embedded credentials, at most 2083
+characters as the six OpenAPI media fields specify. Canonical safety validation
+also rejects credential/signed-URL data. Optional provider null forms are not
+admitted; use omission. Watermark provider metadata incorrectly labels video_url
+as image and opacity/scale as integers; the existing source's videoField and
+OpenAPI string/number roles/types are authoritative. OpenAPI allows opacity zero,
+where detail picker metadata starts at .1; zero is explicitly valid here.
+
+The new controls use the existing override/contract machinery. Undeclared fields,
+raw/provider_options, options.model, masks, unsupported arrays, cross-family
+controls and canonical model overrides reject before authentication/transport.
+Only registered configurable scalar fields accept the existing options envelope.
+Six exact admission IDs do not grant wildcard utility/family execution.
+
+Typed registered project source videos and watermark/reframe images use the
+existing resolver, identity/checksum/project-boundary checks and upload path.
+Only the new utility roles gain these stricter asset-type checks; old 23 bindings
+are unchanged. Plans retain logical placeholders and project-relative uploads.
+No byte/media probing, download, output registration or history mutation is added.
+
+These provider schemas identify video artifacts, including native output.video
+and generic outputs. Shared processV2V now normalizes native video/nested-output
+URLs for the existing application consumer, using its existing result helper;
+all original safe metadata survives. Canonical utility normalization preserves
+actual output order, marks resultKind=v2v-utility and exposes semantic caveats.
+Objects in returned output arrays stay JSON, not fabricated video URLs. Nested
+captions/masks/diagnostics/other actual metadata remain in upstream. Caption
+metadata promises **burned-in video only**, not standalone transcription, SRT,
+VTT, editable captions or measured synchronization. No synthetic output is made
+when a field is absent. Provider success/fidelity/timing/encoding are unmeasured.
+
+### Two utilities deliberately remain I
+
+- **mmaudio-v2-video-to-video → mmaudio-v2/video-to-video:** request is now
+  confirmed: video_url + nonblank prompt, integer duration 1–30/default 8. No
+  input-audio/replacement/mixing/seed control is exposed. Exact slash POST path
+  exists; hyphen logical-name POST does not. Metadata's output_data declares a
+  video property/example but requires a nonexistent audio property and calls its
+  output type AISoundT2A; generic output_schema does not disambiguate artifacts.
+  Thus video-with-generated-audio vs audio-only, original sound treatment and
+  actual result typing remain **UNVERIFIED**. Do not relabel it audio or claim it
+  unavailable at MuAPI. No canonical admission until a coherent first-party
+  output contract is established without paid probing.
+- **depth-anything:** current metadata explicitly says exactly one image_url or
+  video_url, with an image depth map for images and depth video for video. OpenAPI
+  makes both nullable and encodes neither required input nor XOR. Current generic
+  V2V hard-requires source video and uses video output typing. Simply allowlisting
+  would break or mislabel the existing image path. A future scoped alternative-
+  input/result contract must retain both roles; do not invent calibrated depth,
+  image-sequence, units, masks or map encoding. It remains I, not generically bound.
+
+### Read-only reconciliation of all remaining D/I families
+
+All **42 unresolved IDs** are accounted for below. Exact IDs remain in the complete
+75-row inventory above. No family in this section was implemented. Four S entries
+retain specialized precedence: Kling v3 Pro / Wan Animate use Recast, while
+InfiniteTalk / Volcengine use Lip Sync. Alternate Kling variants are not silently
+covered by the pro alias.
+
+| Remaining family / number | Creative value vs existing routes | Evidence / exact blocker | Decision |
+| --- | --- | --- | --- |
+| Standard Seedance 2.5 fixed edit/extend 480p/1080p/4k — 6 I | Resolution/profile alternatives, not a new intent | Every refreshed suffix detail omits resolution, while OpenAPI exposes all resolutions with default 720p even on a 4k suffix. Existing source also has stale aspect/native-profile declarations. Naming cannot establish fixed output | Keep deferred pending provider clarification; do not infer suffix behavior |
+| Seedance 2.5 Intl/Spicy edit/extend, unsuffixed + 480p/1080p/4k — 16 D | Region/profile alternatives; Intl metadata identifies a Dreamina international deployment. No measured new creative ability | Unsuffixed metadata has selectable resolution; suffixed schemas repeat Standard profile ambiguity. Source control parity still needs scoped reconciliation/testing. Spicy naming is not proof of a precise new transform | Consider only four unsuffixed routes if region/profile constraints require them; defer twelve suffixes |
+| Happy Horse 1/1.1 edit generic + 720p/1080p — 6 D | Alternate reference-guided editing, overlapping Wan/Kling/Seedance | Generic schemas confirm resolution 720p/1080p, images max5 optional, audio_setting auto/origin, seed 0–2147483647/default0. Four fixed local declarations currently require images although provider does not; suffix OpenAPI still allows selectable resolution. Existing source media constraints need validation/projection | Low priority; prefer two generic contracts if a concrete production needs this executor; do not bind all profiles for completeness |
+| Seedance 1.5 Pro extend + fast — 2 D | Existing extension intent; camera_fixed and audio switch add optional controls | OpenAPI requires prompt+video, although detail required list omits video. Duration 4–12/default5, resolution480p/720p, audio true, camera_fixed false. Temporal/identity fidelity is marketing, not measured guarantee | Bounded later extension wave; keep variants distinct and avoid exact-camera promises |
+| Pixverse v6 extend — 1 D | Useful stylistic extension alternative | Prompt+video, duration1–15/default5; resolution360p/540p/720p/1080p; audio switch false; optional negative prompt/style anime/3d_animation/clay/comic/cyberpunk. Request evidence sufficient for future bounded implementation, not admitted now | Medium priority for style/short extension controls |
+| LTX 2.3 extend — 1 D | Prompt-optional extension and length1–20 add useful flexibility | Video required; optional prompt, duration1–20/default5. Source/helper support exists; field review, exact duration meaning and lifecycle tests still needed | Low-risk later extension wave |
+| Wan2.2 Spicy extend — 1 D | Mostly redundant extension/style alternative | Prompt+video, resolution480p/720p/default480p, duration enum5/8. No evidence of unique structured controls over current Wan/Seedance/Flux | Low priority / user-driven alternative |
+| Kling v2.6 std/pro + v3 std motion control — 3 D | Performance/reference transfer alternatives, overlapping Recast | Image+video roles, orientation image/video; v2.6 prompt required in OpenAPI, v3 std prompt optional plus sound preservation. Broad camera-control marketing does not prove exact preservation | Review as specialized Recast-compatible alternatives, not generic V2V migration; existing pro remains S |
+| Gemini Omni video edit (older/non-Flash) — 1 I | Higher-value multimodal edit controls absent from admitted Flash edit: references, trim, voice/character IDs | Metadata/OpenAPI require only prompt, allow nullable video, optional image_urls max7; local source wrongly implies required images. Controls include trim_start/end, duration4/6/8/10, resolution, aspect, seed, opaque audio/character ID arrays max3. Need source-required-role reconciliation, ordered trim validation and ID-vs-asset distinction | Highest-value focused edit review; can require a conservative source-video scope, but must not accidentally expose generation or lose media |
+| ai-dance-effects — 1 D (was I) | Potential specialist dance/performance effect; superiority vs Recast/Motion is unverified | Refreshed OpenAPI confirms required image+video, optional prompt, resolution480p/720p/default480p. Catalog lacks resolution metadata; exact dance/motion/identity quality is unverified | New request evidence moves I→D only. Future specialized comparison before deciding route; no binding now |
+| remix-video — 1 D (was I) | Aspect-only transformation overlaps Reframe | Request confirmed video+aspect1:1/16:9/9:16/default9:16. No exposed text/reference controls; description does not prove exact crop or conventional conversion | Low priority / redundant; I→D records real request evidence, not admission |
+| ai-video-upscaler-pro — 1 D (was I) | Alternate enhancement, already many admitted upscalers | Request confirmed video+resolution720p/1080p/2k/4k/default720p. Local sparse metadata lacks control. No measured quality advantage, copy_audio or format control established | Low priority; I→D only, reuse existing upscalers until a concrete need |
+| MMAudio video sound + Depth Anything — 2 I | Both unlock genuinely distinct intents | Exact remaining output/alternative-role blockers documented above | Clarification/contract design first; no paid probing or broad analysis subsystem |
+
+### Recommended future waves (not implementation authorization)
+
+1. **Focused Gemini Omni multimodal edit review**, with conservative source roles,
+   optional references and opaque IDs kept separate. Higher potential control
+   leverage than another resolution-only executor; resolve requirements first.
+2. **Extension-control wave:** LTX 2.3 + Pixverse v6, then Seedance 1.5 Pro/fast
+   only if camera_fixed/audio controls matter. These add useful request controls
+   but no new extension intent. No automatic Wan Spicy admission.
+3. **Specialist performance wave:** compare Dance Effects and three alternate
+   Kling routes against existing Recast/Motion controls; only implement a measured
+   contract/intent gap, retaining specialized precedence.
+4. **User-driven alternative executors:** four unsuffixed Intl/Spicy profiles or
+   two generic Happy Horse models when region/quality constraints justify them.
+   Not a completeness sweep. Performance/quality advantage remains unverified.
+5. **Optional low-value cleanup:** Pro upscaler/remix/Wan Spicy only for concrete
+   user demand. Keep all eighteen Standard/Intl/Spicy fixed-resolution suffixes
+   blocked until provider metadata is coherent; clarification is not a binding wave.
+
+MMAudio and depth clarification can precede these waves because they represent
+new intents, but ambiguity must not be solved by paid jobs or guessed artifacts.
+No additional broad binding wave is required before a read-only Astra projection
+of the reviewed subset with explicit unavailable/deferred states.
+
+### Evidence and safety
+
+This is a bounded review of the checked-out 75-entry OGA V2V surface, not a provider
+catalog scrape. Current source/capability/parameter/media helpers and prior Waves
+were reused. Public, unauthenticated [OpenAPI](https://api.muapi.ai/openapi.json)
+was refreshed, plus exact [model detail GETs](https://api.muapi.ai/api/v1/models/luma-flash-reframe)
+for eight utilities, two wire-name aliases and all forty other unresolved IDs.
+All forty family-detail lookups succeeded; two wire-name detail aliases returned
+404 while their exact POST schemas are present. Request schemas for remaining
+families were compared from the same OpenAPI snapshot, not by POST calls.
+Each family's exact detail URL is `https://api.muapi.ai/api/v1/models/<inventory-ID>`.
+No auth, credentials, pricing/estimate POST, upload, generation, agents, inference,
+model download or paid execution occurred. Confirmed request evidence is distinct
+from inferred creative usefulness and unverified backend quality/result fidelity.

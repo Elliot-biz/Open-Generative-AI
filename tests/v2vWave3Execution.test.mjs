@@ -208,7 +208,7 @@ test('project asset paths remain relative while upload and existing polling see 
 });
 test('unreviewed and specialized routes remain separate without automatic substitution', async t => {
   const calls = fake(t);
-  for (const id of ['gemini-omni-video-edit', 'luma-flash-reframe', 'invented']) assert.equal(findRemote(id, 'v2v'), null);
+  for (const id of ['gemini-omni-video-edit', 'mmaudio-v2-video-to-video', 'invented']) assert.equal(findRemote(id, 'v2v'), null);
   assert.equal(findRemote('wan2.2-animate', 'v2v'), null);
   assert.equal(findRemote('wan2.2-animate-recast').mode, 'recast');
   assert.equal(findRemote('seedance-2.5-motion-control').mode, 'motion_control');

@@ -1140,3 +1140,63 @@ OpenAPI's explicit inheritance semantics when overrides are absent. Conditional
 image requirements come from the published model field description. No runtime
 metadata fetching, credentials, estimates, uploads, generation or paid execution
 was used for this verification. All execution/lifecycle tests use fake transport.
+
+## V2V utility contracts — 2026-10-26
+
+The existing `v2v` route/shared **processV2V** now admits six additional exact IDs:
+`luma-flash-reframe`, `add-video-watermark`, `video-watermark-remover`,
+`seedance-2-watermark-remover` (wire `seedance-2.0-watermark-remover`),
+`seedance-2-video-watermark-remover-pro`, and `ai-captions`. These add reviewed
+REFRAME_VIDEO, APPLY_VIDEO_WATERMARK, REMOVE_VIDEO_WATERMARK and CAPTION_VIDEO.
+There are now **29 reviewed V2V IDs**, with all prior 23 contracts preserved.
+
+[The updated V2V review](V2V_CONTRACT_REVIEW.md#utility-contracts-and-unresolved-family-review--2026-10-26)
+contains exact evidence, enums/bounds/defaults, result limits and the complete
+read-only unresolved-family reconciliation. Request controls extend existing
+videoToolCapabilities overrides and buildV2VRequest; no second catalog, client,
+uploader, poller, provider or raw option path is added. Application V2V still
+delegates to the shared service. No Studio component or layout was changed; existing metadata-driven option
+controls can expose the newly reviewed fields.
+
+| Utility | Required / optional inputs | Explicit scope |
+| --- | --- | --- |
+| Reframe | required video_url; optional image_url first-frame guidance, prompt; aspect default1:1 and duration5/8/10 default5 | AI generative expansion/reframing, not exact crop or preservation guarantee |
+| Add watermark | video_url + distinct watermark_image_url; position enum, opacity0–1 default.7, scale.1–1 default.15 | Structured remote composition; no arbitrary X/Y, timing, masks, output-size or encoding controls |
+| Three removers | source video_url only | Distinct endpoints; AI removal/inpainting/reconstruction. No user mask/prompt/region; no original-content restoration guarantee |
+| Captions | video_url; exact language/theme enums, defaults English/Hormozi_1 | Burned-in captioned video; no invented transcript, SRT/VTT or standalone transcription |
+
+Native typed source-video, watermark-image and optional reframe-image bindings
+reuse registered project asset identity/integrity checks. Wrong asset roles or
+undeclared binding fields reject. Resolved HTTP(S) URLs remain usable directly;
+media URL type/length are validated without probing or reading credentials.
+Plans retain logical/project-relative references, required roles, effective
+options, provider endpoint/field summary and request.v2v.utility caveats. They
+perform no upload, submission, polling, pricing call or mutation.
+
+Shared processV2V retains the existing submit/poll/result lifecycle and reuses its
+result normalizer to surface native output.video or nested output.outputs URLs
+for the current application consumer. Canonical normalization retains actual
+output order and safe provider metadata, tags resultKind=v2v-utility, and exposes
+utility capability/classification/caveat. Structured output entries remain JSON;
+missing subtitle, mask, audio or depth fields are never synthesized. Detailed
+metadata remains in upstream. Output presence is not proof of media encoding,
+quality, timing or fidelity. No output downloads/project registration are added.
+
+**Still unbound:** MMAudio's slash-endpoint request is now confirmed, but public
+output metadata contradicts itself about video versus audio; original-audio
+handling is unverified. Depth Anything describes mutually exclusive image/video
+inputs and corresponding output types, while current generic V2V requires video
+and assumes video output. Neither model is admitted, nor rerouted into audio or
+image execution. Their full existing Studio paths remain unchanged. Additional
+mask/depth/transcript/media-analysis infrastructure is outside this milestone.
+
+Static readiness discovers the newly reviewed bindings through the existing
+resolver. Detailed inputs still require node planning; binding availability is
+not authorization, approval, a fresh quote or budget permission. allowExecution
+and the fixed project-handle host are unchanged. Recast/Motion/Lip Sync/Clipping/
+Motion Graphics keep specialized precedence. No Electron security changes.
+
+Verification used current source plus public read-only OpenAPI/model metadata;
+no credentials, uploads, estimates, provider execution or paid requests occurred.
+All lifecycle/execution QA uses fake transport. The V2V review also groups all
+42 remaining unresolved models into future waves without implementing them.
