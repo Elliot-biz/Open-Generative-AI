@@ -337,6 +337,14 @@ new music client or pretend the current 23 generic matches are fully validated.
 
 ## Image census
 
+**Advanced Image Contracts update (2026-10-26):** the historical table/counts above
+are unchanged. [Reviewed advanced image contracts](WHIHM_EXECUTION_BRIDGE.md#advanced-image-contracts--2026-10-26)
+now cover 15 model IDs: scoped reference guidance and enhancement, ordered/mixed
+project reference arrays, separate Topaz engine identity, layer-list preservation
+and validated view controls. Rich editable-layer semantics and broad expression/
+body pose remain partial; Qwen image-edit-plus-lora view execution is deferred
+because current OpenAPI disagrees with its local angle metadata.
+
 Local and hosted catalog IDs match: **84 T2I / 88 I2I rows**. Hosted Image visibly
 combines text/image modes, vendor filters and variants (Seedream, Qwen, Gemini,
 Nano Banana, Flux, GPT, Ideogram, Grok, Midjourney, Topaz, Krea, Wan and specialist

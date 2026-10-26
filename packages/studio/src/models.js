@@ -13921,7 +13921,7 @@ export const i2iModels = [
     "family": "seedream-5",
     "imageField": "image_url",
     "hasPrompt": true,
-    "promptRequired": true,
+    "promptRequired": false,
     "inputs": {
       "prompt": {
         "type": "string",
@@ -14208,11 +14208,12 @@ export const i2iModels = [
         "title": "Image URL",
         "name": "image_url"
       },
-      "model": {
+      "topaz_model": {
         "description": "Topaz creative upscale model variant.",
         "type": "string",
-        "title": "Model",
-        "name": "model",
+        "title": "Topaz Engine",
+        "name": "topaz_model",
+        "providerField": "model",
         "enum": [
           "Bloom 2",
           "Bloom",
@@ -14292,11 +14293,12 @@ export const i2iModels = [
         "title": "Image URL",
         "name": "image_url"
       },
-      "model": {
+      "topaz_model": {
         "description": "Topaz generative upscale model variant.",
         "type": "string",
-        "title": "Model",
-        "name": "model",
+        "title": "Topaz Engine",
+        "name": "topaz_model",
+        "providerField": "model",
         "enum": [
           "Wonder 3.5",
           "Wonder 3",
@@ -14452,11 +14454,12 @@ export const i2iModels = [
         "title": "Image URL",
         "name": "image_url"
       },
-      "model": {
+      "topaz_model": {
         "description": "Topaz precision upscale model variant.",
         "type": "string",
-        "title": "Model",
-        "name": "model",
+        "title": "Topaz Engine",
+        "name": "topaz_model",
+        "providerField": "model",
         "enum": [
           "Standard V2",
           "High Fidelity V3",

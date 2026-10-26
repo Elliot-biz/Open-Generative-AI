@@ -711,3 +711,140 @@ identity conflict required a new lifecycle or catalog rewrite.
 
 No transcription, separation, MMAudio V2V, lip-sync, clipping, FFmpeg/conversion,
 voice-management service, Audio Studio redesign or Astra projection was added.
+
+## Advanced Image Contracts — 2026-10-26
+
+`packages/studio/src/advancedImageInputContracts.js` projects **15 reviewed model
+IDs** (17 t2i/i2i model/mode pairs) from the existing catalog, base
+`imageInputContracts` and `modelCapabilities`. It provides
+`getAdvancedImageStatus`, `getAdvancedImageModel`, `getAdvancedImageMediaInputs`,
+`buildAdvancedImageRequest` and specialized result normalization. No client,
+catalog copy, uploader, poller, execution mode or provider was added.
+
+| Exact reviewed ID | Canonical mode / semantic scope | Confirmed contract |
+| --- | --- | --- |
+| `flux-pulid` | t2i / i2i, REFERENCE_GUIDED_IMAGE | Identity-reference image + prompt ≤1500; existing aspect enum |
+| `flux-redux` | t2i / i2i, REFERENCE_GUIDED_IMAGE | Composition/style-reference image + prompt ≤1500; aspect/count. Not a separate mask/identity selector |
+| `minimax-image-01-subject-reference` | i2i, REFERENCE_GUIDED_IMAGE | Subject image + prompt; source endpoint alias `minimax-01-subject-reference`; aspect/count |
+| `ideogram-character` | i2i, REFERENCE_GUIDED_IMAGE | Character image + prompt; render_speed/style/aspect/count enums |
+| `vidu-q2-reference-to-image` | i2i, REFERENCE_GUIDED_IMAGE | Ordered images_list 1–7 + prompt; resolution/aspect. No source-array flattening |
+| `gemini-omni-character` | i2i, REFERENCE_GUIDED_IMAGE | Exactly one image in images_list + descriptions; optional character_name / audio_ids (existing voice-profile IDs, not audio uploads). Returned character metadata retained |
+| `topaz-image-upscale` | i2i, UPSCALE_IMAGE | Source image; numeric integer upscale_factor 1/2/4/8, default 2. Source type string contradicted its numeric enum; derived execution contract corrects the type |
+| `seedvr2-image-upscale` | i2i, UPSCALE_IMAGE | Source image; exact lowercase 2k/4k/8k resolution |
+| `ai-skin-enhancer` | i2i, ENHANCE_IMAGE | Source image only; no invented skin/face controls |
+| `topaz-upscale-image-creative` | i2i, ENHANCE_IMAGE | Bloom 2/Bloom/Bloom Realism; factor 1–4 including fractions; creativity integer 1–9, autoprompt/color-preservation, crop/output settings. No text prompt field |
+| `topaz-upscale-image-generative` | i2i, ENHANCE_IMAGE | Existing 9-engine enum, default Wonder 3; factor 1–4; face/sharpen/denoise/detail 0–1; creativity 1–6, texture 1–5; prompt ≤1024 and declared enums/booleans |
+| `topaz-upscale-image-precision` | i2i, ENHANCE_IMAGE | Existing 7-engine enum, default Standard V2; factor 1–4; face/sharpen/denoise/compression 0–1, strength 0.01–1; declared crop/output/subject controls |
+| `bytedance-seedream-5.0-pro-layer` | i2i, DECOMPOSE_IMAGE request reviewed; editable semantics partial | Source image required for decomposition; prompt optional; resolution auto/1K/1.5K/2K, png/jpeg (default png) |
+| `seedream-5.0-flash-layerize` | i2i, DECOMPOSE_IMAGE request reviewed; editable semantics partial | Same source/prompt/resolution shape; output default jpeg, distinct exact endpoint preserved |
+| `face-expression-change` | i2i, view-angle subset of CHANGE_IMAGE_EXPRESSION_POSE | Ordered 1–3 images; rotate_right_left −90–90, move_forward 0–10, vertical_angle −1–1, wide_angle_lens, aspect/output. Source fractional steps retained |
+
+**Deferred:** `qwen-image-edit-plus-lora`. Its local catalog exposes angle/view
+controls, but current OpenAPI accepts prompt, images_list, loras, aspect_ratio and
+output_format instead. It does not declare those angle fields. Canonical lookup /
+readiness now rejects that exact model (`IMAGE_VIEW_CONTRACT_CONFLICT` in contract
+status), rather than sending unsupported view instructions. Its existing shared UI
+and generic service remain untouched. This does not defer all Qwen image editors,
+admit arbitrary LoRA objects, or invent a new camera/pose contract.
+
+### Shared execution and narrow application corrections
+
+Reviewed requests still use `generateImage` / `generateI2I` and the existing
+submit/poll/result path. The advanced contract validates required roles, ordered
+arrays, scalar controls, enums/ranges and unknown fields before transport; missing
+references are never manufactured. Unreviewed basic image models retain their
+existing path and auxiliary mask, garment, watermark, product-source contracts.
+
+All three image Topaz entries now declare **topaz_model**, with providerField=model,
+in existing catalog metadata. Existing Studio parameter controls therefore cannot
+overwrite selected executor `model` with an engine name. The pure contract maps
+only this declared option to provider wire `model`, and plans show both identities.
+`options.model`, arbitrary option bags and cross-endpoint controls reject. Image
+ranges are verified independently; no video engine/range metadata was copied.
+No engine-specific conditional applicability was published in the inspected
+schemas; do not invent coupling rules or claim all engines activate every optional
+control identically. These are AI enhancement/restoration/reconstruction requests,
+not exact pixel/identity-preserving scaling guarantees.
+
+Two small application metadata/request fixes accompany that collision repair:
+Seedream Pro Layer's promptRequired flag is false, consistent with its optional
+prompt schema and existing helper; the Image Studio I2I request checks the existing
+**selectable** aspect capability instead of forwarding a fallback aspect to a model
+with no aspect control. The latter is a nonvisual request hook plus import, not a
+layout or editor redesign. Existing Topaz control rendering is reused (engine label
+becomes Topaz Engine). The older desktop Image client remains less capable; the
+canonical host already calls shared services, so no desktop client was copied or
+broad parity work undertaken.
+
+### Project references, aliases and passive planning
+
+Only reviewed native image roles gain array binding support. For example,
+`assetBindings.images_list: ['registered_subject_b',
+'https://example.com/public-reference.png', 'registered_subject_a']` resolves
+registered IDs through existing project integrity/path checks and preserves the
+URL entry at its original index. IDs must be declared node assetRefs with canonical
+asset type image; remote URL entries are not imported or written as asset records.
+Pure already-resolved URL arrays also work as ordinary inputs. No automatic merge
+with competing parameter arrays; no generic arbitrary-array permissions. Wrong
+roles, missing/corrupt assets, scalar/array mismatch and malformed/excess/empty
+references reject before uploads. Explicit duplicate references are preserved;
+the adapter never adds a duplicate primary alias or silently deduplicates.
+
+Existing Studio image_url + images_list redundancy is accepted only when the
+primary equals the first array item (or exactly one item for scalar models).
+Conflicting aliases and multi-image input to a single-image role reject. Identity,
+composition/style, subject, character and view roles remain named in plans;
+auxiliary mask/garment/watermark fields are not interchangeable generic references.
+
+Plans expose `request.image`: semantic scope, canonical modelId, separate
+providerModel, required inputs/media, array count/limit/order and providerRequest
+endpoint/payload. effectiveOptions include verified catalog defaults. Registered
+asset entries are logical placeholders with project-relative requiredUploads;
+absolute paths remain transient inside trusted host processes. Plan/readiness
+makes no credential lookup, upload, estimate, submission or polling call.
+Authorization, fixed host transport, project storage and production state are
+unchanged. Detailed input planning remains separate from static binding readiness.
+
+### Layer results and honest remaining limits
+
+Reviewed layer calls through generateI2I delegate to the existing **decomposeLayers**
+helper. That helper retains its original default Pro endpoint and now also accepts
+the exact reviewed Flash model. It validates the same request before using its
+existing lifecycle. Confirmed result arrays come from images, output.images or
+existing outputs fallback; a lone URL/empty list/object cannot impersonate a layer
+list. The helper retains every returned metadata field and sets resultKind=layers.
+
+Canonical result normalization requires this specialized helper result, emits all
+images in provider order and marks resultKind=layers. It never collapses the list
+to the first image. Returned top-level/nested identifiers, labels, masks or other
+safe metadata remain in upstream if actually provided; no names/masks are
+fabricated. Current published output schemas guarantee **only a list of image
+URLs**. Front-to-back order, alpha guarantees, editable masks/names, per-layer roles,
+base-image position and PSD-like reconstruction semantics are **UNVERIFIED**.
+Preserving list order is not proof of stacking order. Flash metadata says separated
+layers are PNG and output_format describes its base image; that is a declaration,
+not a measured output guarantee. DECOMPOSE_IMAGE therefore remains partial for
+rich editable-layer meaning, while its request/result transport is now explicit.
+
+Topaz's nested output.image and Gemini's nested output.outputs are normalized
+without losing original metadata/character IDs. No media is downloaded or registered
+automatically. Source size/codec/pixel/duration/alpha and model quality are not
+measured by URL validation or project checksums.
+
+The branded face-expression-change endpoint's verified controls describe camera /
+view transformations. No expression enum, skeletal pose, exact body motion,
+identity lock or exact camera-preservation guarantee is advertised by this
+contract. Unsupported expression/pose controls reject. Broader expression/body-pose
+semantics and Qwen's conflicting view path remain partial/deferred.
+
+### Evidence and QA scope
+
+Read-only public inspection on 2026-10-26: [OpenAPI](https://api.muapi.ai/openapi.json)
+request schemas for the 16 exact reviewed/deferred targets, plus
+`GET https://api.muapi.ai/api/v1/models/{endpoint}` (15 successes; MiniMax alias
+returned 404, but its exact execution path and fields are confirmed in OpenAPI).
+Existing source supplied caps and semantic roles. No authentication, estimates,
+uploads, provider execution or image generation occurred. Source schemas/public
+metadata agree on Topaz engines and bounds; Qwen disagreement is explicitly
+contained instead of generalized. No new image-provider catalog or contract
+framework for unrelated models was introduced.

@@ -623,3 +623,40 @@ test('Audio Wave 1 host rejects malformed dialogue and leaves Suno clone unavail
   }
   assert.equal(h.authReads(), 0);
 });
+
+for (const [model, parameters, bindings, layer] of [
+  ['vidu-q2-reference-to-image', { prompt: 'Keep subjects in supplied order' }, { images_list: ['picture', 'https://example.com/public.png', 'picture'] }, false],
+  ['topaz-upscale-image-generative', { topaz_model: 'Wonder 3.5', sharpen: 0.5, upscale_factor: 1.5 }, { image_url: 'picture' }, false],
+  ['seedream-5.0-flash-layerize', { resolution: 'auto' }, { image_url: 'picture' }, true],
+]) test(`advanced image host: ${model} preserves reviewed request/result without automatic execution`, async t => {
+  const f = await fixture(t), calls = [], uploaded = [];
+  const image = await f.project.importAsset({ sourcePath: f.source, assetId: 'picture', contentType: 'image/png' });
+  assert.equal(image.status, 'imported');
+  const current = await f.project.getProjectWorkflow(f.workflow.workflowId), changed = structuredClone(current.workflow), node = changed.nodes[0];
+  changed.assets.push({ id: 'picture', type: 'image', localPath: image.asset.path });
+  node.executor.model = model; node.metadata.oga.mode = 'i2i'; node.parameters = parameters;
+  node.inputs = Object.keys(bindings).map(id => ({ id, type: 'image', required: true })); node.assetRefs = ['picture'];
+  assert.equal((await f.project.updateWorkflowInProject({ workflow: changed, expectedHash: current.hash })).status, 'updated');
+  const { generateI2I } = await import('../packages/studio/src/muapi.js');
+  const h = await transport(t, { remote: { generateI2I, async uploadFile(_key, file) {
+    uploaded.push(await file.text()); return `https://example.com/image-${uploaded.length}.png`;
+  } } });
+  t.mock.method(globalThis, 'fetch', async (url, init = {}) => {
+    calls.push({ url, ...init });
+    return { ok: true, json: async () => init.method === 'POST' ? { request_id: 'host-image' }
+      : { status: 'completed', ...(layer ? { output: { images: ['https://example.com/layer2.png', 'https://example.com/layer1.png'] }, labels: ['provider metadata'] } : { outputs: ['https://example.com/result.png'] }) } };
+  });
+  const opened = await h.host.openProject({ projectRoot: f.root }), args = { ...request(opened), assetBindings: bindings };
+  const plan = await h.host.planNode(args);
+  assert.equal(plan.status, 'planned', JSON.stringify(plan)); assert.equal(plan.request.image.modelId, model);
+  assert.equal(h.authReads(), 0); assert.equal(uploaded.length, 0); assert.equal(calls.length, 0);
+  assert.equal(errorCode(await h.host.executeNode(args)), 'EXECUTION_NOT_AUTHORIZED');
+  const result = await h.host.executeNode({ ...args, allowExecution: true });
+  assert.equal(result.status, 'succeeded', JSON.stringify(result)); assert.equal(result.model, model); assert.equal(result.requestId, 'host-image');
+  const payload = JSON.parse(calls[0].body);
+  if (model === 'vidu-q2-reference-to-image') assert.deepEqual(payload.images_list, ['https://example.com/image-1.png', 'https://example.com/public.png', 'https://example.com/image-2.png']);
+  if (parameters.topaz_model) { assert.equal(payload.model, parameters.topaz_model); assert.equal(Object.hasOwn(payload, 'topaz_model'), false); }
+  if (layer) { assert.equal(result.resultKind, 'layers'); assert.deepEqual(result.outputs.map(o => o.value), ['https://example.com/layer2.png', 'https://example.com/layer1.png']); assert.deepEqual(result.upstream.labels, ['provider metadata']); }
+  assert.ok(!JSON.stringify({ plan, result }).includes(f.root));
+  assert.deepEqual((await h.host.getWorkflow(request(opened))).workflow, changed);
+});

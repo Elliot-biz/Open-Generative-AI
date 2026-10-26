@@ -11,6 +11,7 @@ import { buildMotionControlRequest } from './motionControlInputContracts.js';
 import { buildRecastRequest } from './recastInputContracts.js';
 import { buildV2VRequest, getV2VExecutionModel } from './v2vInputContracts.js';
 import { buildAudioRequest, getAudioExecutionModel } from './audioInputContracts.js';
+import { buildAdvancedImageRequest, getAdvancedImageModel, getAdvancedImageStatus, normalizeAdvancedImageResult } from './advancedImageInputContracts.js';
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 
@@ -87,6 +88,10 @@ async function submitAndPoll(endpoint, payload, key, onRequestId, maxAttempts = 
 }
 
 export async function generateImage(apiKey, params) {
+    if (getAdvancedImageModel(params.model, 't2i')) {
+        const { endpoint, payload } = buildAdvancedImageRequest(params.model, 't2i', params);
+        return normalizeAdvancedImageResult(await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 60));
+    }
     const modelInfo = getModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const payload = {
@@ -110,6 +115,11 @@ export async function generateImage(apiKey, params) {
 }
 
 export async function generateI2I(apiKey, params) {
+    if (getAdvancedImageModel(params.model, 'i2i')) {
+        if (getAdvancedImageStatus(params.model).resultKind === 'layers') return decomposeLayers(apiKey, params);
+        const { endpoint, payload } = buildAdvancedImageRequest(params.model, 'i2i', params);
+        return normalizeAdvancedImageResult(await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 60));
+    }
     const modelInfo = getI2IModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const imageField = modelInfo?.imageField || 'image_url';
@@ -140,17 +150,11 @@ export async function generateI2I(apiKey, params) {
 }
 
 export async function decomposeLayers(apiKey, params) {
-    const endpoint = 'bytedance-seedream-5.0-pro-layer';
-    const payload = {
-        image_url: params.image_url,
-        prompt: params.prompt || '',
-        resolution: params.resolution || 'auto',
-        output_format: params.output_format || 'png'
-    };
+    const model = params.model ?? 'bytedance-seedream-5.0-pro-layer';
+    if (getAdvancedImageStatus(model).resultKind !== 'layers') throw Object.assign(new Error('Unsupported layer model'), { code: 'IMAGE_MODEL_UNSUPPORTED', path: 'model' });
+    const { endpoint, payload } = buildAdvancedImageRequest(model, 'i2i', params);
     const result = await submitAndPoll(endpoint, payload, apiKey, params.onRequestId, 300);
-    const rawImages = result.images || result.output?.images || result.outputs || (result.url ? [result.url] : []);
-    const images = Array.isArray(rawImages) ? rawImages : [rawImages];
-    return { ...result, images };
+    return normalizeAdvancedImageResult(result, 'layers');
 }
 
 export async function generateVideo(apiKey, params) {

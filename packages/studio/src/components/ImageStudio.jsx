@@ -16,6 +16,7 @@ import {
   getResolutionsForModel,
   getQualityFieldForModel,
   getAspectRatiosForI2IModel,
+  getSelectableAspectRatiosForI2IModel,
   getResolutionsForI2IModel,
   getQualityFieldForI2IModel,
   getMaxImagesForI2IModel,
@@ -1395,7 +1396,7 @@ export default function ImageStudio({
               ),
               images_list: uploadedImageUrls,
               image_url: uploadedImageUrls[0],
-              aspect_ratio: selectedAr,
+              ...(getSelectableAspectRatiosForI2IModel(selectedModelId).length ? { aspect_ratio: selectedAr } : {}),
             };
             if (swapImageUrl) genParams.swap_url = swapImageUrl;
             if (prompt.trim()) genParams.prompt = prompt.trim();
