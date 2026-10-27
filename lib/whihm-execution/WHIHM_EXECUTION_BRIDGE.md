@@ -1,5 +1,12 @@
 # WHIHM → existing application execution bridge
 
+Current record-only extension: [Character / Performance Benchmark Foundation](WHIHM_PERFORMANCE_BENCHMARK.md)
+adds BENCHMARK_PERFORMANCE / performance_benchmark / performance-benchmark. Five fixed
+host APIs create/read cases, record observed attempts and human evaluations, and
+compare facts without execution or ranking. Workflow-run security is unchanged.
+Projection/planning derive **44 groups /605 entries;140 available reviewed**. Case
+payloads are retrieved explicitly, never inserted into planning overview/context.
+
 Current extension: [Workflow Execution Foundation](WHIHM_WORKFLOW_EXECUTION.md)
 adds RUN_WORKFLOW / run_workflow / workflow-execution and six fixed host operations:
 planWorkflowExecution, runWorkflow, getWorkflowRun, approveWorkflowCheckpoint,
