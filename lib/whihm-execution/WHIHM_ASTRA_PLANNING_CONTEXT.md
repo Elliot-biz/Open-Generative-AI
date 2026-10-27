@@ -1,5 +1,12 @@
 # Planning context v1
 
+Current [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md) appears through
+projection metadata only: preparation/face contracts are runtime-gated; segmentation
+is unavailable pending a reviewed remote binding. Overview/context/detail automatically
+expose modes, artifact/review requirements and last-observed readiness. No planning
+implementation change. Current source counts: **47 groups /608 entries**.
+
+
 Current record-only extension: [Character / Performance Benchmark Foundation](WHIHM_PERFORMANCE_BENCHMARK.md)
 adds BENCHMARK_PERFORMANCE / performance_benchmark / performance-benchmark. Five fixed
 host APIs create/read cases, record observed attempts and human evaluations, and

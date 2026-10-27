@@ -1,5 +1,6 @@
 const { app, BrowserWindow, shell, dialog } = require('electron');
 const path = require('path');
+require('./lib/face-guidance').registerFaceScheme(require('electron').protocol);
 const { register: registerLocalInference } = require('./lib/localInference');
 const { register: registerWan2gp } = require('./lib/wan2gpProvider');
 const { register: registerWhihmHost } = require('./lib/whihm-host');

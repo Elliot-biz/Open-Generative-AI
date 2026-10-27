@@ -2,7 +2,7 @@ const { register: registerLoader } = require('node:module');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
-const operations = ['createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark','planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
+const operations = ['planPerformanceGuidance','preparePerformanceGuidance','getPerformanceGuidance','reviewPerformanceGuidance','createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark','planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
 const reject = code => ({ status: 'rejected', diagnostics: [{ code, path: '', message: code.replaceAll('_', ' ') }] });
 let loaded;
 function multimediaHostEnvironment(app, { resourcesPath = process.resourcesPath, platform = process.platform, arch = process.arch } = {}) {
@@ -13,10 +13,13 @@ function multimediaHostEnvironment(app, { resourcesPath = process.resourcesPath,
 function loadHost() {
     if (!loaded) {
         registerLoader(pathToFileURL(path.join(__dirname, 'whihm-esm-loader.mjs')));
-        loaded = Promise.all([import('../../lib/whihm-execution/host.mjs'), import('../../lib/whihm-execution/multimedia-runtime.mjs')]).then(([host, runtime]) => {
+        loaded = Promise.all([import('../../lib/whihm-execution/host.mjs'), import('../../lib/whihm-execution/multimedia-runtime.mjs'), import('../../lib/whihm-execution/face-guidance-runtime.mjs')]).then(([host, runtime, face]) => {
             const { app } = require('electron');
             const environment = multimediaHostEnvironment(app);
-            if (environment) runtime.configureMultimediaRuntime(environment);
+            if (environment) {
+                runtime.configureMultimediaRuntime(environment);
+                face.configureFaceGuidanceRenderer(require('./face-guidance').createFaceRenderer(require('electron')));
+            }
             return host;
         });
     }

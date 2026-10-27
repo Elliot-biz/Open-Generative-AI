@@ -1,5 +1,12 @@
 # Deterministic Finishing v1 — image, video and audio
 
+Guidance addendum: [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md)
+adds restore_source_audio to existing video finishing: explicit registered soundtrack,
+strict duration match, video stream copy and AAC mux, verified/imported through the same
+finishing path. Workflow nodes require a typed donor port. No pitch/stems/mixing policy.
+The existing image and other video/audio operations retain their prior behavior.
+
+
 Capability **FINISH_MEDIA**, local mode **finish_media**, tool **media-finishing**.
 Images use the existing Sharp worker. Bounded video/audio operations now use the
 [paired multimedia runtime](WHIHM_MULTIMEDIA_RUNTIME.md) only through a fresh

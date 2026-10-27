@@ -1,5 +1,15 @@
 # WHIHM → existing application execution bridge
 
+Current extension: [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md)
+adds four fixed project-host APIs (planPerformanceGuidance, preparePerformanceGuidance,
+getPerformanceGuidance, reviewPerformanceGuidance), utility DAG adapters and exact-artifact
+bindings on existing human checkpoints. Source/checksum-linked composition and staged
+CPU JS/WASM face extraction are implemented but real-runtime-unverified. Remote raw-mask
+segmentation is explicitly blocked; supplied masks are not claimed as segmentation results.
+Depth and provider transports are unchanged. FINISH_MEDIA adds bounded restore_source_audio
+with a typed soundtrack binding; no Python/SAM/CUDA, new workflow schema or second runtime.
+
+
 Current record-only extension: [Character / Performance Benchmark Foundation](WHIHM_PERFORMANCE_BENCHMARK.md)
 adds BENCHMARK_PERFORMANCE / performance_benchmark / performance-benchmark. Five fixed
 host APIs create/read cases, record observed attempts and human evaluations, and

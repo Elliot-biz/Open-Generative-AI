@@ -1,5 +1,13 @@
 # Astra capability projection v1
 
+Current runtime-constrained addition: [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md)
+derives PREPARE_PERFORMANCE_GUIDANCE and EXTRACT_FACE_GUIDANCE as reviewed contracts
+with multimedia/model gates, plus SEGMENT_VIDEO_SUBJECT as explicitly unbound/provider-blocked.
+Current counts: **47 groups /608 entries;142 available reviewed,396 generic,35 provider-blocked**.
+Schemas remain v1. Guidance feature checks are optional to the existing finishing
+baseline and mandatory only to the new guidance profile. No model ranking or planning registry.
+
+
 Current record-only extension: [Character / Performance Benchmark Foundation](WHIHM_PERFORMANCE_BENCHMARK.md)
 adds BENCHMARK_PERFORMANCE / performance_benchmark / performance-benchmark. Five fixed
 host APIs create/read cases, record observed attempts and human evaluations, and

@@ -1,5 +1,12 @@
 # Multimedia Transform Runtime Foundation v1
 
+Guidance addendum: [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md) reuses
+the same resolver/leases/process helper. Baseline requirements remain **29 required**;
+optional observations increase21→28 (PNG decode/encode, format/maskedmerge/overlay,
+image2 mux/demux). WHIHM_PERFORMANCE_GUIDANCE_V1 requires those seven plus the existing
+baseline. Their absence never disables existing finishing. No binaries installed.
+
+
 The WHIHM-owned `whihm-multimedia` runtime contract discovers and probes a local
 FFmpeg/ffprobe pair. It does not transform media, add a creative capability, grant
 execution permission, install software or perform remote/provider health checks.

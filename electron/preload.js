@@ -45,6 +45,10 @@ contextBridge.exposeInMainWorld('localAI', {
 
 // Fixed WHIHM channels only; no generic IPC or filesystem access is exposed.
 contextBridge.exposeInMainWorld('whihmHost', {
+    planPerformanceGuidance: request => ipcRenderer.invoke('whihm:planPerformanceGuidance', request),
+    preparePerformanceGuidance: request => ipcRenderer.invoke('whihm:preparePerformanceGuidance', request),
+    getPerformanceGuidance: request => ipcRenderer.invoke('whihm:getPerformanceGuidance', request),
+    reviewPerformanceGuidance: request => ipcRenderer.invoke('whihm:reviewPerformanceGuidance', request),
     createPerformanceBenchmark: request => ipcRenderer.invoke('whihm:createPerformanceBenchmark', request),
     getPerformanceBenchmark: request => ipcRenderer.invoke('whihm:getPerformanceBenchmark', request),
     recordBenchmarkCandidate: request => ipcRenderer.invoke('whihm:recordBenchmarkCandidate', request),

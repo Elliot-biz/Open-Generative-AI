@@ -143,7 +143,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark','planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['planPerformanceGuidance','preparePerformanceGuidance','getPerformanceGuidance','reviewPerformanceGuidance','createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark','planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -1011,4 +1011,24 @@ test('benchmark channels reject foreign senders, unsafe payloads and injected wo
   for(const operation of ['createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark']){assert.equal(typeof h.host[operation],'function');assert.equal(errorCode(await h.handlers.get(`whihm:${operation}`)({...h.event,sender:{}},{})),'HOST_SENDER_REJECTED');}
   assert.equal(errorCode(await h.host.recordBenchmarkCandidate({projectHandle:opened.projectHandle,caseId:'case',expectedRevision:0,allowExecution:true,workflowRun:{runId:'fake'}})),'HOST_REQUEST_INVALID');
   assert.equal(errorCode(await h.host.getPerformanceBenchmark({projectHandle:opened.projectHandle,caseId:'unknown'})),'BENCHMARK_NOT_FOUND');assert.equal(errorCode(await h.host.getPerformanceBenchmark({projectHandle:'foreign',caseId:'case'})),'PROJECT_HANDLE_INVALID');assert.equal(h.authReads(),0);
+});
+
+test('guidance fixed preload/host APIs validate sources, block missing runtime, preserve auth and perform zero provider transport',async t=>{
+  configureMultimediaRuntime({env:{PATH:''}});t.after(()=>configureMultimediaRuntime({}));
+  const f=await fixture(t),records=[];
+  for(const assetId of ['guide_source','guide_depth','guide_mask']){
+    const filename=path.join(path.dirname(f.root),`${assetId}.mp4`);await fs.writeFile(filename,movieBytes({audio:false}));
+    const imported=await f.project.importAsset({sourcePath:filename,assetId,contentType:'video/mp4'});assert.equal(imported.status,'imported');records.push(imported.asset);
+  }
+  const h=await transport(t,{remote:new Proxy({},{get(){throw Error('Provider forbidden');}})}),opened=await h.host.openProject({projectRoot:f.root}),base={projectHandle:opened.projectHandle,assetId:'guide_source',depthAssetId:'guide_depth',maskAssetId:'guide_mask',mode:'depth_mask'};
+  const before=await fs.readFile(path.join(f.root,'project.json'));
+  const plan=await h.host.planPerformanceGuidance(base);assert.equal(plan.status,'planned',JSON.stringify(plan));assert.equal(plan.execution.executable,false);assert.equal(plan.depthRoute.mode,'depth');assert.equal(plan.providerTransport,false);
+  assert.equal(errorCode(await h.host.preparePerformanceGuidance(base)),'EXECUTION_NOT_AUTHORIZED');
+  assert.equal(errorCode(await h.host.preparePerformanceGuidance({...base,allowExecution:true})),'GUIDANCE_RUNTIME_NOT_READY');
+  assert.equal(errorCode(await h.host.getPerformanceGuidance({projectHandle:opened.projectHandle,guidanceId:'lost'})),'GUIDANCE_NOT_FOUND');
+  assert.equal(errorCode(await h.host.reviewPerformanceGuidance({projectHandle:opened.projectHandle,guidanceId:'lost',review:{}})),'EXECUTION_NOT_AUTHORIZED');
+  assert.equal(errorCode(await h.host.planPerformanceGuidance({...base,executable:'/tmp/evil'})),'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await h.host.planPerformanceGuidance({...base,assetId:'/tmp/evil'})),'PROJECT_PATH_UNSAFE');
+  for(const name of ['planPerformanceGuidance','preparePerformanceGuidance','getPerformanceGuidance','reviewPerformanceGuidance'])assert.equal(errorCode(await h.handlers.get(`whihm:${name}`)({...h.event,sender:{}},{})),'HOST_SENDER_REJECTED');
+  assert.deepEqual(await fs.readFile(path.join(f.root,'project.json')),before);assert.equal(h.authReads(),0);assert.equal(h.localCalls.length,0);assert.ok(!JSON.stringify(plan).includes(f.root));
 });
