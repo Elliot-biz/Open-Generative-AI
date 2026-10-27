@@ -1,8 +1,15 @@
 # Planning context v1
 
+Current [remote segmentation](WHIHM_REMOTE_SEGMENTATION.md) derives automatically
+through SEGMENT_VIDEO_SUBJECT: reviewed Meta binding, static auth/configuration guard,
+box/point/concept selectors, opaque IDs and binary mask-sequence result. Counts remain
+47/608; missing key means provider-blocked. No planning branch, health probe, provider
+call, credential exposure or executor selection is introduced.
+
+
 Current [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md) appears through
 projection metadata only: preparation/face contracts are runtime-gated; segmentation
-is unavailable pending a reviewed remote binding. Overview/context/detail automatically
+is now reviewed through Meta and remains blocked until provider configuration exists. Overview/context/detail automatically
 expose modes, artifact/review requirements and last-observed readiness. No planning
 implementation change. Current source counts: **47 groups /608 entries**.
 

@@ -1,11 +1,20 @@
 # WHIHM → existing application execution bridge
 
+Current segmentation binding: [Meta SAM 3.1](WHIHM_REMOTE_SEGMENTATION.md) completes
+SEGMENT_VIDEO_SUBJECT through the existing fixed guidance host API (explicit
+mode subject_mask) and specialized utility DAG route. One fixed authenticated
+Responses call, official parser and registered PNG sequence; no new provider framework,
+MuAPI alias, SDK, retries or workflow schema. Missing configuration is provider-blocked.
+Typed file compatibility is restricted to the canonical mask-sequence MIME; source,
+selector, native usage/identity and unknown monetary cost are retained.
+
+
 Current extension: [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md)
 adds four fixed project-host APIs (planPerformanceGuidance, preparePerformanceGuidance,
 getPerformanceGuidance, reviewPerformanceGuidance), utility DAG adapters and exact-artifact
 bindings on existing human checkpoints. Source/checksum-linked composition and staged
-CPU JS/WASM face extraction are implemented but real-runtime-unverified. Remote raw-mask
-segmentation is explicitly blocked; supplied masks are not claimed as segmentation results.
+CPU JS/WASM face extraction are implemented but real-runtime-unverified. At the initial guidance milestone remote raw-mask
+segmentation was blocked (now resolved by the Meta binding above); supplied masks are not claimed as segmentation results.
 Depth and provider transports are unchanged. FINISH_MEDIA adds bounded restore_source_audio
 with a typed soundtrack binding; no Python/SAM/CUDA, new workflow schema or second runtime.
 

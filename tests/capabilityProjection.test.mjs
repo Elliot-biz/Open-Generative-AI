@@ -28,8 +28,14 @@ test('capability-first grouping has multiple exact executors without ranking', (
 test('all advertised available executors have exact existing canonical binding evidence', () => {
   const all = entries(projectCapabilities());
   for (const e of all.filter(e => e.available && e.runtime.class === 'remote')) {
-    const bound = resolveExecutionBinding({ executor: { type: 'remote-model', provider: e.provider, model: e.id }, metadata: { oga: { mode: e.mode } } });
-    assert.equal(bound.selected.model.id, e.id); assert.equal(bound.runtime, e.runtime.method); assert.equal(e.binding.available, true);
+    if (e.binding.source === 'resolveExecutionBinding') {
+      const bound = resolveExecutionBinding({ executor: { type: 'remote-model', provider: e.provider, model: e.id }, metadata: { oga: { mode: e.mode } } });
+      assert.equal(bound.selected.model.id, e.id); assert.equal(bound.runtime, e.runtime.method);
+    } else {
+      assert.equal(e.binding.source, 'host.preparePerformanceGuidance'); assert.equal(e.id, 'video-subject-segmentation');
+      assert.equal(e.provider, 'meta'); assert.equal(e.runtime.workflow.tool, 'video-subject-segmentation');
+    }
+    assert.equal(e.binding.available, true);
   }
   const p = projectCapabilities(); assert.equal(p.counts.availableReviewed + p.counts.availableGeneric, all.filter(e=>e.available).length);
   assert.equal(p.counts.availableReviewed, 142); assert.equal(p.counts.availableGeneric, 396);

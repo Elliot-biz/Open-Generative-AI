@@ -1,5 +1,13 @@
 # Character / Performance Benchmark Foundation v1
 
+Segmentation integration: [Meta mask artifacts](WHIHM_REMOTE_SEGMENTATION.md) can be
+recorded as references/outputs. File support is limited to the registered canonical
+mask-sequence MIME; other file types remain refused. Workflow observations preserve
+native provider usage and request identity, while unreported monetary cost remains
+unknown/non-aggregatable. Benchmark records still grant no execution authorization,
+run continuation, automatic quality judgment or ranking.
+
+
 Capability **BENCHMARK_PERFORMANCE**, local mode **performance_benchmark**, tool
 **performance-benchmark**. This builds the test bench, not the experiment: it records
 definitions, observed execution evidence and explicit human evaluations. It has no

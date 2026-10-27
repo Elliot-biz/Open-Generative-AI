@@ -1,6 +1,13 @@
 # Performance Guidance Toolkit v1 — bounded, runtime-constrained foundation
 
-This milestone is **PARTIAL**: preparation, local face-extraction implementation,
+Current update: [Meta remote subject segmentation](WHIHM_REMOTE_SEGMENTATION.md) is now
+reviewed/bound. Explicit `mode:subject_mask` produces a registered binary PNG sequence;
+composition consumes it through the existing pipeline. Missing Meta configuration
+remains provider-blocked, and live-provider/real-FFmpeg fidelity remains unverified.
+The initial stop/QA evidence below is historical; no second provider framework or
+local heavy inference was added to resolve it.
+
+**Initial milestone evidence (before the Meta binding):** this milestone was **PARTIAL**: preparation, local face-extraction implementation,
 composition, artifact/review records, workflow integration and soundtrack restoration
 are implemented. **Remote subject segmentation remains unbound/provider-blocked.**
 No SAM runtime, Python environment, PyTorch, CUDA or heavy desktop vision model is
@@ -15,8 +22,9 @@ Benchmark foundations remain authoritative for execution and evaluation respecti
 - `EXTRACT_FACE_GUIDANCE` / `extract_face_guidance` / `face-guidance`: the same
   implementation restricted to `face_mesh`.
 - `SEGMENT_VIDEO_SUBJECT` / `segment_video_subject` /
-  `video-subject-segmentation`: discoverable **unavailable** descriptor;
-  `SEGMENTATION_REVIEWED_ROUTE_MISSING`. No remote submission API is advertised.
+  `video-subject-segmentation`: reviewed Meta sam-3.1 host binding, request mode
+  `subject_mask`; static configuration/readiness and binary sequence output are
+  documented in the remote-segmentation contract.
 
 Modes are `face_mesh`, `depth_mask`, `depth_mask_face_mesh`. Public preparation
 accepts `assetId`, `mode`, optional `depthAssetId`/`maskAssetId`, and `parameters:{}`.
@@ -76,12 +84,18 @@ packaged inference are not certified. No Python sidecar or installer is introduc
 
 ## Segmentation boundary and supplied masks
 
+Current binding: see [remote segmentation](WHIHM_REMOTE_SEGMENTATION.md). The
+following paragraph records the **initial** unapproved-backend boundary, now resolved
+by the explicitly approved bounded Meta binding:
+
 The current OGA/MuAPI bindings provide background matting, not a reviewed raw-mask
 endpoint with explicit subject selection and temporal-mask evidence. The inspected
 [SAM video schema](https://replicate.com/lucataco/sam3-video/api/schema) offers raw-mask
 output on a different provider lifecycle. Adding that provider framework would cross
 this task's stop boundary, so **no segmentation backend is selected or implemented**.
-No point/box/initial-mask support is fabricated and no local SAM fallback exists.
+At that initial milestone no point/box/initial-mask support was admitted. The current
+Meta binding supports box/point/concept prompts; initial-mask support and local SAM
+fallback remain absent.
 A future reviewed binding must own selector semantics, request lifecycle, raw-mask
 retrieval and provider evidence through the existing remote architecture.
 
@@ -212,8 +226,7 @@ Planning context has no guidance-specific registry or branch and carries no full
 landmark payload in its overview. Image finishing and all prior model admissions stay
 unchanged. No FFmpeg creative capability is added.
 
-Next: review/admit an exact remote raw-mask route through the existing provider
-boundary, then stage the pinned face model and run local acceptance with an approved
+The remote raw-mask binding has now been added. Next, stage the pinned face model and run local acceptance with an approved
 multimedia pair. Only after actual whole-clip review should a later executor
 integration compare Higgsfield Genjutsu, MuAPI Seedance/Kling Motion Control,
 Runway Act Two, Wan Animate or open-guided Seedance paths. This milestone supplies

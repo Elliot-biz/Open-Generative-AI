@@ -1,8 +1,18 @@
 # Astra capability projection v1
 
+Current segmentation update: [SEGMENT_VIDEO_SUBJECT](WHIHM_REMOTE_SEGMENTATION.md)
+is reviewed/statically bound to Meta sam-3.1, replacing the unbound placeholder.
+Totals remain **47 groups /608 entries**. Missing Meta configuration keeps it
+provider-blocked; configured credentials make its contract available without probing
+provider health. Runtime remains unverified. Projection includes selectors, exact
+specialized host/tool route, opaque result IDs and PNG-sequence artifact semantics.
+Planning-context code/schema is unchanged.
+
+
 Current runtime-constrained addition: [Performance Guidance Toolkit](WHIHM_PERFORMANCE_GUIDANCE.md)
 derives PREPARE_PERFORMANCE_GUIDANCE and EXTRACT_FACE_GUIDANCE as reviewed contracts
-with multimedia/model gates, plus SEGMENT_VIDEO_SUBJECT as explicitly unbound/provider-blocked.
+with multimedia/model gates, plus SEGMENT_VIDEO_SUBJECT, initially unbound and now reviewed/configuration-gated
+through the Meta binding above.
 Current counts: **47 groups /608 entries;142 available reviewed,396 generic,35 provider-blocked**.
 Schemas remain v1. Guidance feature checks are optional to the existing finishing
 baseline and mandatory only to the new guidance profile. No model ranking or planning registry.
