@@ -142,7 +142,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -940,4 +940,25 @@ test('fixed inspection host retains sender, project, profile, path and integrity
   await fs.writeFile(f.source,'different bytes');
   const {asset}=await f.project.getProjectAsset('reference'); await fs.writeFile(path.join(f.root,asset.path),'changed registered bytes');
   assert.equal(errorCode(await h.host.inspectMedia(request)),'ASSET_HASH_MISMATCH'); assert.equal(h.authReads(),0);
+});
+
+test('fixed finishing host derives a verified image without provider auth and preserves immutable source', async t => {
+  const f=await fixture(t),h=await transport(t,{useDefaultLoader:true}),file=path.join(f.root,'finishing-input.png');
+  const bytes=await imageBytes();await fs.writeFile(file,bytes);const imported=await f.project.importAsset({sourcePath:file,assetId:'finish_source',contentType:'image/png'});assert.equal(imported.status,'imported');await fs.unlink(file);
+  const opened=await h.host.openProject({projectRoot:f.root}),request={projectHandle:opened.projectHandle,assetId:'finish_source',operation:'resize',parameters:{width:8,height:6,fit:'cover',outputFormat:'png'}};
+  let network=0;t.mock.method(globalThis,'fetch',()=>{network++;throw Error('Provider forbidden');});
+  assert.equal(errorCode(await h.host.finishMedia(request)),'EXECUTION_NOT_AUTHORIZED');
+  const before=await fs.readFile(path.join(f.root,'project.json'),'utf8'),plan=await h.host.planMediaFinishing(request);assert.equal(plan.status,'planned');assert.equal(await fs.readFile(path.join(f.root,'project.json'),'utf8'),before);
+  const result=await h.host.finishMedia({...request,allowExecution:true});assert.equal(result.status,'succeeded');assert.equal(result.output.verification.status,'verified');assert.notEqual(result.output.assetId,'finish_source');
+  const inspected=await h.host.inspectMedia({projectHandle:opened.projectHandle,assetId:result.output.assetId,allowExecution:true});assert.equal(inspected.status,'succeeded');assert.equal(inspected.facts.image.displayDimensions.width,8);assert.equal(inspected.facts.image.displayDimensions.height,6);
+  const record=await h.host.getAsset({projectHandle:opened.projectHandle,assetId:result.output.assetId});assert.equal(record.asset.source.assetId,'finish_source');assert.equal(record.asset.metadata.deterministicFinishing.operation,'resize');
+  assert.deepEqual(await fs.readFile(path.join(f.root,imported.asset.path)),bytes);assert.ok(!JSON.stringify([plan,result]).includes(f.root));assert.equal(network,0);assert.equal(h.authReads(),0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
+});
+test('fixed finishing channels retain sender, request and asset boundaries',async t=>{
+  const f=await fixture(t),h=await transport(t),opened=await h.host.openProject({projectRoot:f.root});
+  const request={projectHandle:opened.projectHandle,assetId:'reference',operation:'convert',parameters:{outputFormat:'png'},allowExecution:true};
+  const handler=h.handlers.get('whihm:finishMedia');assert.equal(errorCode(await handler({...h.event,sender:{}},request)),'HOST_SENDER_REJECTED');
+  for(const extra of [{outputPath:'/tmp/anything'},{command:'ffmpeg anything'},{backend:'arbitrary'}])assert.equal(errorCode(await h.host.finishMedia({...request,...extra})),'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await h.host.finishMedia({...request,assetId:'../outside'})),'ASSET_ID_INVALID');
+  assert.equal(errorCode(await h.host.finishMedia({...request,parameters:{outputFormat:'png',rawArgs:[]}})),'FINISH_PARAMETERS_INVALID');assert.equal(h.authReads(),0);
 });

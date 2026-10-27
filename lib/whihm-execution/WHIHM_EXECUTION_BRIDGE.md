@@ -1,5 +1,11 @@
 # WHIHM → existing application execution bridge
 
+> **Second extension, safe PARTIAL:** [Deterministic image finishing](WHIHM_DETERMINISTIC_FINISHING.md)
+> exposes fixed planMediaFinishing/finishMedia host operations, immutable derived
+> asset imports and post-transform Media Inspection verification. It uses existing
+> Sharp in a fixed worker; no provider or new binary. Video/audio finishing remains
+> deferred until a supported runtime/deployment contract exists. No remote mode changed.
+
 > **First extension implemented:** [Media Inspection + technical validation](WHIHM_MEDIA_INSPECTION.md).
 > Fixed host `planMediaInspection` / `inspectMedia` reads registered project media
 > locally, with explicit inspection opt-in, existing integrity checks and no provider

@@ -32,9 +32,11 @@ test('all advertised available executors have exact existing canonical binding e
     assert.equal(bound.selected.model.id, e.id); assert.equal(bound.runtime, e.runtime.method); assert.equal(e.binding.available, true);
   }
   const p = projectCapabilities(); assert.equal(p.counts.availableReviewed + p.counts.availableGeneric, all.filter(e=>e.available).length);
-  assert.equal(p.counts.availableReviewed, 137); assert.equal(p.counts.availableGeneric, 396);
+  assert.equal(p.counts.availableReviewed, 138); assert.equal(p.counts.availableGeneric, 396);
   const inspection = entry('media-inspection', 'inspect_media', p);
   assert.equal(inspection.binding.source, 'host.inspectMedia'); assert.equal(inspection.binding.available, true);
+  const finishing = entry('media-finishing', 'finish_media', p);
+  assert.equal(finishing.binding.source, 'host.finishMedia'); assert.equal(finishing.binding.available, true);
 });
 for (const [id, cap] of [
   ['gemini-omni-video-edit', 'VIDEO_EDIT'], ['seedance-2.5-spicy-video-edit', 'VIDEO_EDIT'],

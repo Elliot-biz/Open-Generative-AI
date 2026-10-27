@@ -1,5 +1,10 @@
 # Astra capability projection v1
 
+Current finishing addendum: [Deterministic Finishing](WHIHM_DETERMINISTIC_FINISHING.md)
+adds one local image-only FINISH_MEDIA tool (42 groups / 603 entries; 138 available
+reviewed). All prior 602 entries remain unchanged. Video/audio finishing is deferred
+pending a supported binary/runtime decision; catalog presence does not imply it exists.
+
 Current extension: [Media Inspection](WHIHM_MEDIA_INSPECTION.md) adds one descriptor-
 derived local `INSPECT_MEDIA` tool (41 groups / 602 entries; 137 available reviewed).
 The previous 601 executor entries and 13 remote modes retain their exact semantics.

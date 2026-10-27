@@ -1,5 +1,9 @@
 # Planning context v1
 
+[Image finishing](WHIHM_DETERMINISTIC_FINISHING.md) appears automatically under
+FINISH_MEDIA/media-finishing, including operation-specific parameter constraints.
+Planning-context implementation/schema is unchanged. No video/audio finishing is implied.
+
 [Media Inspection](WHIHM_MEDIA_INSPECTION.md) now appears automatically under
 `INSPECT_MEDIA` / `media-inspection`. No planning-context code or schema changed;
 the size measurements below record the initial 601-entry implementation snapshot.
