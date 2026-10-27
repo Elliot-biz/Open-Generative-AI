@@ -12,6 +12,7 @@ import { createProject, createWorkflow, hashWorkflow, setNodeApproval, applyEdit
 import { assessCurrentWorkflowReadiness } from '../src/lib/whihmReadinessClient.mjs';
 import { createWorkflowHost } from '../lib/whihm-execution/host.mjs';
 import { connectWhihmHost } from '../src/lib/whihmHostRuntime.mjs';
+import { imageBytes, movieBytes, waveBytes } from './helpers/mediaInspectionFixtures.mjs';
 const require = createRequire(import.meta.url);
 const { register } = require('../electron/lib/whihm-host.js');
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -141,7 +142,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -906,4 +907,37 @@ test('fixed host planning-context reads are progressive, exact, sender-checked a
     assert.equal(errorCode(await handler(h.event,{...request,provider_options:{}})),'HOST_REQUEST_INVALID');
   }
   assert.equal(await fs.readFile(path.join(f.root,'project.json'),'utf8'),before);assert.equal(h.authReads(),0);assert.equal(network,0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
+});
+
+test('fixed inspection host probes registered image/video/audio without renderer execution, credentials or writes', async t => {
+  const f = await fixture(t), h = await transport(t, { useDefaultLoader: true });
+  for (const [assetId, bytes, contentType] of [['inspect_image',await imageBytes(),'image/png'],['inspect_video',movieBytes(),'video/mp4'],['inspect_audio',waveBytes(),'audio/wav']]) {
+    const file = path.join(f.root, `${assetId}.bin`); await fs.writeFile(file,bytes);
+    assert.equal((await f.project.importAsset({sourcePath:file,assetId,contentType})).status,'imported');
+    await fs.unlink(file);
+  }
+  const before = await fs.readFile(path.join(f.root,'project.json'),'utf8');
+  const opened = await h.host.openProject({projectRoot:f.root}); let network=0;
+  t.mock.method(globalThis,'fetch',()=>{network++;throw Error('Transport forbidden');});
+  for (const [assetId,kind] of [['inspect_image','image'],['inspect_video','video'],['inspect_audio','audio']]) {
+    const request = {projectHandle:opened.projectHandle,assetId};
+    assert.equal(errorCode(await h.host.inspectMedia(request)),'EXECUTION_NOT_AUTHORIZED');
+    const plan = await h.host.planMediaInspection(request); assert.equal(plan.status,'planned'); assert.equal(plan.declaredMediaKind,kind);
+    const r = await h.host.inspectMedia({...request,allowExecution:true}); assert.equal(r.status,'succeeded'); assert.equal(r.facts.mediaKind,kind);
+    assert.ok(!JSON.stringify([plan,r]).includes(f.root));
+  }
+  assert.equal(await fs.readFile(path.join(f.root,'project.json'),'utf8'),before); assert.equal(h.authReads(),0); assert.equal(network,0); assert.equal(h.localCalls.length,0); assert.equal(h.statuses.length,0);
+});
+test('fixed inspection host retains sender, project, profile, path and integrity boundaries', async t => {
+  const f = await fixture(t),h=await transport(t),opened=await h.host.openProject({projectRoot:f.root});
+  const request={projectHandle:opened.projectHandle,assetId:'reference',allowExecution:true};
+  const handler=h.handlers.get('whihm:inspectMedia');
+  assert.equal(errorCode(await handler({...h.event,sender:{}},request)),'HOST_SENDER_REJECTED');
+  assert.equal(errorCode(await h.host.inspectMedia({...request,path:'/etc/passwd'})),'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await h.host.inspectMedia({...request,assetId:'../outside'})),'ASSET_ID_INVALID');
+  assert.equal(errorCode(await h.host.inspectMedia({...request,requirements:{quality:1}})),'MEDIA_PROFILE_INVALID');
+  assert.equal(errorCode(await h.host.inspectMedia(request)),'MEDIA_TYPE_UNSUPPORTED');
+  await fs.writeFile(f.source,'different bytes');
+  const {asset}=await f.project.getProjectAsset('reference'); await fs.writeFile(path.join(f.root,asset.path),'changed registered bytes');
+  assert.equal(errorCode(await h.host.inspectMedia(request)),'ASSET_HASH_MISMATCH'); assert.equal(h.authReads(),0);
 });

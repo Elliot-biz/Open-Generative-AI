@@ -27,12 +27,14 @@ test('capability-first grouping has multiple exact executors without ranking', (
 });
 test('all advertised available executors have exact existing canonical binding evidence', () => {
   const all = entries(projectCapabilities());
-  for (const e of all.filter(e => e.available)) {
+  for (const e of all.filter(e => e.available && e.runtime.class === 'remote')) {
     const bound = resolveExecutionBinding({ executor: { type: 'remote-model', provider: e.provider, model: e.id }, metadata: { oga: { mode: e.mode } } });
     assert.equal(bound.selected.model.id, e.id); assert.equal(bound.runtime, e.runtime.method); assert.equal(e.binding.available, true);
   }
   const p = projectCapabilities(); assert.equal(p.counts.availableReviewed + p.counts.availableGeneric, all.filter(e=>e.available).length);
-  assert.equal(p.counts.availableReviewed, 136); assert.equal(p.counts.availableGeneric, 396);
+  assert.equal(p.counts.availableReviewed, 137); assert.equal(p.counts.availableGeneric, 396);
+  const inspection = entry('media-inspection', 'inspect_media', p);
+  assert.equal(inspection.binding.source, 'host.inspectMedia'); assert.equal(inspection.binding.available, true);
 });
 for (const [id, cap] of [
   ['gemini-omni-video-edit', 'VIDEO_EDIT'], ['seedance-2.5-spicy-video-edit', 'VIDEO_EDIT'],

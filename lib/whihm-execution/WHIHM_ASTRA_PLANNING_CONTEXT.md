@@ -1,5 +1,9 @@
 # Planning context v1
 
+[Media Inspection](WHIHM_MEDIA_INSPECTION.md) now appears automatically under
+`INSPECT_MEDIA` / `media-inspection`. No planning-context code or schema changed;
+the size measurements below record the initial 601-entry implementation snapshot.
+
 The model-agnostic [planning-context.mjs](planning-context.mjs) provides progressive,
 read-only views over [projectCapabilities()](WHIHM_ASTRA_CAPABILITY_PROJECTION.md).
 An external reasoning director interprets the user's goal, requests exact capability

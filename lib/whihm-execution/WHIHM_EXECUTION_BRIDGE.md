@@ -1,5 +1,11 @@
 # WHIHM → existing application execution bridge
 
+> **First extension implemented:** [Media Inspection + technical validation](WHIHM_MEDIA_INSPECTION.md).
+> Fixed host `planMediaInspection` / `inspectMedia` reads registered project media
+> locally, with explicit inspection opt-in, existing integrity checks and no provider
+> transport. Its `inspect_media` local tool adds no remote mode or generative binding.
+> Header-only facts and caller-supplied technical requirements remain separate.
+
 > **Planning context v1 implemented:** [model-agnostic progressive reads](WHIHM_ASTRA_PLANNING_CONTEXT.md)
 > expose `getPlanningOverview()`, `getCapabilityContext(id)` and `getExecutorContext(id)`
 > through the fixed host interface. These project-independent reads preserve the

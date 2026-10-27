@@ -1,5 +1,10 @@
 # Astra capability projection v1
 
+Current extension: [Media Inspection](WHIHM_MEDIA_INSPECTION.md) adds one descriptor-
+derived local `INSPECT_MEDIA` tool (41 groups / 602 entries; 137 available reviewed).
+The previous 601 executor entries and 13 remote modes retain their exact semantics.
+The initial implementation snapshot and QA below remain historical evidence.
+
 The read-only `projectCapabilities()` API in
 [capability-projection.mjs](capability-projection.mjs) describes the existing
 foundation. It neither selects executors nor authorizes or executes them.
