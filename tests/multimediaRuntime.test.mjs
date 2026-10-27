@@ -98,10 +98,10 @@ test('unknown table headers/flags are unknown; encoder and decoder direction rem
   const r=evaluateRuntimeFeatures({ffmpeg:{decoders:new Set(['h264']),encoders:new Set(['h264_nvenc'])}});assert.equal(r.features.find(f=>f.id==='ffmpeg.decoders.h264').status,'available');assert.equal(r.features.find(f=>f.id==='ffmpeg.encoders.libx264').status,'missing');
 });
 test('baseline is bounded and optional features never imply actual media operations',()=>{
-  const p=getMultimediaBaseline();assert.equal(p.id,'WHIHM_MEDIA_FINISHING_BASELINE_V1');assert.equal(p.mediaTransformsImplemented,false);assert.ok(p.features.find(f=>f.id==='ffmpeg.filters.volume').required);assert.equal(p.features.find(f=>f.id==='ffmpeg.filters.loudnorm').required,false);assert.ok(!p.features.some(f=>/av1|libx265|nvenc/.test(f.name)));
+  const p=getMultimediaBaseline();assert.equal(p.id,'WHIHM_MEDIA_FINISHING_BASELINE_V1');assert.equal(p.mediaTransformsImplemented,true);assert.ok(p.features.find(f=>f.id==='ffmpeg.filters.volume').required);assert.equal(p.features.find(f=>f.id==='ffmpeg.filters.loudnorm').required,false);assert.ok(!p.features.some(f=>/av1|libx265|nvenc/.test(f.name)));
 });
-test('complete fixture is ready while actual media execution remains unverified/unimplemented',async t=>{
-  const f=await runtimeFixture(t),dir=await f.pair(path.join(f.root,'pair')),r=await createMultimediaRuntime({...options,configuredDir:dir}).getStatus();assert.equal(r.availability,'ready');assert.deepEqual(r.blockingReasons,[]);assert.deepEqual(r.baseline.missing,[]);assert.deepEqual(r.baseline.unknown,[]);assert.equal(r.executionVerified,false);assert.equal(r.mediaTransformsImplemented,false);assert.ok(!JSON.stringify(r).includes(f.root));
+test('complete fixture is ready while actual media execution remains unverified',async t=>{
+  const f=await runtimeFixture(t),dir=await f.pair(path.join(f.root,'pair')),r=await createMultimediaRuntime({...options,configuredDir:dir}).getStatus();assert.equal(r.availability,'ready');assert.deepEqual(r.blockingReasons,[]);assert.deepEqual(r.baseline.missing,[]);assert.deepEqual(r.baseline.unknown,[]);assert.equal(r.executionVerified,false);assert.equal(r.mediaTransformsImplemented,true);assert.ok(!JSON.stringify(r).includes(f.root));
 });
 test('missing required encoder makes runtime partial; absent optional features do not block baseline',async t=>{
   const f=await runtimeFixture(t),dir=await f.pair(path.join(f.root,'pair'));
@@ -147,11 +147,11 @@ for(const [behavior,expected]of[['setInterval(()=>{},1000)','MM_PROBE_TIMEOUT'],
 test('unsupported raw probe arguments never spawn',async()=>{
   let calls=0;for(const query of ['-i','help','protocols',['version']]){const r=await runRuntimeProbe('/tmp/ffmpeg','ffmpeg',query,{spawnProcess:()=>{calls++;}});assert.equal(r.code,'MM_PROBE_REQUEST_INVALID');}assert.equal(calls,0);
 });
-test('planning uses the last safe runtime observation without probing or enabling transforms',async t=>{
+test('planning uses the last safe runtime observation without probing or authorizing transforms',async t=>{
   const f=await runtimeFixture(t),dir=await f.pair(path.join(f.root,'pair'));let calls=0;configureMultimediaRuntime({...options,configuredDir:dir,probe:async(...a)=>{calls++;return probeFixture(...a);}});t.after(()=>configureMultimediaRuntime());
   const initial=getExecutorContext('media-finishing');assert.equal(initial.executor.runtime.multimedia.snapshot.observation,'not_probed');assert.equal(calls,0);
   await getMultimediaRuntimeStatus();const count=calls,detail=getExecutorContext('media-finishing'),cap=getCapabilityContext('FINISH_MEDIA'),overview=getPlanningOverview();assert.equal(calls,count);assert.equal(detail.executor.runtime.multimedia.snapshot.availability,'ready');assert.deepEqual(cap.executors[0].runtime,detail.executor.runtime);
-  for(const e of [detail.executor,cap.executors[0]]){assert.equal(e.available,true);assert.equal(e.runtime.scopes.image.implemented,true);assert.equal(e.runtime.scopes.video.implemented,false);assert.equal(e.runtime.scopes.audio.implemented,false);}
+  for(const e of [detail.executor,cap.executors[0]]){assert.equal(e.available,true);assert.equal(e.runtime.scopes.image.implemented,true);assert.equal(e.runtime.scopes.video.implemented,true);assert.equal(e.runtime.scopes.audio.implemented,true);}
   assert.equal(overview.capabilities.length,42);assert.equal(projectCapabilities().counts.executorEntries,603);assert.ok(!overview.capabilities.some(c=>/FFMPEG|MULTIMEDIA_RUNTIME/.test(c.id)));
 });
 test('host read is project-independent, strict, unauthenticated and nonmutating',async t=>{

@@ -3,13 +3,14 @@
 [Multimedia runtime readiness](WHIHM_MULTIMEDIA_RUNTIME.md) now appears as scoped
 FINISH_MEDIA runtime requirements plus a safe last-observed snapshot. Projection
 never runs probes; counts remain42 groups /603 entries. Image stays executable,
-video/audio stay not_implemented regardless of runtime readiness. No FFmpeg creative
+video/audio are implemented but runtime-gated by a fresh baseline-ready lease. No FFmpeg creative
 capability or new execution binding is introduced.
 
 Current finishing addendum: [Deterministic Finishing](WHIHM_DETERMINISTIC_FINISHING.md)
-adds one local image-only FINISH_MEDIA tool (42 groups / 603 entries; 138 available
-reviewed). All prior 602 entries remain unchanged. Video/audio finishing is deferred
-pending a supported binary/runtime decision; catalog presence does not imply it exists.
+exposes one local image/video/audio FINISH_MEDIA tool (42 groups / 603 entries; 138 available
+reviewed). All prior 602 entries remain unchanged. Video/audio execution requires the paired multimedia baseline; image stays available
+independently. Operation-specific parameter schemas and output kinds derive from
+the validator. No raw command controls or new creative runtime capability are added.
 
 Current extension: [Media Inspection](WHIHM_MEDIA_INSPECTION.md) adds one descriptor-
 derived local `INSPECT_MEDIA` tool (41 groups / 602 entries; 137 available reviewed).

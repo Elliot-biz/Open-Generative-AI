@@ -5,9 +5,11 @@ including [multimedia readiness](WHIHM_MULTIMEDIA_RUNTIME.md) and separate image
 video/audio implementation scopes. Reads never probe: use the fixed status read
 for a fresh observation. Schemas remain v1; there is no tool-specific planning branch.
 
-[Image finishing](WHIHM_DETERMINISTIC_FINISHING.md) appears automatically under
+[Deterministic finishing](WHIHM_DETERMINISTIC_FINISHING.md) appears automatically under
 FINISH_MEDIA/media-finishing, including operation-specific parameter constraints.
-Planning-context implementation/schema is unchanged. No video/audio finishing is implied.
+Planning-context implementation/schema is unchanged. Video/audio scopes now expose implemented operations, exact export contracts and
+last-observed runtime gating. Images stay available; a ready snapshot never replaces
+a fresh execution lease. No planning branch or schema change was needed.
 
 [Media Inspection](WHIHM_MEDIA_INSPECTION.md) now appears automatically under
 `INSPECT_MEDIA` / `media-inspection`. No planning-context code or schema changed;

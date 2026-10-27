@@ -119,8 +119,8 @@ test('project integrity and asset-ID boundaries remain authoritative',async t=>{
   const f=await fixture(t);for(const assetId of ['/etc/passwd','../outside','file:///tmp/source'])assert.equal(code(await planMediaFinishing({...f,assetId})),'ASSET_ID_INVALID');
   assert.equal(code(await planMediaFinishing({...f,assetId:'missing'})),'ASSET_NOT_FOUND');await fs.writeFile(path.join(f.root,f.record.path),'tampered');assert.equal(code(await finishMedia({...f,allowExecution:true})),'ASSET_HASH_MISMATCH');
 });
-for(const [type,bytes]of[['video/mp4',movieBytes()],['audio/wav',waveBytes()]])test(`${type} finishing remains unavailable`,async t=>{
-  const f=await fixture(t,bytes,type);assert.equal(code(await planMediaFinishing(f)),'FINISH_MEDIA_KIND_UNSUPPORTED');assert.equal((await assets(f)).length,1);
+for(const [type,bytes]of[['video/mp4',movieBytes()],['audio/wav',waveBytes()]])test(`${type} finishing rejects image-only encoding controls`,async t=>{
+  const f=await fixture(t,bytes,type);assert.equal(code(await planMediaFinishing(f)),type.startsWith('audio')?'FINISH_OPERATION_UNSUPPORTED':'FINISH_PARAMETERS_INVALID');assert.equal((await assets(f)).length,1);
 });
 test('missing Sharp backend fails structurally',async()=>{await assert.rejects(transformImageBytes(await imageBytes(),'convert',{outputFormat:'png'},async()=>{throw Error('/private/backend');}),{finishingCode:'FINISH_BACKEND_UNAVAILABLE'});});
 for(const [name,transform,expected]of[
@@ -154,7 +154,7 @@ test('worker startup/exit/malformed output errors are structured',async()=>{
 });
 test('projection and all planning views derive local image finishing',()=>{
   const p=projectCapabilities(),e=p.capabilities.find(c=>c.id==='FINISH_MEDIA').executors[0];assert.equal(p.schemaVersion,1);assert.equal(e.runtime.class,'local');assert.equal(e.available,true);assert.equal(e.partial,true);
-  assert.deepEqual(e.controls.operation.enum,['resize','crop','contain','convert']);assert.equal(e.inputs[0].type,'image');assert.equal(e.binding.readOnly,false);assert.equal(e.result.kind,'derived-project-image');
+  assert.deepEqual(e.constraints.find(c=>c.mediaKind==='image').operations,{resize:{required:['width','height','fit'],allowed:['width','height','fit']},crop:{required:['left','top','width','height'],allowed:['left','top','width','height']},contain:{required:['width','height','background'],allowed:['width','height','background']},convert:{required:[],allowed:[]}});assert.deepEqual(e.inputs[0].acceptedTypes,['image','video','audio']);assert.equal(e.binding.readOnly,false);assert.ok(e.result.variants.includes('derived-project-image'));
   assert.ok(getPlanningOverview().capabilities.some(c=>c.id==='FINISH_MEDIA'));assert.equal(getCapabilityContext('FINISH_MEDIA').executors[0].id,'media-finishing');assert.deepEqual(getExecutorContext('media-finishing').executor,e);
 });
 test('host finishing is project-scoped, explicit, provider-free and rejects raw options',async t=>{

@@ -3,14 +3,17 @@
 > **Multimedia runtime foundation:** [paired runtime contract](WHIHM_MULTIMEDIA_RUNTIME.md)
 > exposes getMultimediaRuntimeStatus({refresh?}) through the fixed read-only host.
 > It safely probes local version/capability metadata without project/media/provider
-> access. FINISH_MEDIA retains image execution; video/audio stay unimplemented.
-> No binaries, transforms or packaging repair are added.
+> access. FINISH_MEDIA retains independent image execution and now implements bounded
+> video/audio transforms behind a fresh baseline-ready lease. No binaries/dependencies
+> or packaging repair are added; the current runtime is missing.
 
-> **Second extension, safe PARTIAL:** [Deterministic image finishing](WHIHM_DETERMINISTIC_FINISHING.md)
+> **Second extension, bounded image/video/audio:** [Deterministic finishing](WHIHM_DETERMINISTIC_FINISHING.md)
 > exposes fixed planMediaFinishing/finishMedia host operations, immutable derived
 > asset imports and post-transform Media Inspection verification. It uses existing
-> Sharp in a fixed worker; no provider or new binary. Video/audio finishing remains
-> deferred until a supported runtime/deployment contract exists. No remote mode changed.
+> Sharp in a fixed worker; video/audio use the existing paired runtime, safe typed
+> arguments and output verification. Missing/partial/incompatible/unverified runtime
+> blocks only multimedia execution. Real FFmpeg acceptance remains unverified.
+> No provider, new binary, workflow orchestration or remote-mode change.
 
 > **First extension implemented:** [Media Inspection + technical validation](WHIHM_MEDIA_INSPECTION.md).
 > Fixed host `planMediaInspection` / `inspectMedia` reads registered project media

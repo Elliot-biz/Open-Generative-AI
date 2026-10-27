@@ -3,8 +3,8 @@
 The WHIHM-owned `whihm-multimedia` runtime contract discovers and probes a local
 FFmpeg/ffprobe pair. It does not transform media, add a creative capability, grant
 execution permission, install software or perform remote/provider health checks.
-Image finishing remains available through Sharp; video/audio finishing remains
-**not implemented**, including when this runtime reports metadata readiness.
+Image finishing remains available through Sharp; video/audio finishing is now [implemented in bounded scopes](WHIHM_DETERMINISTIC_FINISHING.md),
+with execution requiring a fresh baseline-ready lease. Readiness itself runs no transform.
 
 ## Discovery and trust boundary
 
@@ -110,7 +110,9 @@ structured blockingReasons. States:
 - `ready`: compatible metadata protocol plus every required advertised feature.
 
 Readiness is only an observation, never execution authorization or media proof.
-`executionVerified` and `mediaTransformsImplemented` remain false. Errors include
+`executionVerified` stays false. `mediaTransformsImplemented` now reports true for
+the bounded finishing contracts; `probeExecutesMediaTransforms:false` explicitly
+separates that implementation from metadata-only readiness checks. Errors include
 safe codes/role/query/required-feature IDs, not raw program diagnostics.
 
 One process-local cache lasts 30 seconds; concurrent reads/refreshes share an
@@ -122,7 +124,7 @@ probe, refresh, check PATH or authenticate. A not-probed snapshot is explicit.
 
 FINISH_MEDIA retains 603 total projection entries / 42 capabilities and its available
 image executor. Runtime metadata adds image=implemented/available and
-video/audio=not_implemented, plus the multimedia profile/status read and safe last
+video/audio=implemented but runtime-gated, plus the multimedia profile/status read and safe last
 snapshot. Capability/executor planning contexts preserve these generic runtime
 fields. No FFmpeg creative group, model ID list or ranking/fallback policy is added.
 
@@ -189,7 +191,10 @@ Node child scripts standing in for the fixed CLI protocol. No installed FFmpeg i
 needed for correctness. The informational local discovery currently reports
 missing; no real media or transforms were used. A future executor must still
 validate parameters/assets, authorize each transform, recheck runtime identity,
-perform controlled transforms and independently verify outputs.
+perform controlled transforms and independently verify outputs. The current finishing
+executor now does so through an internal fresh-probe execution lease, without another
+discovery path or renderer-configurable executable. Binary identities are rechecked
+before/after execution; private resolved paths never enter projection/host results.
 
 This establishes a reusable bounded local-health pattern: discovery, paired
 identity, protocol compatibility, advertised features, scoped readiness and a

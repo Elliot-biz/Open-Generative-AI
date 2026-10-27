@@ -956,19 +956,21 @@ test('fixed finishing host derives a verified image without provider auth and pr
   assert.deepEqual(await fs.readFile(path.join(f.root,imported.asset.path)),bytes);assert.ok(!JSON.stringify([plan,result]).includes(f.root));assert.equal(network,0);assert.equal(h.authReads(),0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
 });
 test('fixed finishing channels retain sender, request and asset boundaries',async t=>{
-  const f=await fixture(t),h=await transport(t),opened=await h.host.openProject({projectRoot:f.root});
-  const request={projectHandle:opened.projectHandle,assetId:'reference',operation:'convert',parameters:{outputFormat:'png'},allowExecution:true};
+  const f=await fixture(t),h=await transport(t),sourcePath=path.join(f.root,'boundary-fixture.png');
+  await fs.writeFile(sourcePath,await imageBytes());assert.equal((await f.project.importAsset({sourcePath,assetId:'boundary_image',contentType:'image/png'})).status,'imported');
+  const opened=await h.host.openProject({projectRoot:f.root});
+  const request={projectHandle:opened.projectHandle,assetId:'boundary_image',operation:'convert',parameters:{outputFormat:'png'},allowExecution:true};
   const handler=h.handlers.get('whihm:finishMedia');assert.equal(errorCode(await handler({...h.event,sender:{}},request)),'HOST_SENDER_REJECTED');
   for(const extra of [{outputPath:'/tmp/anything'},{command:'ffmpeg anything'},{backend:'arbitrary'}])assert.equal(errorCode(await h.host.finishMedia({...request,...extra})),'HOST_REQUEST_INVALID');
   assert.equal(errorCode(await h.host.finishMedia({...request,assetId:'../outside'})),'ASSET_ID_INVALID');
   assert.equal(errorCode(await h.host.finishMedia({...request,parameters:{outputFormat:'png',rawArgs:[]}})),'FINISH_PARAMETERS_INVALID');assert.equal(h.authReads(),0);
 });
 
-test('fixed multimedia status read is cached, project-independent and reflected without enabling finishing',async t=>{
+test('fixed multimedia status read is cached, project-independent and reflected without authorizing finishing',async t=>{
   const f=await fixture(t),h=await transport(t),before=await fs.readFile(path.join(f.root,'project.json'),'utf8');
   configureMultimediaRuntime({env:{PATH:''}});t.after(()=>configureMultimediaRuntime());let network=0;t.mock.method(globalThis,'fetch',()=>{network++;throw Error('Provider forbidden');});
   const a=await h.host.getMultimediaRuntimeStatus(),b=await h.host.getMultimediaRuntimeStatus();assert.equal(a.availability,'missing');assert.deepEqual(a,b);assert.equal(a.source,'unavailable');
-  const e=(await h.host.getExecutorContext('media-finishing')).executor;assert.equal(e.available,true);assert.equal(e.runtime.multimedia.snapshot.availability,'missing');assert.equal(e.runtime.scopes.video.implemented,false);assert.equal(e.runtime.scopes.audio.implemented,false);
+  const e=(await h.host.getExecutorContext('media-finishing')).executor;assert.equal(e.available,true);assert.equal(e.runtime.multimedia.snapshot.availability,'missing');assert.equal(e.runtime.scopes.video.implemented,true);assert.equal(e.runtime.scopes.audio.implemented,true);
   assert.equal((await h.host.getMultimediaRuntimeStatus({refresh:true})).availability,'missing');assert.equal(await fs.readFile(path.join(f.root,'project.json'),'utf8'),before);assert.equal(h.authReads(),0);assert.equal(network,0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
 });
 test('multimedia status channel rejects foreign sender, executable overrides and raw arguments',async t=>{
