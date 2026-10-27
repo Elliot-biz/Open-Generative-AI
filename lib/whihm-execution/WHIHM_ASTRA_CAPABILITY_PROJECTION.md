@@ -4,6 +4,10 @@ The read-only `projectCapabilities()` API in
 [capability-projection.mjs](capability-projection.mjs) describes the existing
 foundation. It neither selects executors nor authorizes or executes them.
 
+For progressive consumption, use the [planning-context v1 API](WHIHM_ASTRA_PLANNING_CONTEXT.md):
+compact overview, exact capability summaries and full executor details on demand.
+It derives from this projection without changing availability or execution semantics.
+
 ```js
 import { projectCapabilities } from './capability-projection.mjs';
 const projection = projectCapabilities();

@@ -141,7 +141,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -887,4 +887,23 @@ test('fixed host capability projection is read-only, project-independent, transp
   assert.equal(errorCode(await handler(h.event, { source: {} })), 'HOST_REQUEST_INVALID');
   assert.equal(errorCode(await handler(h.event, { allowExecution: true })), 'HOST_REQUEST_INVALID');
   const second = await h.host.getCapabilityProjection(); assert.deepEqual(second, p);
+});
+
+test('fixed host planning-context reads are progressive, exact, sender-checked and leave projects untouched', async t => {
+  const f=await fixture(t),h=await transport(t,{remote:new Proxy({},{get(){throw Error('Remote forbidden');}})});
+  const before=await fs.readFile(path.join(f.root,'project.json'),'utf8');let network=0;
+  t.mock.method(globalThis,'fetch',()=>{network++;throw Error('Provider forbidden');});
+  const overview=await h.host.getPlanningOverview();assert.equal(overview.status,'ok');assert.equal(overview.kind,'planning_overview');
+  const cap=await h.host.getCapabilityContext('VIDEO_EDIT');assert.equal(cap.status,'ok');assert.equal(cap.capability.id,'VIDEO_EDIT');
+  const detail=await h.host.getExecutorContext('gemini-omni-video-edit');assert.equal(detail.status,'ok');assert.equal(detail.executor.id,'gemini-omni-video-edit');
+  assert.equal((await h.host.getCapabilityContext('unknown')).status,'not_found');assert.equal((await h.host.getExecutorContext('unknown')).status,'not_found');
+  assert.equal((await h.host.getExecutorContext('flux-pulid')).status,'ambiguous');
+  assert.equal((await h.host.getPlanningOverview({filters:{}})).status,'rejected');
+  assert.equal((await h.host.getCapabilityContext('VIDEO_EDIT',{filters:{}})).status,'rejected');
+  assert.equal((await h.host.getExecutorContext('gemini-omni-video-edit',{})).status,'rejected');
+  for(const [operation,request]of[['getPlanningOverview',{}],['getCapabilityContext',{capabilityId:'VIDEO_EDIT'}],['getExecutorContext',{executorId:'gemini-omni-video-edit'}]]){
+    const handler=h.handlers.get('whihm:'+operation);assert.equal(errorCode(await handler({...h.event,sender:{}},request)),'HOST_SENDER_REJECTED');
+    assert.equal(errorCode(await handler(h.event,{...request,provider_options:{}})),'HOST_REQUEST_INVALID');
+  }
+  assert.equal(await fs.readFile(path.join(f.root,'project.json'),'utf8'),before);assert.equal(h.authReads(),0);assert.equal(network,0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
 });

@@ -45,6 +45,9 @@ contextBridge.exposeInMainWorld('localAI', {
 
 // Fixed WHIHM channels only; no generic IPC or filesystem access is exposed.
 contextBridge.exposeInMainWorld('whihmHost', {
+    getPlanningOverview: (...args) => ipcRenderer.invoke('whihm:getPlanningOverview', args.length ? { unsupportedArguments: true } : {}),
+    getCapabilityContext: (capabilityId, ...args) => ipcRenderer.invoke('whihm:getCapabilityContext', { capabilityId, ...(args.length ? { unsupportedArguments: true } : {}) }),
+    getExecutorContext: (executorId, ...args) => ipcRenderer.invoke('whihm:getExecutorContext', { executorId, ...(args.length ? { unsupportedArguments: true } : {}) }),
     getCapabilityProjection: () => ipcRenderer.invoke('whihm:getCapabilityProjection', {}),
     openProject: request => ipcRenderer.invoke('whihm:openProject', request),
     getWorkflow: request => ipcRenderer.invoke('whihm:getWorkflow', request),

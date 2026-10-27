@@ -1,5 +1,10 @@
 # WHIHM → existing application execution bridge
 
+> **Planning context v1 implemented:** [model-agnostic progressive reads](WHIHM_ASTRA_PLANNING_CONTEXT.md)
+> expose `getPlanningOverview()`, `getCapabilityContext(id)` and `getExecutorContext(id)`
+> through the fixed host interface. These project-independent reads preserve the
+> projection's states and guards; they never authorize or execute a provider action.
+
 > **Projection v1 implemented:** [Astra capability projection](WHIHM_ASTRA_CAPABILITY_PROJECTION.md)
 > now exposes read-only projectCapabilities() and the fixed host
 > getCapabilityProjection operation. It derives current contracts/bindings and

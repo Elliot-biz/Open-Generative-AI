@@ -1,0 +1,121 @@
+# Planning context v1
+
+The model-agnostic [planning-context.mjs](planning-context.mjs) provides progressive,
+read-only views over [projectCapabilities()](WHIHM_ASTRA_CAPABILITY_PROJECTION.md).
+An external reasoning director interprets the user's goal, requests exact capability
+IDs, and inspects executor details as needed. Astra remains external: this interface
+contains no reasoning-model calls, prompts, credentials or goal parser.
+
+## Retrieval
+
+```js
+import {
+  getPlanningOverview, getCapabilityContext, getExecutorContext,
+} from './planning-context.mjs';
+
+const overview = getPlanningOverview();
+const capability = getCapabilityContext('VIDEO_EDIT');
+const detail = getExecutorContext('gemini-omni-video-edit');
+
+// Existing trusted Electron host, with the same read-only semantics:
+await window.whihmHost.getPlanningOverview();
+await window.whihmHost.getCapabilityContext('VIDEO_EDIT');
+await window.whihmHost.getExecutorContext('gemini-omni-video-edit');
+```
+
+The internal host operations accept `{}`, `{capabilityId}` and `{executorId}`,
+respectively. Existing sender validation and fixed IPC allowlisting apply. A project,
+runtime connection, credentials or execution approval is unnecessary. Extra fields,
+arguments and filters are rejected; v1 has no query DSL or filtering surface.
+
+| View | Content |
+| --- | --- |
+| Overview | Every capability ID/purpose, executor counts by availability/assurance/runtime/verification, and derived guard observations; no executor records or control schemas |
+| Capability context | One exact capability, all its executor summaries, required/optional media roles and cardinality, constraints, asset/opaque-ID declarations, result/lifecycle facts, control names, availability reasons and limitations |
+| Executor context | One exact projected executor record, including complete controls, schemas, defaults, evidence and limitations; unchanged in meaning from the projection |
+
+Capability summaries omit role schemas and full control definitions. Fetch the executor
+detail before constructing requests. Limitations shared verbatim by every executor
+are factored into `sharedLimitations`; combine them with each summary's `limitations`.
+No source caveat is paraphrased or dropped. Runtime checks and actual canonical input
+validation remain authoritative; discovery does not validate supplied media.
+
+## Version, identity and errors
+
+Successful responses have `schemaVersion: 1`, `projectionSchemaVersion: 1`,
+`status: "ok"`, a `kind`, copied projection environment/limitations, and structured
+`guards`. Counts are live facts, not version guarantees. `availableForPlanning`
+counts only source entries with `available === true`; it grants no authorization,
+spend approval, runtime-health or fidelity assurance.
+
+IDs are exact, case-sensitive strings. Executor lookup accepts a projected `key`,
+or a logical model `id` only when unique. An ambiguous ID returns `status:
+"ambiguous"`, `PLANNING_EXECUTOR_ID_AMBIGUOUS` and sorted route keys in `matches`.
+The caller must explicitly retrieve one of those keys. No route is selected.
+
+Unknown IDs return `status: "not_found"` with `PLANNING_CAPABILITY_NOT_FOUND` or
+`PLANNING_EXECUTOR_NOT_FOUND`. Malformed IDs return `PLANNING_ID_INVALID`;
+unsupported extra arguments return `PLANNING_FILTERS_UNSUPPORTED`, both rejected.
+Module diagnostics contain codes, not echoed caller input. Validation failures
+before projection retrieval expose the planning version only; lookup errors also
+expose the projection version. A future unsupported projection version fails closed
+with `PLANNING_PROJECTION_VERSION_UNSUPPORTED`. Host envelope errors retain the
+existing `HOST_REQUEST_INVALID` convention.
+
+## Planning guards and known states
+
+`guards.rules` contains explicit false-valued permissions/inferences: catalog
+presence does not grant availability; availability does not authorize execution;
+known unavailable executors are not execution candidates; runtime-unverified does
+not mean runtime-failed; human lifecycle action cannot be automated; specialized
+routes cannot be silently substituted; opaque IDs are not assets; local configuration
+does not prove availability; source use does not imply packaged readiness.
+
+`guards.observed` is derived from only the requested scope: unavailable or deferred/
+blocked entries, runtime-unverified state, specialized routing, human/liveness needs,
+opaque provider identities, local constraints and provider clarification. The overview
+also includes these flags per capability. These are facts and guards, not a policy
+engine or model-selection recommendation.
+
+- MMAudio remains unavailable/provider-blocked and `mustRevisit: true`; no output
+  artifact semantics are invented.
+- Ordinary Seedance2.5 Spicy T2V/I2V remain deferred; known ambiguous fixed-resolution
+  suffixes remain unavailable. Reviewed Spicy V2V edit remains available/reviewed.
+- Gemini Omni provider identifiers remain controls/identities, never project assets.
+- Depth retains image/video XOR and depth-image/depth-video result variants.
+- Guided Suno retains human recording/liveness, same-live-session continuation and
+  opaque `voice_id`; no autonomous confirmation is implied.
+- Local entries remain local-constrained. Specialized Recast and other dedicated
+  routes retain their exact routing. Runtime verification remains unverified.
+- The known packaging omission remains a shipping blocker separate from source use.
+
+## Derivation, compactness and boundaries
+
+Every read takes one fresh snapshot from `projectCapabilities()`. No second model
+registry, cache/index subsystem or per-model branch exists. New metadata-described
+capabilities/executors automatically appear in all three views; fixture tests prove
+this. Object keys, capability IDs and executor keys are sorted deterministically;
+meaningful array order is retained. Returned objects are detached JSON-compatible data.
+
+Measured at this implementation using UTF-8 bytes of minified `JSON.stringify`:
+
+| View | Bytes |
+| --- | ---: |
+| Full projection, 40 capabilities / 601 executor entries | 1,380,720 |
+| Planning overview | 26,435 |
+| VIDEO_EDIT capability context | 35,000 |
+| Gemini Omni executor context | 4,890 |
+
+The initial overview is **98.09% smaller** than the full projection. Sizes will change
+with upstream metadata. The API reduces response/context size, not snapshot derivation
+work. All known alternatives remain visible; nothing is ranked, scored or selected.
+
+No provider/authentication/upload calls, renderer execution requests, project mutation,
+workflows, agents, retries, fallbacks, model ranking or real extension work are added.
+Execution services, contracts, bindings, projection admission and authorization are
+unchanged. This is a consumption API, not a network server or external-model adapter.
+
+QA: **44 new tests** (43 planning-context cases plus one fixed-host integration case);
+**374 targeted tests pass** (43 planning + 44 projection + 61 host + 226 execution/
+Depth/Suno/high-value-video regressions). Syntax/ESLint and `git diff --check` pass.
+No Studio/renderer build inputs or UI changed; no Vite/browser QA was required.
