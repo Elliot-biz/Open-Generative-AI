@@ -143,7 +143,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -978,4 +978,19 @@ test('multimedia status channel rejects foreign sender, executable overrides and
   assert.equal(errorCode(await handler({...h.event,sender:{}},{})),'HOST_SENDER_REJECTED');
   for(const request of [{path:'/tmp/ffmpeg'},{executable:'anything'},{args:['-i','media']},{env:{PATH:'/tmp'}},{refresh:'yes'},{projectHandle:'fake'}])assert.equal(errorCode(await h.host.getMultimediaRuntimeStatus(request)),'HOST_REQUEST_INVALID');
   assert.equal(h.authReads(),0);
+});
+test('fixed workflow-run host pauses, approves and resumes the same session without provider calls',async t=>{
+  const f=await fixture(t),workflow=createWorkflow({workflowId:'run_checkpoint',name:'Run checkpoint',nodes:[{id:'approval',title:'Review',kind:'review',executor:{type:'control',id:'human',tool:'approval',mayCostMoney:false,requiresConfirmation:true},inputs:[],outputs:[{id:'approved',type:'boolean'}],parameters:{reason:'Explicit human checkpoint'}}],outputs:[{id:'decision',type:'boolean',source:{nodeId:'approval',portId:'approved'}}]});
+  assert.equal((await f.project.addWorkflowToProject(workflow)).status,'added');const h=await transport(t,{useDefaultLoader:true}),opened=await h.host.openProject({projectRoot:f.root}),base={projectHandle:opened.projectHandle,workflowId:workflow.workflowId};
+  const before=await fs.readFile(path.join(f.root,'project.json'));assert.equal((await h.host.planWorkflowExecution(base)).status,'planned');assert.equal(errorCode(await h.host.runWorkflow(base)),'EXECUTION_NOT_AUTHORIZED');
+  const run=await h.host.runWorkflow({...base,allowExecution:true});assert.equal(run.status,'awaiting_user');const read={projectHandle:base.projectHandle,runId:run.runId};assert.deepEqual(await h.host.getWorkflowRun(read),run);
+  const approved=await h.host.approveWorkflowCheckpoint({...read,nodeId:'approval',decision:'approve',origin:'human',expectedRevision:run.revision,allowExecution:true});assert.equal(approved.status,'paused');
+  const complete=await h.host.resumeWorkflow({...read,expectedRevision:approved.revision,allowExecution:true});assert.equal(complete.status,'completed',JSON.stringify(complete));assert.equal(complete.runId,run.runId);assert.equal(complete.outputs.decision.value,true);
+  assert.deepEqual(await fs.readFile(path.join(f.root,'project.json')),before);assert.equal(h.authReads(),0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
+});
+test('workflow-run IPC rejects foreign senders, graph injection and cross-session run adoption',async t=>{
+  const f=await fixture(t),h=await transport(t),opened=await h.host.openProject({projectRoot:f.root});
+  for(const operation of ['planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun'])assert.equal(errorCode(await h.handlers.get(`whihm:${operation}`)({...h.event,sender:{}},{})),'HOST_SENDER_REJECTED');
+  assert.equal(errorCode(await h.host.runWorkflow({projectHandle:opened.projectHandle,workflowId:'selected_workflow',allowExecution:true,workflow:{nodes:[]}})),'HOST_REQUEST_INVALID');
+  assert.equal(errorCode(await h.host.getWorkflowRun({projectHandle:opened.projectHandle,runId:'run_from_another_session'})),'RUN_NOT_FOUND');assert.equal(h.authReads(),0);
 });

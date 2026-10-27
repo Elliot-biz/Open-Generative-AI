@@ -1,5 +1,14 @@
 # WHIHM → existing application execution bridge
 
+Current extension: [Workflow Execution Foundation](WHIHM_WORKFLOW_EXECUTION.md)
+adds RUN_WORKFLOW / run_workflow / workflow-execution and six fixed host operations:
+planWorkflowExecution, runWorkflow, getWorkflowRun, approveWorkflowCheckpoint,
+resumeWorkflow and invalidateWorkflowRun. Canonical DAGs execute through existing
+bindings/tools with explicit permission, human pauses, session-only runs and
+controlled downstream invalidation. No agents, selection, fallback or schema migration.
+Projection/planning stay v1 and derive **43 groups /604 entries;139 available reviewed**.
+Older milestone counts and single-node-only notes below remain historical.
+
 > **Multimedia runtime foundation:** [paired runtime contract](WHIHM_MULTIMEDIA_RUNTIME.md)
 > exposes getMultimediaRuntimeStatus({refresh?}) through the fixed read-only host.
 > It safely probes local version/capability metadata without project/media/provider

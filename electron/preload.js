@@ -45,6 +45,13 @@ contextBridge.exposeInMainWorld('localAI', {
 
 // Fixed WHIHM channels only; no generic IPC or filesystem access is exposed.
 contextBridge.exposeInMainWorld('whihmHost', {
+    planWorkflowExecution: request => ipcRenderer.invoke('whihm:planWorkflowExecution', request),
+    runWorkflow: request => ipcRenderer.invoke('whihm:runWorkflow', request),
+    getWorkflowRun: request => ipcRenderer.invoke('whihm:getWorkflowRun', request),
+    approveWorkflowCheckpoint: request => ipcRenderer.invoke('whihm:approveWorkflowCheckpoint', request),
+    resumeWorkflow: request => ipcRenderer.invoke('whihm:resumeWorkflow', request),
+    invalidateWorkflowRun: request => ipcRenderer.invoke('whihm:invalidateWorkflowRun', request),
+
     getMultimediaRuntimeStatus: request => ipcRenderer.invoke('whihm:getMultimediaRuntimeStatus', request ?? {}),
     finishMedia: request => ipcRenderer.invoke('whihm:finishMedia', request),
     planMediaFinishing: request => ipcRenderer.invoke('whihm:planMediaFinishing', request),

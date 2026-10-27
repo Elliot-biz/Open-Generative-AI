@@ -1,5 +1,14 @@
 # Astra capability projection v1
 
+Current extension: [Workflow Execution Foundation](WHIHM_WORKFLOW_EXECUTION.md)
+adds RUN_WORKFLOW / run_workflow / workflow-execution and six fixed host operations:
+planWorkflowExecution, runWorkflow, getWorkflowRun, approveWorkflowCheckpoint,
+resumeWorkflow and invalidateWorkflowRun. Canonical DAGs execute through existing
+bindings/tools with explicit permission, human pauses, session-only runs and
+controlled downstream invalidation. No agents, selection, fallback or schema migration.
+Projection/planning stay v1 and derive **43 groups /604 entries;139 available reviewed**.
+Older milestone counts and single-node-only notes below remain historical.
+
 [Multimedia runtime readiness](WHIHM_MULTIMEDIA_RUNTIME.md) now appears as scoped
 FINISH_MEDIA runtime requirements plus a safe last-observed snapshot. Projection
 never runs probes; counts remain42 groups /603 entries. Image stays executable,
