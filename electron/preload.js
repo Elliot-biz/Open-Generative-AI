@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('localAI', {
 
 // Fixed WHIHM channels only; no generic IPC or filesystem access is exposed.
 contextBridge.exposeInMainWorld('whihmHost', {
+    getMultimediaRuntimeStatus: request => ipcRenderer.invoke('whihm:getMultimediaRuntimeStatus', request ?? {}),
     finishMedia: request => ipcRenderer.invoke('whihm:finishMedia', request),
     planMediaFinishing: request => ipcRenderer.invoke('whihm:planMediaFinishing', request),
     inspectMedia: request => ipcRenderer.invoke('whihm:inspectMedia', request),

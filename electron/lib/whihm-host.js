@@ -2,13 +2,23 @@ const { register: registerLoader } = require('node:module');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
-const operations = ['finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
+const operations = ['getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
 const reject = code => ({ status: 'rejected', diagnostics: [{ code, path: '', message: code.replaceAll('_', ' ') }] });
 let loaded;
+function multimediaHostEnvironment(app, { resourcesPath = process.resourcesPath, platform = process.platform, arch = process.arch } = {}) {
+    if (!app) return null;
+    const paths = platform === 'win32' ? path.win32 : path.posix;
+    return { packaged: app.isPackaged === true, resourcesPath, platform, arch, managedRoot: paths.join(app.getPath('userData'), 'multimedia') };
+}
 function loadHost() {
     if (!loaded) {
         registerLoader(pathToFileURL(path.join(__dirname, 'whihm-esm-loader.mjs')));
-        loaded = import('../../lib/whihm-execution/host.mjs');
+        loaded = Promise.all([import('../../lib/whihm-execution/host.mjs'), import('../../lib/whihm-execution/multimedia-runtime.mjs')]).then(([host, runtime]) => {
+            const { app } = require('electron');
+            const environment = multimediaHostEnvironment(app);
+            if (environment) runtime.configureMultimediaRuntime(environment);
+            return host;
+        });
     }
     return loaded;
 }
@@ -86,4 +96,4 @@ function register({ ipcMain, getWindow, load = loadHost, timeoutMs = 35 * 60 * 1
         return { status: 'received' };
     });
 }
-module.exports = { register };
+module.exports = { register, multimediaHostEnvironment };

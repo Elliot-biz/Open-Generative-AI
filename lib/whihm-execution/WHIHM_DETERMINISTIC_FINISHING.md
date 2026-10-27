@@ -1,10 +1,15 @@
 # Deterministic Finishing Foundation v1
 
+Current runtime addendum: [Multimedia Runtime Foundation](WHIHM_MULTIMEDIA_RUNTIME.md)
+now defines paired discovery/probing and a read-only status API. Image finishing
+stays available; video/audio remain explicitly unimplemented even if that runtime
+is ready. Its last observed status is visible through existing planning contexts.
+
 **Safe PARTIAL: complete bounded image subset.** Capability `FINISH_MEDIA`, local
 mode `finish_media`, tool `media-finishing`. No generative provider, editor UI,
 semantic decisions, finishing workflow, batch scheduler or named delivery preset.
 
-## Tooling gate
+## Original image-milestone tooling gate (historical)
 
 The checkout/environment has no app-supported FFmpeg/ffprobe binary, discovery,
 version policy or packaging contract. Wan2GP's internal Python children are not

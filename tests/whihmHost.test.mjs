@@ -13,6 +13,7 @@ import { assessCurrentWorkflowReadiness } from '../src/lib/whihmReadinessClient.
 import { createWorkflowHost } from '../lib/whihm-execution/host.mjs';
 import { connectWhihmHost } from '../src/lib/whihmHostRuntime.mjs';
 import { imageBytes, movieBytes, waveBytes } from './helpers/mediaInspectionFixtures.mjs';
+import { configureMultimediaRuntime } from '../lib/whihm-execution/multimedia-runtime.mjs';
 const require = createRequire(import.meta.url);
 const { register } = require('../electron/lib/whihm-host.js');
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -142,7 +143,7 @@ test('upstream error, refund and request ID are serializable and sanitized acros
 });
 test('preload surface has no arbitrary IPC/fs/shell API and unsolicited replies reject', async t => {
   const h = await transport(t);
-  assert.deepEqual(Object.keys(h.host).sort(), ['finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
+  assert.deepEqual(Object.keys(h.host).sort(), ['getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'applyWorkflowApproval', 'applyWorkflowInvalidation', 'assessWorkflowReadiness', 'executeNode', 'getAsset', 'getWorkflow', 'onRuntimeRequest', 'onStatus', 'openProject', 'planNode', 'runtimeProgress', 'runtimeReady', 'runtimeResult'].sort());
   assert.equal(errorCode(await h.host.runtimeResult({ requestId: 'unrequested', ok: true, value: {} })), 'HOST_RESPONSE_UNEXPECTED');
   const main = await fs.readFile(path.join(repo, 'electron/main.js'), 'utf8');
   assert.match(main, /webSecurity: true/); assert.match(main, /contextIsolation: true/); assert.match(main, /nodeIntegration: false/);
@@ -961,4 +962,18 @@ test('fixed finishing channels retain sender, request and asset boundaries',asyn
   for(const extra of [{outputPath:'/tmp/anything'},{command:'ffmpeg anything'},{backend:'arbitrary'}])assert.equal(errorCode(await h.host.finishMedia({...request,...extra})),'HOST_REQUEST_INVALID');
   assert.equal(errorCode(await h.host.finishMedia({...request,assetId:'../outside'})),'ASSET_ID_INVALID');
   assert.equal(errorCode(await h.host.finishMedia({...request,parameters:{outputFormat:'png',rawArgs:[]}})),'FINISH_PARAMETERS_INVALID');assert.equal(h.authReads(),0);
+});
+
+test('fixed multimedia status read is cached, project-independent and reflected without enabling finishing',async t=>{
+  const f=await fixture(t),h=await transport(t),before=await fs.readFile(path.join(f.root,'project.json'),'utf8');
+  configureMultimediaRuntime({env:{PATH:''}});t.after(()=>configureMultimediaRuntime());let network=0;t.mock.method(globalThis,'fetch',()=>{network++;throw Error('Provider forbidden');});
+  const a=await h.host.getMultimediaRuntimeStatus(),b=await h.host.getMultimediaRuntimeStatus();assert.equal(a.availability,'missing');assert.deepEqual(a,b);assert.equal(a.source,'unavailable');
+  const e=(await h.host.getExecutorContext('media-finishing')).executor;assert.equal(e.available,true);assert.equal(e.runtime.multimedia.snapshot.availability,'missing');assert.equal(e.runtime.scopes.video.implemented,false);assert.equal(e.runtime.scopes.audio.implemented,false);
+  assert.equal((await h.host.getMultimediaRuntimeStatus({refresh:true})).availability,'missing');assert.equal(await fs.readFile(path.join(f.root,'project.json'),'utf8'),before);assert.equal(h.authReads(),0);assert.equal(network,0);assert.equal(h.localCalls.length,0);assert.equal(h.statuses.length,0);
+});
+test('multimedia status channel rejects foreign sender, executable overrides and raw arguments',async t=>{
+  const h=await transport(t),handler=h.handlers.get('whihm:getMultimediaRuntimeStatus');
+  assert.equal(errorCode(await handler({...h.event,sender:{}},{})),'HOST_SENDER_REJECTED');
+  for(const request of [{path:'/tmp/ffmpeg'},{executable:'anything'},{args:['-i','media']},{env:{PATH:'/tmp'}},{refresh:'yes'},{projectHandle:'fake'}])assert.equal(errorCode(await h.host.getMultimediaRuntimeStatus(request)),'HOST_REQUEST_INVALID');
+  assert.equal(h.authReads(),0);
 });

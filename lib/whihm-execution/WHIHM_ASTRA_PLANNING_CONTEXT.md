@@ -1,5 +1,10 @@
 # Planning context v1
 
+Planning summaries now retain all safe projected runtime fields generically,
+including [multimedia readiness](WHIHM_MULTIMEDIA_RUNTIME.md) and separate image/
+video/audio implementation scopes. Reads never probe: use the fixed status read
+for a fresh observation. Schemas remain v1; there is no tool-specific planning branch.
+
 [Image finishing](WHIHM_DETERMINISTIC_FINISHING.md) appears automatically under
 FINISH_MEDIA/media-finishing, including operation-specific parameter constraints.
 Planning-context implementation/schema is unchanged. No video/audio finishing is implied.

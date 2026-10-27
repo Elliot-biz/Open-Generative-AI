@@ -1,5 +1,11 @@
 # WHIHM → existing application execution bridge
 
+> **Multimedia runtime foundation:** [paired runtime contract](WHIHM_MULTIMEDIA_RUNTIME.md)
+> exposes getMultimediaRuntimeStatus({refresh?}) through the fixed read-only host.
+> It safely probes local version/capability metadata without project/media/provider
+> access. FINISH_MEDIA retains image execution; video/audio stay unimplemented.
+> No binaries, transforms or packaging repair are added.
+
 > **Second extension, safe PARTIAL:** [Deterministic image finishing](WHIHM_DETERMINISTIC_FINISHING.md)
 > exposes fixed planMediaFinishing/finishMedia host operations, immutable derived
 > asset imports and post-transform Media Inspection verification. It uses existing
