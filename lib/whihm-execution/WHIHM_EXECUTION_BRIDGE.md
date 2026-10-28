@@ -1499,3 +1499,5 @@ Syntax checks and ESLint pass for all seven touched JS/MJS files; Vite productio
 build passes with the existing chunk-size advisory. git diff --check passes.
 All uploads/provider execution are mocked. Only two public unauthenticated
 metadata GETs were real; no provider POST, private listing or paid operation.
+
+Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield and prepared-guidance Seedance execution remain explicitly unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.

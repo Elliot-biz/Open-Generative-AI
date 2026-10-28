@@ -1,3 +1,4 @@
+import { getPerformanceTransformation } from './performanceTransformationContracts.js';
 import { getMotionControlModelById } from './models.js';
 
 function need(condition, code, path, message) {
@@ -11,6 +12,8 @@ const instructions = Object.freeze({
   motion_transfer: 'Extract motion from the reference video and rebuild the scene with the new characters and assets, preserving the original motion, choreography, and camera movements.',
   objects_swap: 'Keep the rest of the scene as filmed, swap the characters, products, or clothes with the reference images.',
 });
+
+export function getMotionControlExecutionModel(id) { const model = getMotionControlModelById(id); return model?.id === id && model.executionReviewed === true ? model : null; }
 
 export function getMotionControlInputDescription(id) {
   const model = getMotionControlModelById(id); if (model?.id !== id) return null;
@@ -75,6 +78,7 @@ export function buildMotionControlRequest(params = {}) {
     requiredMedia: [{ role: 'source-motion', field: 'video_url', upstreamField: 'video_url' },
       { role: 'reference-images', field: 'images_list', upstreamField: 'images_list', minimum: 1, maximum: model.maxImages }],
     supportedOptions: ['mode', 'prompt', 'duration', 'aspect_ratio', ...['generate_audio', 'high_bitrate', 'quality', 'seed'].filter(key => allowed.has(key))].sort(),
+    transformation: getPerformanceTransformation(model, 'motion_control', params),
     motionControl: { intentMode: params.mode, imageCount: images.length, minimumImages: 1, maximumImages: model.maxImages,
       duration, minimumDuration: model.minDuration, maximumDuration: model.maxDuration,
       suppliedOptions: Object.keys(params).filter(key => !['model', 'onRequestId', 'video_url', ...forms].includes(key)).sort() },

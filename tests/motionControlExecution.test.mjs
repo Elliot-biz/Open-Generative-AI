@@ -147,7 +147,7 @@ test('source catalog reflects provider 2.0 seed support and unknown routes do no
   assert.equal(findRemote('not-a-motion-model', 'motion_control'), null);
   assert.equal(findRemote('mmaudio-v2-video-to-video'), null);
   assert.equal(findRemote('seedance-2.5-intl-motion-control', 'motion_control'), null);
-  assert.equal(findRemote('seedance-2.5-spicy-motion-control', 'motion_control'), null);
+  assert.equal(findRemote('seedance-2.5-spicy-motion-control', 'motion_control').model.id, 'seedance-2.5-spicy-motion-control');
 });
 test('shared service retains source-declared existing variants without binding them in WHIHM', async t => {
   const calls = fake(t);

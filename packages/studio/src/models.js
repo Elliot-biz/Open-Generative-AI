@@ -31805,6 +31805,8 @@ export const getAspectRatiosForRecastModel = (id) => {
 export const motionControlModels = [
   {
     id: "seedance-2.5-motion-control",
+    executionReviewed: true,
+    transformationOutputResolution: "720p",
     name: "Seedance 2.5 Motion Control",
     endpoint: "seedance-2.5-motion-control",
     family: "seedance",
@@ -31821,6 +31823,7 @@ export const motionControlModels = [
   },
   {
     id: "seedance-2-motion-control",
+    executionReviewed: true,
     name: "Seedance 2.0 Motion Control",
     endpoint: "seedance-2-motion-control",
     family: "seedance",
@@ -31863,6 +31866,8 @@ export const motionControlModels = [
   },
   {
     "id": "seedance-2.5-spicy-motion-control",
+    executionReviewed: true,
+    transformationOutputResolution: "720p",
     "name": "Seedance 2.5 Spicy Motion Control",
     "shortName": "Seedance 2.5 Spicy",
     "endpoint": "seedance-2.5-spicy-motion-control",

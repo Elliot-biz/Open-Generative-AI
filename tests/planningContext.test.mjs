@@ -14,8 +14,8 @@ test('overview is versioned, deterministic, JSON compatible and includes all exa
   assert.equal(overview.status,'ok');assert.equal(overview.schemaVersion,1);assert.equal(overview.projectionSchemaVersion,projection.schemaVersion);
   assert.deepEqual(overview,getPlanningOverview());assert.deepEqual(JSON.parse(JSON.stringify(overview)),overview);
   assert.deepEqual(overview.capabilities.map(c=>c.id),projection.capabilities.map(c=>c.id));
-  assert.equal(overview.counts.executorEntries,all(projection).length);assert.equal(overview.counts.availableForPlanning,538);
-  assert.equal(overview.counts.availableByAssurance.reviewed,142);assert.equal(overview.counts.availableByAssurance.generic,396);
+  assert.equal(overview.counts.executorEntries,all(projection).length);assert.equal(overview.counts.availableForPlanning,543);
+  assert.equal(overview.counts.availableByAssurance.reviewed,147);assert.equal(overview.counts.availableByAssurance.generic,396);
 });
 test('overview omits executor/control records and is materially smaller than the full projection', () => {
   const overview=getPlanningOverview(),projection=projectCapabilities();
@@ -24,10 +24,10 @@ test('overview omits executor/control records and is materially smaller than the
 });
 test('overview exposes blocked/deferred, specialized, local and human lifecycle facts', () => {
   const overview=getPlanningOverview();
-  assert.equal(overview.counts.byAvailability.provider_blocked,35);assert.equal(overview.counts.byAvailability.deferred,22);
+  assert.equal(overview.counts.byAvailability.provider_blocked,35);assert.equal(overview.counts.byAvailability.deferred,25);
   assert.equal(overview.counts.byAvailability.local_constrained,13);assert.equal(overview.guards.observed.runtimeUnverifiedPresent,true);
   assert.equal(overview.capabilities.find(c=>c.id==='CLONE_VOICE_GUIDED').flags.humanLifecycleActionRequired,true);
-  assert.equal(overview.capabilities.find(c=>c.id==='TRANSFER_PERFORMANCE').flags.specializedRoutingPresent,true);
+  assert.equal(overview.capabilities.find(c=>c.id==='PERFORMANCE_TRANSFER').flags.specializedRoutingPresent,true);
 });
 test('exact capability context returns only that group, multiple executors and deterministic summaries', () => {
   const context=getCapabilityContext('VIDEO_EDIT'),source=projectCapabilities().capabilities.find(c=>c.id==='VIDEO_EDIT');

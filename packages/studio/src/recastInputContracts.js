@@ -1,3 +1,4 @@
+import { getPerformanceTransformation } from './performanceTransformationContracts.js';
 import { getRecastModelById } from './models.js';
 
 function requireInput(condition, code, path, message) {
@@ -38,7 +39,7 @@ export function buildRecastRequest(params = {}) {
     payload[field] = value;
   }
   return {
-    endpoint: model.endpoint, payload,
+    endpoint: model.endpoint, payload, transformation: getPerformanceTransformation(model, 'recast', payload),
     requiredMedia: [
       { role: 'target-character', field: 'image_url', upstreamField: model.imageField },
       { role: 'driving-performance', field: 'video_url', upstreamField: model.videoField },
