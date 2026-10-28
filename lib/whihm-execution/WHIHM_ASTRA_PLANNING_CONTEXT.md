@@ -172,3 +172,8 @@ Overview stays compact; executor context exposes the integer-frame timeline
 contract, tracks, cut-only transitions, output format and multimedia requirement.
 Use `planTimelineComposition` to resolve assets and obtain current render blockers;
 planning never executes/probes FFmpeg. See [timeline contract](WHIHM_TIMELINE_COMPOSITION.md).
+
+Audio Production discovery derives `PRODUCE_AUDIO_MIX` directly from projection
+(50 groups /618 entries). Exact executor context exposes track categories,
+processors, automation and multimedia readiness. `planAudioProduction` resolves
+source hashes and operation-specific blockers without executing/probing FFmpeg.

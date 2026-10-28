@@ -38,7 +38,7 @@ test('all advertised available executors have exact existing canonical binding e
     assert.equal(e.binding.available, true);
   }
   const p = projectCapabilities(); assert.equal(p.counts.availableReviewed + p.counts.availableGeneric, all.filter(e=>e.available).length);
-  assert.equal(p.counts.availableReviewed, 148); assert.equal(p.counts.availableGeneric, 396);
+  assert.equal(p.counts.availableReviewed, 149); assert.equal(p.counts.availableGeneric, 396);
   const inspection = entry('media-inspection', 'inspect_media', p);
   assert.equal(inspection.binding.source, 'host.inspectMedia'); assert.equal(inspection.binding.available, true);
   const finishing = entry('media-finishing', 'finish_media', p);

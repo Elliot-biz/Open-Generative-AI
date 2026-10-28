@@ -63,6 +63,8 @@ contextBridge.exposeInMainWorld('whihmHost', {
     invalidateWorkflowRun: request => ipcRenderer.invoke('whihm:invalidateWorkflowRun', request),
 
     getMultimediaRuntimeStatus: request => ipcRenderer.invoke('whihm:getMultimediaRuntimeStatus', request ?? {}),
+    planAudioProduction: request => ipcRenderer.invoke('whihm:planAudioProduction',request),
+    produceAudioMix: request => ipcRenderer.invoke('whihm:produceAudioMix',request),
     planTimelineComposition: request => ipcRenderer.invoke('whihm:planTimelineComposition', request),
     composeTimeline: request => ipcRenderer.invoke('whihm:composeTimeline', request),
     finishMedia: request => ipcRenderer.invoke('whihm:finishMedia', request),

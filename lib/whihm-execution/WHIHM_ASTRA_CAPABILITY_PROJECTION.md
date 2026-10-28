@@ -203,3 +203,7 @@ entry (`timeline-composition`), bringing discovery to 49 groups /617 entries.
 The binding is present; actual rendering requires the multimedia baseline and
 operation-specific features. It accepts registered sources and integer-frame
 tracks, not shell/filtergraph strings. See [timeline contract](WHIHM_TIMELINE_COMPOSITION.md).
+
+`PRODUCE_AUDIO_MIX` adds one local, deterministic, runtime-gated entry, bringing
+projection to 50 groups /618 entries. Per-stage processing, bus/sidechain support
+and limitations come from its execution description. Analysis inference is deferred.
