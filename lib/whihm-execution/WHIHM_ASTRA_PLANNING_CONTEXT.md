@@ -181,3 +181,8 @@ source hashes and operation-specific blockers without executing/probing FFmpeg.
 Timing analysis is discovered from projection with PCM16 WAV requirements and
 explicit downbeat absence. Mix executor context exposes additive manipulation
 modes/ranges; neither capability gives raw FFmpeg control or selects edit points.
+
+AGENT_EXECUTE is dynamically derived from projection. Exact executor context
+exposes structured action vocabulary, limits and existing logical-reference usage.
+planAgentExecution is the non-executing draft check; apply/run/continue are separate
+permission-gated calls. No Astra-specific branch, ranking or fallback is added.

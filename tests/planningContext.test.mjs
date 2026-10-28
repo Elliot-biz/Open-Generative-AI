@@ -14,8 +14,8 @@ test('overview is versioned, deterministic, JSON compatible and includes all exa
   assert.equal(overview.status,'ok');assert.equal(overview.schemaVersion,1);assert.equal(overview.projectionSchemaVersion,projection.schemaVersion);
   assert.deepEqual(overview,getPlanningOverview());assert.deepEqual(JSON.parse(JSON.stringify(overview)),overview);
   assert.deepEqual(overview.capabilities.map(c=>c.id),projection.capabilities.map(c=>c.id));
-  assert.equal(overview.counts.executorEntries,all(projection).length);assert.equal(overview.counts.availableForPlanning,546);
-  assert.equal(overview.counts.availableByAssurance.reviewed,150);assert.equal(overview.counts.availableByAssurance.generic,396);
+  assert.equal(overview.counts.executorEntries,all(projection).length);assert.equal(overview.counts.availableForPlanning,547);
+  assert.equal(overview.counts.availableByAssurance.reviewed,151);assert.equal(overview.counts.availableByAssurance.generic,396);
 });
 test('overview omits executor/control records and is materially smaller than the full projection', () => {
   const overview=getPlanningOverview(),projection=projectCapabilities();

@@ -1517,3 +1517,9 @@ frameRate and bounded settings, returning json evidence and an immutable artifac
 reference. analyzeAudioTiming is the corresponding guarded host method. Existing
 Audio Production handles additive event pitch/stretch/playback through its shared
 runtime and existing workflow invalidation. See WHIHM_AUDIO_PRODUCTION.md.
+
+Agent Execution is a bounded authoring/control client of the same Workflow Execution
+instance, not an executor replacement. Its five fixed host APIs use canonical edit
+batches/history, exact projection requirements and explicit execution permissions.
+See [Agent Execution v1](WHIHM_AGENT_EXECUTION.md) for supported edits, unresolved
+parameter limits, approval/provider uncertainty guards and session-only behavior.

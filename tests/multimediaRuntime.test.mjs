@@ -152,7 +152,7 @@ test('planning uses the last safe runtime observation without probing or authori
   const initial=getExecutorContext('media-finishing');assert.equal(initial.executor.runtime.multimedia.snapshot.observation,'not_probed');assert.equal(calls,0);
   await getMultimediaRuntimeStatus();const count=calls,detail=getExecutorContext('media-finishing'),cap=getCapabilityContext('FINISH_MEDIA'),overview=getPlanningOverview();assert.equal(calls,count);assert.equal(detail.executor.runtime.multimedia.snapshot.availability,'ready');assert.deepEqual(cap.executors[0].runtime,detail.executor.runtime);
   for(const e of [detail.executor,cap.executors[0]]){assert.equal(e.available,true);assert.equal(e.runtime.scopes.image.implemented,true);assert.equal(e.runtime.scopes.video.implemented,true);assert.equal(e.runtime.scopes.audio.implemented,true);}
-  assert.equal(overview.capabilities.length,51);assert.equal(projectCapabilities().counts.executorEntries,619);assert.ok(!overview.capabilities.some(c=>/FFMPEG|MULTIMEDIA_RUNTIME/.test(c.id)));
+  assert.equal(overview.capabilities.length,52);assert.equal(projectCapabilities().counts.executorEntries,620);assert.ok(!overview.capabilities.some(c=>/FFMPEG|MULTIMEDIA_RUNTIME/.test(c.id)));
 });
 test('host read is project-independent, strict, unauthenticated and nonmutating',async t=>{
   const f=await runtimeFixture(t),root=path.join(f.root,'project');await createProject(root,{title:'Runtime read fixture'});const before=await fs.readFile(path.join(root,'project.json'),'utf8');let runtime=0,network=0;

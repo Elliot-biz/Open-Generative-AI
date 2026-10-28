@@ -211,3 +211,8 @@ and limitations come from its execution description. Analysis inference is defer
 Audio completion adds local ANALYZE_AUDIO_TIMING (51 groups /619 entries).
 Exact Audio Production metadata exposes pitch/stretch/playback controls and bounds;
 analysis metadata explicitly excludes downbeats and automatic creative decisions.
+
+Agent control adds AGENT_EXECUTE with one local entry (52 groups /620 entries).
+The description exposes plan/apply/run separation, bounded canonical edits,
+revision requirements, external approvals and stop/re-plan behavior. It is not a
+model/provider entry and is not admitted recursively as a workflow node.

@@ -63,6 +63,11 @@ contextBridge.exposeInMainWorld('whihmHost', {
     invalidateWorkflowRun: request => ipcRenderer.invoke('whihm:invalidateWorkflowRun', request),
 
     getMultimediaRuntimeStatus: request => ipcRenderer.invoke('whihm:getMultimediaRuntimeStatus', request ?? {}),
+    planAgentExecution: request => ipcRenderer.invoke('whihm:planAgentExecution',request),
+    applyAgentPlan: request => ipcRenderer.invoke('whihm:applyAgentPlan',request),
+    runAgentExecution: request => ipcRenderer.invoke('whihm:runAgentExecution',request),
+    getAgentExecution: request => ipcRenderer.invoke('whihm:getAgentExecution',request),
+    continueAgentExecution: request => ipcRenderer.invoke('whihm:continueAgentExecution',request),
     analyzeAudioTiming: request => ipcRenderer.invoke('whihm:analyzeAudioTiming',request),
     planAudioProduction: request => ipcRenderer.invoke('whihm:planAudioProduction',request),
     produceAudioMix: request => ipcRenderer.invoke('whihm:produceAudioMix',request),
