@@ -52,10 +52,11 @@ Three distinct deferred discovery entries record input documentation:
 - [Restyle](https://open.higgsfield.ai/models/higgsfield/genjutsu/restyle/v1.0/api-reference): preset_id required;0–5 references; source motion/composition/audio described as retained; provider may change cadence.
 
 These are INPUT_DOCUMENTATION_ONLY, **not executable bindings**. The existing
-remote bridge is MuAPI-only; no Higgsfield auth/upload/poll/continuation adapter
-exists to reuse. The native protocol uses Key ID:secret and asynchronous requests;
-its submission/status/result identity, uncertainty and host credential integration
-still need a bounded reviewed adapter. This partial does not disguise native
+remote bridge is MuAPI-only; the internal native lifecycle transport now implements auth, submission and
+session-bound status reads, but upload/output publication and workflow continuation
+dispatch are not connected. The native protocol uses Key ID:secret and asynchronous requests;
+its native request/status identity and uncertainty are tested in isolation;
+host asset integration and workflow execution remain unfinished. This partial does not disguise native
 Higgsfield as MuAPI or introduce another provider framework. All three entries
 remain deferred with HIGGSFIELD_LIFECYCLE_BINDING_UNREVIEWED. No credentials or
 provider probe is performed by discovery/planning. Their recorded input envelopes
@@ -97,3 +98,51 @@ QA:26 new cases;1396 unique targeted tests passed (1127 affected regressions,
 Vite production build passed with its existing chunk-size advisory. git diff --check
 passed. No dependencies, credentials, schemas, host/preload channels or runtime
 binaries were changed. Local-only commit; no push or live provider execution.
+
+
+## Native transport follow-up — incomplete binding
+
+[higgsfield-native.mjs](higgsfield-native.mjs) provides a bounded internal HTTP
+adapter for the three exact routes. It is not exposed through host/preload or
+selected by Workflow Execution. Discovery remains deferred; counts are unchanged.
+
+Credentials use HF_API_KEY_ID and HF_API_KEY_SECRET with Authorization: Key ID:secret.
+Missing/incomplete configuration returns HIGGSFIELD_CREDENTIALS_MISSING or
+HIGGSFIELD_CONFIGURATION_INVALID. adapterReady means local configuration only, not
+account access or an executable canonical binding. Readiness performs zero network.
+
+Requests reject unknown controls and source facts outside4–30seconds; this avoids
+silent provider trimming. Source facts are trusted internal inputs and do not
+replace project integrity or Media Inspection. Object Swap enforces409600pixels.
+No upload implementation, schema change, SDK, renderer IPC or credential storage.
+
+Each submit makes one POST. Accepted IDs are native UUIDs. A separate random
+continuation handle identifies private session state, never substitutes for the
+provider ID, and cannot be rehydrated from JSON. A poll makes one GET to the exact
+provider-returned HTTPS API status URL, with origin/path/request-ID validation.
+queued/in_progress map to processing; completed to succeeded; failed/nsfw to failed;
+canceled to cancelled. Completion requires a video URL. The same status response
+contains output metadata; there is no guessed result endpoint. Native usage/cost
+is retained, including zero, without pricing calculations.
+
+Ambiguous submission, malformed response, unknown status, timeout or interrupted
+status read blocks. A known request can be polled through its owning session;
+terminal results are cached. Unknown-ID submission cannot be automatically resumed
+or submitted again. No retries, automatic resubmission or cancellation is added.
+The adapter uses argument-free fixed HTTP routes, redirect rejection, a15second
+per-call deadline and1MiB JSON response cap. Raw provider diagnostics are not returned.
+
+Sources reviewed2026-10-28: [authentication](https://docs.higgsfield.ai/docs/authentication),
+[request lifecycle](https://docs.higgsfield.ai/docs/concepts/requests),
+[status schema](https://docs.higgsfield.ai/docs/api-reference/requests/get-request-status),
+[file upload protocol](https://docs.higgsfield.ai/docs/concepts/file-uploads), and the
+three model references above. Public unauthenticated documentation GETs only.
+
+Remaining work: connect trusted project inputs/upload, bounded output retrieval
+and immutable registration, workflow readiness and same-run continuation, then
+promote discovery. No output checksum/lineage or end-to-end workflow support is
+claimed by the internal transport. Native provider inference remains unverified.
+
+Transport follow-up QA: 26 new mocked native cases and 217 affected regression
+cases passed (243 total). Syntax/ESLint and git diff --check passed. No renderer
+build input changed; no Vite/browser or live-provider QA. This is PARTIAL.
