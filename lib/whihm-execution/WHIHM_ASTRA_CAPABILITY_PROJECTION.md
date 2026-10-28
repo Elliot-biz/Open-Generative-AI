@@ -220,3 +220,6 @@ model/provider entry and is not admitted recursively as a workflow node.
 EVALUATE_CREATIVE adds one local evaluator entry (53 groups /621 entries). Its
 metadata exposes objective rules, evidence trust classes, human-review boundaries,
 external subjective attachment and the four QC states. It is not a revision runner.
+
+
+Creative revision adds PLAN_CREATIVE_REVISION / creative-revision / plan_creative_revision: 54 groups /622 entries. Its contract exposes bounded correction families, exact QC/artifact/workflow preconditions, Agent delegation and conservative two-cycle limits. No duplicate registry or provider selection.

@@ -1528,3 +1528,6 @@ Creative QC is an optional local evaluator, exposed through four fixed host read
 evaluation/review APIs. It does not dispatch workflow revisions or approve runs.
 Registered result/assessment evidence and source checksums remain separate from
 Workflow/Agent continuation authority. See [Creative QC v1](WHIHM_CREATIVE_QC.md).
+
+
+Creative revision adds fixed planCreativeRevision, runCreativeRevision, getCreativeRevision and continueCreativeRevision host/preload calls. It reuses the project-scoped Agent and Workflow instances, execution locks and explicit permissions. Creative QC remains evaluation-only; revision audit records are not execution authority.

@@ -191,3 +191,6 @@ Creative QC derives dynamically from EVALUATE_CREATIVE projection. Executor cont
 provides bounded request/rule fields, evidence provenance policies and states.
 Remediation targets are advisory: a separate authorized agent plan is required to
 change or execute a workflow. No semantic model or subjective score is implied.
+
+
+Creative revision planning is dynamically discovered via PLAN_CREATIVE_REVISION. Structured lineage-event timing may map directly; subjective prose requires external structured intent or human review. Inspect scope, checksum/revision preconditions, side effects and stop policies before an explicit run. No autonomous cycle, inferred approval or provider retry.

@@ -201,7 +201,7 @@ test('asset identity/traversal checks remain authoritative before multimedia exe
   const f=await projectFixture(t);for(const assetId of ['../outside','/etc/passwd','file:///tmp/test'])assert.equal(code(await planMediaFinishing({...f,assetId})),'ASSET_ID_INVALID');await fs.appendFile(path.join(f.root,f.record.path),'changed');assert.equal(code(await finishMedia({...f,allowExecution:true})),'ASSET_HASH_MISMATCH');
 });
 test('projection and generic planning automatically expose implemented runtime-gated multimedia scope',()=>{
-  const p=projectCapabilities(),e=getExecutorContext('media-finishing').executor;assert.equal(p.counts.executorEntries,621);assert.equal(e.runtime.scopes.image.availability,'available');
+  const p=projectCapabilities(),e=getExecutorContext('media-finishing').executor;assert.equal(p.counts.executorEntries,622);assert.equal(e.runtime.scopes.image.availability,'available');
   for(const kind of ['video','audio']){assert.equal(e.runtime.scopes[kind].implemented,true);assert.equal(e.runtime.scopes[kind].availability,'runtime_blocked');assert.ok(e.runtime.scopes[kind].operations.trim);}
   assert.deepEqual(e.runtime.scopes.video.parameterProperties.container.enum,['mp4','mov']);assert.deepEqual(e.runtime.scopes.audio.parameterProperties.container.enum,['wav']);
   assert.deepEqual(e.runtime.scopes.video.parameterProperties.audioCodec.enum,['aac']);assert.deepEqual(e.runtime.scopes.audio.parameterProperties.audioCodec.enum,['pcm_s16le']);

@@ -63,6 +63,10 @@ contextBridge.exposeInMainWorld('whihmHost', {
     invalidateWorkflowRun: request => ipcRenderer.invoke('whihm:invalidateWorkflowRun', request),
 
     getMultimediaRuntimeStatus: request => ipcRenderer.invoke('whihm:getMultimediaRuntimeStatus', request ?? {}),
+    planCreativeRevision: request => ipcRenderer.invoke('whihm:planCreativeRevision',request),
+    runCreativeRevision: request => ipcRenderer.invoke('whihm:runCreativeRevision',request),
+    getCreativeRevision: request => ipcRenderer.invoke('whihm:getCreativeRevision',request),
+    continueCreativeRevision: request => ipcRenderer.invoke('whihm:continueCreativeRevision',request),
     planCreativeQc: request => ipcRenderer.invoke('whihm:planCreativeQc',request),
     evaluateCreativeQc: request => ipcRenderer.invoke('whihm:evaluateCreativeQc',request),
     getCreativeQc: request => ipcRenderer.invoke('whihm:getCreativeQc',request),
