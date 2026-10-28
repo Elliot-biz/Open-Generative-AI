@@ -1523,3 +1523,8 @@ instance, not an executor replacement. Its five fixed host APIs use canonical ed
 batches/history, exact projection requirements and explicit execution permissions.
 See [Agent Execution v1](WHIHM_AGENT_EXECUTION.md) for supported edits, unresolved
 parameter limits, approval/provider uncertainty guards and session-only behavior.
+
+Creative QC is an optional local evaluator, exposed through four fixed host reads/
+evaluation/review APIs. It does not dispatch workflow revisions or approve runs.
+Registered result/assessment evidence and source checksums remain separate from
+Workflow/Agent continuation authority. See [Creative QC v1](WHIHM_CREATIVE_QC.md).

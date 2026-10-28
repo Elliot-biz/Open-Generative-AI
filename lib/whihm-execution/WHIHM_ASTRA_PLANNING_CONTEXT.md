@@ -186,3 +186,8 @@ AGENT_EXECUTE is dynamically derived from projection. Exact executor context
 exposes structured action vocabulary, limits and existing logical-reference usage.
 planAgentExecution is the non-executing draft check; apply/run/continue are separate
 permission-gated calls. No Astra-specific branch, ranking or fallback is added.
+
+Creative QC derives dynamically from EVALUATE_CREATIVE projection. Executor context
+provides bounded request/rule fields, evidence provenance policies and states.
+Remediation targets are advisory: a separate authorized agent plan is required to
+change or execute a workflow. No semantic model or subjective score is implied.

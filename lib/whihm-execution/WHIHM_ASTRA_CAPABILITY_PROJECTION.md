@@ -216,3 +216,7 @@ Agent control adds AGENT_EXECUTE with one local entry (52 groups /620 entries).
 The description exposes plan/apply/run separation, bounded canonical edits,
 revision requirements, external approvals and stop/re-plan behavior. It is not a
 model/provider entry and is not admitted recursively as a workflow node.
+
+EVALUATE_CREATIVE adds one local evaluator entry (53 groups /621 entries). Its
+metadata exposes objective rules, evidence trust classes, human-review boundaries,
+external subjective attachment and the four QC states. It is not a revision runner.
