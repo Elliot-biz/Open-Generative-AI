@@ -1501,3 +1501,8 @@ All uploads/provider execution are mocked. Only two public unauthenticated
 metadata GETs were real; no provider POST, private listing or paid operation.
 
 Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield is now reviewed/bound through Workflow Execution with project assets and credential readiness guards; prepared-guidance Seedance execution remains unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.
+
+Timeline composition is now available as the local `timeline-composition` utility
+and fixed `planTimelineComposition` / `composeTimeline` host operations. It uses
+registered checksum-bound sources, a versioned integer-frame document and the
+existing multimedia lease/process runner. See [timeline contract](WHIHM_TIMELINE_COMPOSITION.md).

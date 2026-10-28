@@ -197,3 +197,9 @@ image_url/images_list requirement as a constraint; native optional-role metadata
 must not be used to bypass that existing check.
 
 Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield is now reviewed/bound through Workflow Execution with project assets and credential readiness guards; prepared-guidance Seedance execution remains unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.
+
+Timeline foundation adds `COMPOSE_TIMELINE` with one WHIHM local deterministic
+entry (`timeline-composition`), bringing discovery to 49 groups /617 entries.
+The binding is present; actual rendering requires the multimedia baseline and
+operation-specific features. It accepts registered sources and integer-frame
+tracks, not shell/filtergraph strings. See [timeline contract](WHIHM_TIMELINE_COMPOSITION.md).
