@@ -24,7 +24,7 @@ test('overview omits executor/control records and is materially smaller than the
 });
 test('overview exposes blocked/deferred, specialized, local and human lifecycle facts', () => {
   const overview=getPlanningOverview();
-  assert.equal(overview.counts.byAvailability.provider_blocked,35);assert.equal(overview.counts.byAvailability.deferred,25);
+  assert.equal(overview.counts.byAvailability.provider_blocked,38);assert.equal(overview.counts.byAvailability.deferred,22);
   assert.equal(overview.counts.byAvailability.local_constrained,13);assert.equal(overview.guards.observed.runtimeUnverifiedPresent,true);
   assert.equal(overview.capabilities.find(c=>c.id==='CLONE_VOICE_GUIDED').flags.humanLifecycleActionRequired,true);
   assert.equal(overview.capabilities.find(c=>c.id==='PERFORMANCE_TRANSFER').flags.specializedRoutingPresent,true);

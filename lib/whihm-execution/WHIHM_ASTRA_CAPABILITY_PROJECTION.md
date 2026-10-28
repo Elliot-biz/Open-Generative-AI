@@ -196,4 +196,4 @@ certified callable provider URL. Generic I2V also exposes the existing canonical
 image_url/images_list requirement as a constraint; native optional-role metadata
 must not be used to bypass that existing check.
 
-Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield and prepared-guidance Seedance execution remain explicitly unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.
+Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield is now reviewed/bound through Workflow Execution with project assets and credential readiness guards; prepared-guidance Seedance execution remains unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.

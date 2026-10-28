@@ -1,4 +1,4 @@
-# Performance transformation executor family — partial integration
+# Performance transformation executor family — native Higgsfield workflow integration
 
 Canonical discovery now uses PERFORMANCE_TRANSFER, OBJECT_REPLACE_VIDEO and
 VIDEO_RESTYLE. Integration does not establish which executor is best. No paid
@@ -43,24 +43,131 @@ this transformation metadata and native usage. Remote outputs continue through
 existing normalization/publication/integrity boundaries; no provider-side undo or
 trusted continuation rehydration is added.
 
-## Higgsfield: stopped at native binding boundary
+## Higgsfield: bound through Workflow Execution
 
-Three distinct deferred discovery entries record input documentation:
+All three native routes are now reviewed/bound in the existing workflow adapter:
 
-- [Motion Transfer](https://open.higgsfield.ai/models/higgsfield/genjutsu/motion-transfer/v1.0/api-reference): source minimum4s, provider trims after30s,1–8 images, optional prompt max10000,480p/720p/1080p(default720p).
-- [Object Swap](https://open.higgsfield.ai/models/higgsfield/genjutsu/object-swap/v1.0/api-reference): distinct endpoint, same reference/duration envelope, minimum409600 source pixels per frame.
-- [Restyle](https://open.higgsfield.ai/models/higgsfield/genjutsu/restyle/v1.0/api-reference): preset_id required;0–5 references; source motion/composition/audio described as retained; provider may change cadence.
+| Model | Canonical intent | Native envelope |
+| --- | --- | --- |
+| higgsfield/genjutsu/motion-transfer/v1.0 | PERFORMANCE_TRANSFER | 1–8 ordered reference images |
+| higgsfield/genjutsu/object-swap/v1.0 | OBJECT_REPLACE_VIDEO | 1–8 ordered references; at least409600source pixels |
+| higgsfield/genjutsu/restyle/v1.0 | VIDEO_RESTYLE | 0–5 ordered references; explicit preset_id |
 
-These are INPUT_DOCUMENTATION_ONLY, **not executable bindings**. The existing
-remote bridge is MuAPI-only; the internal native lifecycle transport now implements auth, submission and
-session-bound status reads, but upload/output publication and workflow continuation
-dispatch are not connected. The native protocol uses Key ID:secret and asynchronous requests;
-its native request/status identity and uncertainty are tested in isolation;
-host asset integration and workflow execution remain unfinished. This partial does not disguise native
-Higgsfield as MuAPI or introduce another provider framework. All three entries
-remain deferred with HIGGSFIELD_LIFECYCLE_BINDING_UNREVIEWED. No credentials or
-provider probe is performed by discovery/planning. Their recorded input envelopes
-do not claim input validation or execution support.
+All accept source video, optional prompt up to10000characters, and resolution
+480p/720p/1080p(default720p). WHIHM accepts4–30seconds and rejects excess before
+upload rather than letting the provider trim. These are provider envelopes and
+intent statements, not measured performance or preservation guarantees.
+
+Current first-party references:
+[Motion Transfer](https://open.higgsfield.ai/models/higgsfield/genjutsu/motion-transfer/v1.0/api-reference),
+[Object Swap](https://open.higgsfield.ai/models/higgsfield/genjutsu/object-swap/v1.0/api-reference),
+[Restyle](https://open.higgsfield.ai/models/higgsfield/genjutsu/restyle/v1.0/api-reference),
+[uploads](https://docs.higgsfield.ai/docs/concepts/file-uploads),
+[request lifecycle](https://docs.higgsfield.ai/docs/concepts/requests).
+These public sources were read without credentials, uploads or generation.
+
+### Credentials and discovery
+
+Set HF_API_KEY_ID and HF_API_KEY_SECRET in the trusted host environment. The
+preserved native transport uses Authorization: Key ID:secret. Projection and
+planning read local configuration only: HIGGSFIELD_CREDENTIALS_MISSING or
+HIGGSFIELD_CONFIGURATION_INVALID blocks execution; valid configuration reports
+available/reviewed with accountAccessVerified:false and runtimeVerification:unverified.
+Readiness does not certify account access, credits, provider uptime or quality.
+Built-in Node HTTPS supplies media transport; no storage service, runtime binary,
+SDK, dependency or renderer credentials are introduced.
+
+Three existing entries are promoted, with no new catalog rows:48groups/616entries.
+With credentials absent:147available reviewed,396generic,38provider-blocked,
+22deferred. With valid configuration:150available reviewed,35provider-blocked.
+Native provider IDs remain opaque and never become project assets. Discovery
+includes source/reference roles, constraints and same-session polling semantics.
+
+### Canonical project inputs and workflow calls
+
+Use remote-model executors with provider:higgsfield, the exact native model ID,
+and metadata.oga.mode:performance_transformation (optional when the provider/model
+are exact). A declared metadata.oga.intent must match the route. Use the existing
+planWorkflowExecution/runWorkflow/resumeWorkflow/getWorkflowRun host APIs.
+Single-node MuAPI planNode/executeNode remain separate; no provider-specific IPC
+or new execution engine is introduced.
+
+The source input port is video_url:type video with a {$asset:registeredId} value.
+References use image_urls:type image/cardinality many with an array of asset
+references. Restyle can omit references. Exactly one video output port is supported.
+Unregistered URLs, arbitrary paths, missing references, wrong media types,
+conflicting intent/mode, unknown controls and checksum mismatch reject before dispatch.
+Existing workflow/project schema, graph dependencies and authorization remain intact.
+
+The project adapter reuses Media Inspection, readBytes/hashBytes and the project
+importer. Every source/reference is checked for registered identity, actual media
+kind, supported MIME and bytes/checksum before upload; an aggregate64MiBinput cap
+bounds memory. MP4 sources and PNG/JPEG/WebP/GIF images are admitted within existing
+inspection limits. Planning inspects headers and local configuration, but never
+uploads, submits, polls or creates output. Effective controls exclude placeholder
+media URLs; normalized workflow inputs retain canonical asset identities.
+
+### Provider handoff and identity
+
+For each verified asset, POST the documented /files/generate-upload-url endpoint,
+then PUT the verified bytes with returned allowlisted Content-Type/x-amz headers.
+API credentials are sent only to the fixed API endpoint, never presigned storage
+or output URLs. The public_url is passed to the preserved native submit method.
+No upload retry, fallback or public file-sharing service is added. An ambiguous
+upload stops before generation and does not automatically recreate provider state.
+Known handoff identity survives failure as asset ID/checksum plus provider origin
+and SHA256 reference fingerprint; signed URLs and storage headers remain private.
+
+The preserved native adapter owns authentication, input validation, POST, UUID,
+status URL and normalization. The project adapter adds a private session handle
+bound to the owning project/root and exact native request UUID. Neither serialized
+results nor benchmark records can create a trusted continuation session.
+
+### Same-run continuation and uncertainty
+
+queued/in_progress pause the same run as blocked/continuationRequired. Explicit
+resumeWorkflow continuation:{nodeId,action:poll} performs one native status GET.
+No scheduler, automatic polling loop, generic retry or second generation POST.
+An interrupted poll with a known session can be explicitly polled again. Unknown
+provider states remain unresolved. A submission without a confirmed native identity
+is uncertain and cannot resume by submitting again. Generic approval is unchanged.
+
+completed retrieves/validates/imports the output. failed/nsfw/canceled are terminal
+provider outcomes and never register media; moderation is not a transport error.
+A completed native result is retained privately when output retrieval fails, so
+explicit continuation retries retrieval only. Once publication is attempted,
+an uncertain importer outcome blocks rather than risking a duplicate import.
+Run locks plus a session continuation lock prevent concurrent publication. Returned
+snapshots are detached. Host/engine disposal clears private continuation state;
+cross-restart recovery is not supported. Source/reference integrity is rechecked
+before continuation. Input/executor changes use existing downstream stale semantics;
+live/stale operations are not automatically restarted.
+
+### Bounded output retrieval and publication
+
+The narrowly scoped media helper uses Node HTTPS with normal certificate validation,
+public IPv4 DNS checks and a pinned lookup result to prevent DNS rebinding. It
+rejects credentials in URLs, non-HTTPS, custom ports, private/reserved addresses,
+IPv6 literals and redirects. DNS and each transfer have bounded timeouts; responses
+are capped at64MiB(JSON upload metadata64KiB). Requests inherit no provider headers
+on storage/output transfers. IPv6-only or redirecting CDNs fail closed in v1.
+No provider output is executed as code or interpreted as a local path.
+
+Only positive-length video/mp4 bytes that pass existing Media Inspection as MP4
+video reach a controlled private temporary file and immutable project import.
+Inspection is header-based technical evidence, not full decoding or Creative QC.
+The output checksum is independently compared with imported bytes; temporary data
+is removed. Sources remain immutable; outputs have separate registered asset IDs.
+A committed but unconfirmed import may leave an orphan asset; no successful run
+output is accepted and no unsafe asset rollback/delete is attempted.
+
+Registered metadata records schema/route version, provider/model/native UUID,
+intent, source/reference IDs/checksums, input handoff fingerprints, normalized
+controls, output reference fingerprint, submission time and native usage/cost.
+The workflow output is a typed project asset with checksum, not a remote URL.
+Benchmark run evidence retains that output, input/checksum bindings, exact route,
+request UUID, attempt, intent and native usage/cost. Unknown remains unknown;
+reported zero remains zero. No price estimates or rankings are produced.
 
 ## WHIHM prepared guidance: execution remains blocked
 
@@ -80,69 +187,19 @@ No automatic chaining, Demucs, pitch policy, frame-rate policy or resolution rec
 
 ## Verification and next work
 
-All provider execution is mocked. Public unauthenticated documentation/metadata
-GETs only; no uploads, provider jobs, paid calls or runtime fidelity proof. Workflow
-session state, invalidation and no-duplicate execution remain owned by the existing
-engine. Source/dev availability does not establish packaged desktop readiness.
-Projection:48 groups/616 entries (previous47/608),147 available reviewed,396 generic;
-entries include intent views, not616 unique providers/models. New availability is
-Spicy and its object view; four other object views reflect existing/deferred routes.
+All generation/upload/download behavior is tested using explicit fixtures/mocks.
+Tiny technical-header video fixtures are not proof of real encoded-media fidelity.
+No real user uploads, Higgsfield generations, paid usage or quality comparisons
+were performed. The existing Electron dependency-closure packaging blocker remains;
+source/development availability is not packaged production certification.
 
-Next: implement the bounded native Higgsfield host adapter with explicit credential,
-request identity, status/result and uncertainty contracts. Separately establish a
-first-party Seedance guidance-input contract before enabling WHIHM-guided generation.
-Paid comparison experiments remain a later explicitly authorized task.
+Next: separately authorize a minimal native-provider runtime acceptance with safe
+licensed fixtures, or complete local face-runtime acceptance. Paid comparative
+benchmarking, ranking/fallback and WHIHM-guided Seedance remain separate work.
 
-QA:26 new cases;1396 unique targeted tests passed (1127 affected regressions,
-243 workflow-core,26 new). Final syntax/ESLint passed for19 touched JS/MJS files.
-Vite production build passed with its existing chunk-size advisory. git diff --check
-passed. No dependencies, credentials, schemas, host/preload channels or runtime
-binaries were changed. Local-only commit; no push or live provider execution.
-
-
-## Native transport follow-up — incomplete binding
-
-[higgsfield-native.mjs](higgsfield-native.mjs) provides a bounded internal HTTP
-adapter for the three exact routes. It is not exposed through host/preload or
-selected by Workflow Execution. Discovery remains deferred; counts are unchanged.
-
-Credentials use HF_API_KEY_ID and HF_API_KEY_SECRET with Authorization: Key ID:secret.
-Missing/incomplete configuration returns HIGGSFIELD_CREDENTIALS_MISSING or
-HIGGSFIELD_CONFIGURATION_INVALID. adapterReady means local configuration only, not
-account access or an executable canonical binding. Readiness performs zero network.
-
-Requests reject unknown controls and source facts outside4–30seconds; this avoids
-silent provider trimming. Source facts are trusted internal inputs and do not
-replace project integrity or Media Inspection. Object Swap enforces409600pixels.
-No upload implementation, schema change, SDK, renderer IPC or credential storage.
-
-Each submit makes one POST. Accepted IDs are native UUIDs. A separate random
-continuation handle identifies private session state, never substitutes for the
-provider ID, and cannot be rehydrated from JSON. A poll makes one GET to the exact
-provider-returned HTTPS API status URL, with origin/path/request-ID validation.
-queued/in_progress map to processing; completed to succeeded; failed/nsfw to failed;
-canceled to cancelled. Completion requires a video URL. The same status response
-contains output metadata; there is no guessed result endpoint. Native usage/cost
-is retained, including zero, without pricing calculations.
-
-Ambiguous submission, malformed response, unknown status, timeout or interrupted
-status read blocks. A known request can be polled through its owning session;
-terminal results are cached. Unknown-ID submission cannot be automatically resumed
-or submitted again. No retries, automatic resubmission or cancellation is added.
-The adapter uses argument-free fixed HTTP routes, redirect rejection, a15second
-per-call deadline and1MiB JSON response cap. Raw provider diagnostics are not returned.
-
-Sources reviewed2026-10-28: [authentication](https://docs.higgsfield.ai/docs/authentication),
-[request lifecycle](https://docs.higgsfield.ai/docs/concepts/requests),
-[status schema](https://docs.higgsfield.ai/docs/api-reference/requests/get-request-status),
-[file upload protocol](https://docs.higgsfield.ai/docs/concepts/file-uploads), and the
-three model references above. Public unauthenticated documentation GETs only.
-
-Remaining work: connect trusted project inputs/upload, bounded output retrieval
-and immutable registration, workflow readiness and same-run continuation, then
-promote discovery. No output checksum/lineage or end-to-end workflow support is
-claimed by the internal transport. Native provider inference remains unverified.
-
-Transport follow-up QA: 26 new mocked native cases and 217 affected regression
-cases passed (243 total). Syntax/ESLint and git diff --check passed. No renderer
-build input changed; no Vite/browser or live-provider QA. This is PARTIAL.
+QA: 40 new mocked project/media/workflow integration cases; 695 unique targeted
+tests passed, including native transport, transformation, workflow, benchmark,
+projection/planning, host, MuAPI/Recast, guidance/segmentation and project-integrity
+regressions. Syntax/ESLint passed for 11 touched JS/MJS files; git diff --check
+passed. No renderer input changed, so no Vite/browser QA. Native lifecycle behavior was preserved; a tiny internal authorization-header hook
+is shared with the media handoff to avoid duplicating credential semantics. No provider generation, real uploads or paid usage.

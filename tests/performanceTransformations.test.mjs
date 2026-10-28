@@ -53,8 +53,8 @@ test('discovery exposes intent-specific views and exact original executor IDs',(
  for(const e of all.filter(e=>e.constraints?.some(c=>c.kind==='exact_intent_parameters'))){assert.equal(getExecutorContext(e.key).status,'ok');assert.ok(findRemote(e.id,e.mode)||!e.available);}
  assert.ok(getPlanningOverview().capabilities.some(c=>c.id==='PERFORMANCE_TRANSFER'));assert.ok(!all.some(e=>/body.swap.studio/i.test(e.id)));
 });
-test('Higgsfield native lifecycle and WHIHM prepared-guidance consumption remain unavailable',()=>{
- const p=projectCapabilities();for(const id of ['motion-transfer','object-swap','restyle']){const e=getExecutorContext(`higgsfield/genjutsu/${id}/v1.0`).executor;assert.equal(e.available,false);assert.equal(e.binding.available,false);assert.equal(e.reason.code,'HIGGSFIELD_LIFECYCLE_BINDING_UNREVIEWED');assert.equal(findRemote(e.id),null);}
+test('Higgsfield readiness is blocked without credentials and WHIHM prepared-guidance consumption remains unavailable',()=>{
+ const p=projectCapabilities();for(const id of ['motion-transfer','object-swap','restyle']){const e=getExecutorContext(`higgsfield/genjutsu/${id}/v1.0`).executor;assert.equal(e.available,false);assert.equal(e.binding.available,true);assert.equal(e.reason.code,'HIGGSFIELD_CREDENTIALS_MISSING');assert.equal(findRemote(e.id),null);}
  const e=getCapabilityContext('PERFORMANCE_TRANSFER').executors.find(e=>e.id==='seedance-2.5-motion-control');const s=e.constraints.find(c=>c.kind==='transformation_support');assert.equal(s.guidance.preparedGuidanceSupported,false);assert.equal(s.guidance.code,'GUIDANCE_INPUT_CONTRACT_UNSUPPORTED');assert.ok(!p.capabilities.some(c=>/GENJUTSU|AGENT/.test(c.id)));
 });
 test('missing native cost stays unknown and provider failure keeps exact route',async()=>{

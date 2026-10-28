@@ -165,4 +165,4 @@ QA: **44 new tests** (43 planning-context cases plus one fixed-host integration 
 Depth/Suno/high-value-video regressions). Syntax/ESLint and `git diff --check` pass.
 No Studio/renderer build inputs or UI changed; no Vite/browser QA was required.
 
-Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield and prepared-guidance Seedance execution remain explicitly unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.
+Current transformation-family update: see [Performance transformations](WHIHM_PERFORMANCE_TRANSFORMATIONS.md). Existing Recast/Motion Control routes are reconciled; Spicy Motion Control is admitted. Native Higgsfield is now reviewed/bound through Workflow Execution with project assets and credential readiness guards; prepared-guidance Seedance execution remains unavailable. Intent views preserve exact executor IDs; use full projection keys for ambiguous IDs.
