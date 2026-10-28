@@ -207,3 +207,7 @@ tracks, not shell/filtergraph strings. See [timeline contract](WHIHM_TIMELINE_CO
 `PRODUCE_AUDIO_MIX` adds one local, deterministic, runtime-gated entry, bringing
 projection to 50 groups /618 entries. Per-stage processing, bus/sidechain support
 and limitations come from its execution description. Analysis inference is deferred.
+
+Audio completion adds local ANALYZE_AUDIO_TIMING (51 groups /619 entries).
+Exact Audio Production metadata exposes pitch/stretch/playback controls and bounds;
+analysis metadata explicitly excludes downbeats and automatic creative decisions.

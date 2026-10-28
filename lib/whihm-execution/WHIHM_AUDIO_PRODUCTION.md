@@ -135,24 +135,83 @@ Projection derives one added capability/entry dynamically (50 groups /618 entrie
 Host/preload expose only planAudioProduction and produceAudioMix. Runtime status
 is an observation; a bound capability never bypasses fresh execution readiness.
 
-## Current partial scope
+## Timing analysis and manipulation extension
 
-Automatic transient/onset, tempo/beat/downbeat and music-section inference are
-**deferred**, not reported as detected evidence. No ANALYZE_AUDIO_TIMING capability
-is advertised. Pitch/time changes were reviewed against FFmpeg atempo/asetrate,
-but are deferred: source-duration/latency/pitch-quality verification needs its own
-bounded acceptance before exposing these as production controls. There is no
-implicit semitone, tempo, sample-rate or FPS policy. No heavy ML is required.
+`ANALYZE_AUDIO_TIMING` / `audio-timing-analysis` / `analyze_audio_timing` is a
+local PCM16 WAV evidence utility. Existing upstream pitch fields belong to remote
+speech generation; no reusable local onset/tempo analyzer was found. No provider
+client or audio runtime was added. PCM samples are read only after existing Media
+Inspection and checksum validation; mono/stereo inputs share the 64 MiB asset cap.
 
-Real local acceptance uses the existing staged 7.0.2 runtime/helper, generated
-sine/WAV/video fixtures, bus ducking/DSP/master rendering and existing final mux.
-Fixture tests cover contracts, plan/registration/workflow boundaries. No provider
-calls, paid generation, user-media uploads, dependency installs or renderer work.
-DSP semantics follow the [FFmpeg filters reference](https://ffmpeg.org/ffmpeg-filters.html).
+Host request: `{projectHandle,assetId,checksum,frameRate,settings?,allowExecution:true}`.
+The mandatory frameRate uses the normalized Timeline rational clock. Settings
+allow only riseThreshold (0.01–1, default 0.15). No path/filter/model input.
+Workflow utility accepts assetId as an asset port, checksum/frameRate/settings as
+parameters, and a json result containing the registered analysis artifact reference.
+Planning validates inputs without calculating candidates, creating files or probing.
 
-Acceptance at implementation: 29 new tests pass, including two real-runtime
-renders/measurements and video packet-hash equality across the existing mux.
-808 unique targeted tests pass across affected suites, project integrity and
-projection-count regressions. Syntax/ESLint pass for 20 touched JS/MJS files.
-The broader feature request remains PARTIAL because timing analysis and controlled
-pitch/time processing are explicitly deferred rather than advertised as implemented.
+Versioned pcm-peak-rise-v1 uses approximately 10 ms sample windows and normalized
+absolute channel peak rises, with 100 ms candidate refractory spacing. Each onset
+records original sample, nearest Timeline frame, rise strength and window start.
+Strength is an amplitude difference, not calibrated confidence or an impact label.
+Frame mapping is round(sample × fpsNumerator / (sampleRate × fpsDenominator));
+rounding error is at most half a Timeline frame, with window-level localization.
+
+At least four onsets and ≥70% agreement around the median inter-onset interval
+(within max(20 ms,5%)) admit tempo hypotheses. Half/base/double interval tempos
+within 30–300 BPM are retained explicitly; intervalAgreement is evidence rather
+than musical certainty. Beat candidates are observed onsets under this regularity
+hypothesis, never interpolated/predicted beats. Soft, sustained, syncopated, noisy
+or complex audio can yield missing/spurious candidates or no stable tempo.
+Downbeats/meter phase are explicitly unsupported. No semantic section inference,
+cut/SFX selection, automatic action, or human approval is produced.
+
+Analysis schemaVersion 1 includes source identity/hash, rate/channels, timebase,
+settings/version, candidate evidence, downbeat limitation, analysisHash/resultHash.
+Analysis hash uses source checksum + algorithm/settings + timebase; result hash
+covers canonical result evidence. Repeated analyses import separate immutable JSON
+artifacts through the existing importer. Their ordinary asset references can be
+attached to Audio Production analysisRefs. Unused analysis evidence does not alter
+the mix hash or authorize execution.
+
+Audio schema v1 event manipulation is additive:
+
+- `{mode:"pitch",sourceDurationFrames:50,pitchSemitones:3}` preserves event duration;
+  sourceDurationFrames must equal event durationFrames. Range −12…+12 semitones.
+- `{mode:"stretch",sourceDurationFrames:25}` fits the trimmed source interval into
+  event durationFrames while preserving nominal pitch using FFmpeg atempo.
+- `{mode:"playback",sourceDurationFrames:25}` changes duration and pitch together
+  through sample-rate reinterpretation/resampling.
+
+Source/target duration ratio is bounded 0.5…2. No manipulation object means the
+original unmodified behavior. Trims refer to the source interval, target placement
+and fades/automation refer to output event frames. Processing order is source
+resample/trim → timestamp reset → manipulation → endpoint fit → event gain/pan/DSP
+→ fades → placement → track → bus/ducking → master.
+
+Pitch uses asetrate rounded to nearest integer sample rate, aresample back to the
+master rate, then inverse atempo compensation. Stretch uses atempo directly.
+Integer output samples derive from shared Timeline conversion. Endpoint fit pads
+any backend tail shortage with silence or trims excess to the target sample count;
+it does not promise transient-phase identity or high-quality extremes. Master
+inspection verifies duration within one sample. No additional DSP framework or
+hidden semitone/FPS policy. The atempo/asetrate probe names are optional runtime
+features gated per mix; baseline required features remain unchanged.
+
+Manipulation parameters participate in mix/render hashes and existing workflow
+invalidation. Source duration checks use the explicit sourceDurationFrames. Generic
+projection/planning now derives 51 groups /619 entries, including the analysis
+capability and manipulation modes/ranges. The only new IPC method is
+analyzeAudioTiming; planAudioProduction/produceAudioMix remain the mix API.
+
+Real local acceptance uses the existing staged 7.0.2-static pair and tiny generated
+tones/click tracks. No dependencies, providers, paid execution, downloads, UI,
+heavy ML, stem separation or new clock/runtime were introduced. FFmpeg behavior
+follows the [official filters reference](https://ffmpeg.org/ffmpeg-filters.html).
+
+Completion QA: 13 new cases pass; 821 unique targeted tests pass including affected
+regressions. Synthetic 60/90/120/137 BPM, silence/ambiguity, actual ±12/+3 semitone
+frequency checks, stretch/playback duration, analysis artifact/workflow registration
+and pitch-driven descendant invalidation are covered. Syntax/ESLint pass for all
+19 touched JS/MJS files. Real tests source the existing local runtime helper; no
+installation, provider calls, paid usage, renderer build or browser QA occurs.

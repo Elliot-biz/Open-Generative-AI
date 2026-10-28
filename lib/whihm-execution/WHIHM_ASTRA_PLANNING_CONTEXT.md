@@ -177,3 +177,7 @@ Audio Production discovery derives `PRODUCE_AUDIO_MIX` directly from projection
 (50 groups /618 entries). Exact executor context exposes track categories,
 processors, automation and multimedia readiness. `planAudioProduction` resolves
 source hashes and operation-specific blockers without executing/probing FFmpeg.
+
+Timing analysis is discovered from projection with PCM16 WAV requirements and
+explicit downbeat absence. Mix executor context exposes additive manipulation
+modes/ranges; neither capability gives raw FFmpeg control or selects edit points.

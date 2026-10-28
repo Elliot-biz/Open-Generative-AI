@@ -1511,3 +1511,9 @@ Audio Production adds the local `audio-production` workflow utility and fixed
 `planAudioProduction` / `produceAudioMix` host APIs. It shares Timeline frame/sample
 conversion, staging and multimedia readiness. See [Audio Production v1](WHIHM_AUDIO_PRODUCTION.md)
 for routing, typed processors, master WAV, existing restore-source-audio mux and deferred analysis.
+
+The local audio-timing-analysis utility accepts registered audio plus checksum,
+frameRate and bounded settings, returning json evidence and an immutable artifact
+reference. analyzeAudioTiming is the corresponding guarded host method. Existing
+Audio Production handles additive event pitch/stretch/playback through its shared
+runtime and existing workflow invalidation. See WHIHM_AUDIO_PRODUCTION.md.
