@@ -194,3 +194,5 @@ change or execute a workflow. No semantic model or subjective score is implied.
 
 
 Creative revision planning is dynamically discovered via PLAN_CREATIVE_REVISION. Structured lineage-event timing may map directly; subjective prose requires external structured intent or human review. Inspect scope, checksum/revision preconditions, side effects and stop policies before an explicit run. No autonomous cycle, inferred approval or provider retry.
+
+Provider Center v1 is advertised by planning overview as getProviderCenter: read-only global provider/runtime status, safe credential presence, paid-side-effect and catalog binding metadata. Explicit tests are local-only; account health remains unverified. Project dependencies are a separate query. No new capability registry entry.
