@@ -43,6 +43,8 @@ function navigate(page) {
 
     if (page === 'image') {
       wrapper.appendChild(ImageStudio());
+    } else if (page === 'providers') {
+      import('./components/ProviderCenter.js').then(({ ProviderCenter }) => wrapper.appendChild(ProviderCenter()));
     } else if (page === 'video') {
       import('./components/VideoStudio.js').then(({ VideoStudio }) => {
         wrapper.appendChild(VideoStudio());

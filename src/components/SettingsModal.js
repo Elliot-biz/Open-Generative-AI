@@ -14,7 +14,7 @@ export function SettingsModal(onClose) {
     header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;';
     header.innerHTML = `
         <h2 style="font-size:1rem;font-weight:800;color:#fff;margin:0;">${t('settings.title')}</h2>
-        <button id="settings-close-btn" style="color:rgba(255,255,255,0.4);background:none;border:none;cursor:pointer;padding:4px;">
+        <button id="settings-close-btn" aria-label="Close settings" style="color:rgba(255,255,255,0.4);background:none;border:none;cursor:pointer;padding:4px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
     `;
@@ -52,11 +52,11 @@ export function SettingsModal(onClose) {
     apiPanel.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:0.75rem;">
             <div>
-                <label style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:0.4rem;font-weight:600;">${t('settings.muapiKeyLabel')}</label>
+                <label for="settings-api-key" style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:0.4rem;font-weight:600;">${t('settings.muapiKeyLabel')}</label>
                 <input id="settings-api-key" type="password"
                     style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:0.75rem;padding:0.6rem 0.9rem;color:#fff;font-size:0.875rem;outline:none;"
                     placeholder="${t('settings.keyPlaceholder')}"
-                    value="${localStorage.getItem('muapi_key') || ''}">
+                    autocomplete="new-password">
             </div>
             <p style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin:0;">
                 ${t('settings.keyNote')}
@@ -95,6 +95,7 @@ export function SettingsModal(onClose) {
 
     // ── API key save/cancel handlers ──────────────────────────────────────────
     const close = () => {
+        apiPanel.querySelector('#settings-api-key').value = '';
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
         if (onClose) onClose();
     };
@@ -103,10 +104,12 @@ export function SettingsModal(onClose) {
     apiPanel.querySelector('#settings-save-btn').onclick = () => {
         const key = apiPanel.querySelector('#settings-api-key').value.trim();
         if (key) {
-            localStorage.setItem('muapi_key', key);
+            try { localStorage.setItem('muapi_key', key); }
+            catch { apiPanel.querySelector('#settings-api-key').value = ''; alert(t('settings.invalidKey')); return; }
             window.dispatchEvent(new Event('desktop:auth-changed'));
             close();
         } else {
+            apiPanel.querySelector('#settings-api-key').value = '';
             alert(t('settings.invalidKey'));
         }
     };

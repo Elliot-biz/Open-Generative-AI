@@ -35,11 +35,13 @@ export function Header(navigate) {
         { label: t('nav.cinema'),  page: 'cinema' },
         { label: t('nav.workflows'), page: 'workflows' },
         { label: t('nav.agents'),  page: 'agents' },
+        { label: 'Providers', page: 'providers' },
         { label: t('nav.mcpcli'),  page: 'mcp-cli' },
     ];
 
     items.forEach(({ label, page }, idx) => {
-        const link = document.createElement('a');
+        const link = document.createElement(page === 'providers' ? 'button' : 'a');
+        if(page === 'providers')link.type='button';
         link.textContent = label;
         link.className = `hover:text-white transition-all cursor-pointer relative group ${idx === 0 ? 'text-white' : ''}`;
 
@@ -86,6 +88,10 @@ export function Header(navigate) {
     langBtn.textContent = currentLang === 'zh-CN' ? 'EN' : '中文';
     langBtn.onclick = () => setLang(currentLang === 'zh-CN' ? 'en' : 'zh-CN');
 
+    const providerButton=document.createElement('button');
+    providerButton.type='button';providerButton.textContent='Providers';
+    providerButton.className='lg:hidden px-3 py-1.5 rounded-md border border-white/10 text-[13px] text-white';
+    providerButton.onclick=()=>navigate('providers');rightPart.appendChild(providerButton);
     rightPart.appendChild(langBtn);
     rightPart.appendChild(settingsBtn);
 

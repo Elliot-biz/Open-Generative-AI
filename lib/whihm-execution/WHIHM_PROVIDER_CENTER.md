@@ -95,3 +95,52 @@ Workflow/Agent/Creative Revision, native Higgsfield, Meta, multimedia, local mod
 availability, projection/planning and host/preload regressions. Syntax/ESLint pass
 for all 7 touched JS/MJS files; git diff --check passes. No provider calls, paid
 usage, runtime installation, dependency or renderer changes occurred.
+
+## In-app UI and credential controls
+
+The existing app router now has a `providers` page via Providers in the header,
+with a compact navigation button below desktop widths. ProviderCenter uses the
+fixed existing preload reads; no new host APIs or credential mutation authority
+were added. Cards group remote providers, runtimes and models/utilities, derive
+capabilities/modes from the snapshot, expose account-usage warnings and unknown
+cost, and expand model/evidence details. Users can open a registered project folder
+through existing openProject to query node dependencies. Readiness tests are explicit
+and show a display-only check time. No generation or authenticated connection probe
+is added. Errors show fixed sanitized text, never adapter exception messages.
+
+Higgsfield and Meta remain manage-only environment configuration. There is no
+existing persistent credential setter/store for them; implementing one is deferred
+rather than writing plaintext secrets or changing process credential ownership.
+Configure the documented host variables before launching Electron. Credential
+removal is likewise deferred. A paid acceptance requires credentials, current
+readiness, explicit execution permission and any existing workflow approvals.
+
+MuAPI uses the unchanged upstream settings/localStorage transport. The page derives
+only a boolean presence, never retains or exports the key, and labels a present key
+UNVERIFIED. This boolean is renderer-local and does not assert host verification.
+Configure MuAPI opens existing SettingsModal; Manage MuAPI opens the existing
+https://muapi.ai/access-keys URL with target=_blank/noopener/noreferrer, through
+Electron's existing external-browser handling. No account webview is used. Settings
+no longer prefills the saved key; transient password input clears on close/save.
+MuAPI's existing storage is the deliberate exception to new host-only storage:
+it is neither migrated nor copied to another store.
+
+Browser mode shows an explicit host-unavailable fallback, MuAPI presence/settings
+and the external manage link. Full normalized host state, local probes and project
+dependencies require Electron. No insecure browser credential workaround is added.
+
+UI validation includes 390/1023/1440 browser viewports, screenshots and overflow
+checks, password no-prefill/clear-after-save with a recognizable fixture key, and
+existing storage preservation. Host behavior is tested by existing fixed API suites;
+Electron-style page data uses a mocked preload in browser QA, not a live provider.
+
+Final UI QA: 277 unique targeted tests pass (9 new UI contract tests plus existing
+Provider Center, host/preload, projection/planning, Workflow, Agent and Creative
+Revision suites). All 6 touched JS/MJS files pass syntax/ESLint; production Vite
+build and git diff --check pass. Existing upstream sourcemap/use-client/chunk-size
+warnings remain. Browser checks at 390, 1023 and 1440 show no page/card horizontal
+overflow and accessible Providers navigation. Mocked preload checks cover dependency
+nodes, readiness feedback and focus. Browser fallback, sanitized failed reads,
+MuAPI no-prefill, clear-after-save, storage failure/clear, and external-link target
+were checked. No real provider connection, Electron packaged launch, paid usage,
+credential removal or host credential-store mutation was performed.
