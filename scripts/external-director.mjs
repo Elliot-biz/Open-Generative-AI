@@ -20,7 +20,8 @@ try{
     while((end=pending.indexOf('\n'))>=0){
       const line=pending.slice(0,end);pending=pending.slice(end+1);if(!line.trim())continue;
       let result;
-      try{result=await bridge.call(JSON.parse(line));}catch{result={schemaVersion:1,status:'error',error:{code:'INVALID_REQUEST',nativeCode:'DIRECTOR_JSON_INVALID'}};}
+      let parsed;
+      try{parsed=JSON.parse(line);result=await bridge.call(parsed);}catch{result={schemaVersion:1,status:'error',...(typeof parsed?.requestId==='string'?{requestId:parsed.requestId}:{}),error:{code:'INVALID_REQUEST',nativeCode:'DIRECTOR_JSON_INVALID'}};}
       if(!process.stdout.write(JSON.stringify(result)+'\n'))await new Promise(resolve=>process.stdout.once('drain',resolve));
     }
   }

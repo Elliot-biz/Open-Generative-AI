@@ -27,6 +27,9 @@ It emits a v1 `ready` envelope containing the session ID and full tool manifest.
 Each following input line is `{ "tool": "get_project_context", "arguments": {} }`.
 Each output line is a JSON response. EOF closes the session and disposes host
 services. Incomplete/oversized framing closes safely; errors never print stacks.
+The protocol also accepts a bounded `requestId` and echoes it on every response;
+the request ID correlates transport replies, while an ACT's `arguments.commandId`
+is the canonical side-effect identity.
 Only the owner-supplied startup project is accessible. Requests cannot open/switch
 projects or supply paths. The bridge is disabled until explicitly started.
 
@@ -145,3 +148,25 @@ assessment provenance and secret/error boundaries. Existing control-layer suites
 retain provider uncertainty, revision bounds and unaffected-branch acceptance.
 Future Work/Astra/Codex integrations need only translate this fixed manifest into
 their tool protocol; no application model integration is required.
+
+## External client harness
+
+`lib/whihm-execution/external-director-client.mjs` is a reusable child-process
+client. It starts the source bridge, negotiates and validates the v1 manifest,
+validates calls against the received schemas, assigns request/action IDs, parses
+stdout separately from stderr, correlates replies, refreshes project context, and
+tracks only session hashes, IDs and registered asset checksums. It never stores
+credential values. `CLIENT_ACT_AMBIGUOUS` is raised after an ACT timeout, lost
+process response or transport failure; the client never resends that command ID.
+Identical completed action calls reuse the cached response, while conflicting
+reuse fails before transport. READ/PLAN timeouts remain ordinary request errors.
+
+The small read demonstration is:
+
+```sh
+node scripts/external-director-client.mjs --project /absolute/registered/project --scenario read
+```
+
+The client is deliberately not a reasoning engine and has no model SDK. A future
+Work/Codex/Astra adapter can call `start()`, `getManifest()`, `call(tool,args)` and
+`refreshContext()` while retaining the same structured result/error envelopes.
