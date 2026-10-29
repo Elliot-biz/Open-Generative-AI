@@ -2,7 +2,11 @@
 
 Objective outcomes can now include `id`, `artifactId`, and an
 `objective_measurement` rule. These become explicit requirements in fresh QC after
-revision. See `WHIHM_OBJECTIVE_EVIDENCE.md`; descriptions alone remain advisory.
+revision. Supported measurable families are `timeline`, `audio`, `visual`,
+`segment`, `face`, `mask`, `target` and `audio_timing`; specialized families must
+bind registered evidence to the source checksum and (for target facts) an explicit
+canonical target ID. See `WHIHM_OBJECTIVE_EVIDENCE.md`; descriptions alone remain
+advisory.
 
 External directors supply creative decisions. Creative Revision validates and
 translates them to its existing bounded corrections, Agent Execution authors the

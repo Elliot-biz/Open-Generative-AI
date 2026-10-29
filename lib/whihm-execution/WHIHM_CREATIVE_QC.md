@@ -1,8 +1,10 @@
 # Creative QC Foundation v1
 
 Objective extensions are documented in `WHIHM_OBJECTIVE_EVIDENCE.md`: bounded
-pixel-domain evidence, typed comparisons, authored production measurements and
-conversion of explicit revision outcomes into post-render QC requirements.
+pixel-domain evidence, typed comparisons, authored production measurements,
+change-derived segment statistics, checksum-bound face/mask normalization,
+target prominence and linkage to existing audio timing candidates. Explicit
+revision outcomes still convert into post-render QC requirements.
 
 `EVALUATE_CREATIVE` / `creative-qc` / `evaluate_creative` evaluates a production
 against explicit requirements. It writes immutable evidence only. It cannot edit
@@ -27,11 +29,12 @@ reference, not reconstructed execution authority.
 
 Artifacts: `{id,assetId,checksum,role}`. Role here is a logical output binding;
 `role` evaluator compares the actual registry role to its explicit expected value.
-Evidence: `{id,assetId,checksum,sourceClass,artifactId}`. All inputs resolve through
-the existing project registry, byte/hash checks and logical paths. JSON evidence
-is capped at 2 MiB; QC records also cap at 2 MiB and individual observations
-at 32 KiB; requests at 128 KiB, 16 artifacts/evidence/reviews and 64 criteria.
-No arbitrary file path or remote URL is followed.
+Evidence: `{id,assetId,checksum,sourceClass,artifactId}` with optional
+`sourceAssetId`, `sourceChecksum` and `targetId` for specialized evidence. All
+inputs resolve through the existing project registry, byte/hash checks and logical
+paths. JSON evidence is capped at 2 MiB; QC records also cap at 2 MiB and
+individual observations at 32 KiB; requests at 128 KiB, 16 artifacts/evidence/
+reviews and 64 criteria. No arbitrary file path or remote URL is followed.
 
 Requirements: `{id,category,required,severity,humanReview,rule,artifactId?,target?,
 remediation?,description?}`. Description is non-authoritative context. IDs are unique. Categories are TECHNICAL, OBJECTIVE_INTENT,
@@ -58,9 +61,11 @@ allowExternalAssessments. Global humanReview.required adds a separate mandatory
 
 Rules: asset_exists, checksum, inspection (existing requirements profile), media_kind,
 dimensions, aspect, duration, frame_rate, streams (video/audio booleans), output_count
-(unique registered asset IDs, optional logical role filter), role, benchmark_metric, evidence_value,
-lineage_event, assessment and semantic. Rules and fields are allowlisted. Counts,
-tolerances, dimensions and timing ranges validate before evaluation.
+(unique registered asset IDs, optional logical role filter), role, benchmark_metric,
+evidence_value, lineage_event, assessment and semantic. `objective_measurement`
+families are `timeline`, `audio`, `visual`, `segment`, `face`, `mask`, `target` and
+`audio_timing`. Rules and fields are allowlisted. Counts, tolerances, dimensions,
+sampling windows and timing ranges validate before evaluation.
 
 Fresh inspection facts retain backend/scope/validation evidence. Inspection is
 header-based technical readability, not full decoding, CFR certainty, aesthetics,
@@ -73,7 +78,10 @@ JSON and checks its final artifact identity/hash. It does not remeasure cuts,
 ducking or sync. `evidence_value` compares an explicit bounded property path/value
 in a target-bound JSON record. `lineage_event` checks authored Timeline item/Audio
 Production event frame placement from registered metadata; it is not proof of
-actual visual/audio content. No semantic scene facts are invented.
+actual visual/audio content. `visual`/`segment` decode bounded grayscale samples;
+`face`/`mask`/`target` normalize existing registered specialized evidence; and
+`audio_timing` references existing onset/beat candidates only. No semantic scene
+facts or object identity are invented.
 
 Overall state derives only from required findings, in this precedence:
 
@@ -89,11 +97,13 @@ failures remain visible but do not secretly determine overall acceptance.
 
 ## Evidence trust and human boundaries
 
-Trust classes: verified_deterministic, recorded_deterministic, provider_metadata,
-model_assessment, human_assessment, unverified. Fresh local checks may assert only
-facts they actually verify. Broken artifacts remain unverified. Imported recorded
-measurements require explicit allowRecordedDeterministic=true. SHA256 verifies
-byte identity, not who made a measurement or whether a claimed result is true.
+Trust classes: verified_deterministic, recorded_deterministic, specialized_model,
+provider_metadata, model_assessment, human_assessment, unverified. Fresh local checks
+may assert only facts they actually verify. Broken artifacts remain unverified.
+Imported recorded measurements require explicit allowRecordedDeterministic=true.
+Specialized face/mask evidence requires source asset/checksum binding and is
+normalized before use; its provenance is not upgraded to deterministic. SHA256
+verifies byte identity, not who made a measurement or whether a claimed result is true.
 Recorded provenance is caller-declared and is marked measurementAuthenticity:
 not_attested. Never relabel provider/model claims as fresh deterministic evidence.
 An authorized caller must decide which recorded evidence is appropriate to trust.
@@ -125,9 +135,12 @@ Results contain schemaVersion/kind/evaluatorVersion, project ID, definitionHash,
 evidenceHash, resultHash, request, state, findings, evidence and workflow/run
 association. Findings carry category, required flag, severity, outcome, evidence,
 observations, affected artifact/hash, optional assessment/confidence and advisory
-remediation/targets. Node/parameter family, Timeline item, Audio event and output
-role targets are authored hints; node IDs are validated when a workflow association
-is supplied. Targets never become edit commands.
+remediation/targets. Objective observations retain `PASS`, `FAIL`, `UNVERIFIED`,
+`UNSUPPORTED` or `BLOCKED` status, expected/measured/tolerance/unit and the
+normalized measurement. The result `objectiveSummary` counts evaluated, passed,
+failed, unverified, unsupported and blocked checks. Node/parameter family, Timeline
+item, Audio event and output role targets are authored hints; node IDs are validated
+when a workflow association is supplied. Targets never become edit commands.
 
 Definition hash includes requirements, artifact expectations, objective and policy,
 but excludes evidence/reviewRefs. Evidence hash covers verified references and
@@ -169,13 +182,19 @@ No bespoke duplicate measurements or provider calls are added to QC.
 Human-only and mocked subjective fixtures exercise review/provenance policies.
 Subjective evaluation engines, authenticated reviewer roles/signatures, semantic
 vision/audio analysis, external evidence attestation, revision loops, Creative
-Memory, durable workflow continuation and publishing are deferred. QC remains
-conservative when evidence cannot support the requested fact.
+Memory, durable workflow continuation and publishing remain deferred. Depth
+objective evidence is explicitly unsupported because no authoritative registered
+depth source exists (`DEPTH_OBJECTIVE_EVIDENCE_UNSUPPORTED_NO_AUTHORITATIVE_SOURCE`).
+Live MediaPipe extraction remains environment-blocked by
+`FACE_ELECTRON_RUNNER_UNAVAILABLE`; supplied valid face artifacts are still
+normalized. QC remains conservative when evidence cannot support the requested fact.
 
 ## Validation
 
-The focused QC suite passes 26 tests, including real local Anime / Action
-benchmark execution and evidence consumption. Targeted existing regression suites
-pass 845 tests (871 total, no skipped tests). Syntax and ESLint pass for all
-16 touched JS/MJS files; git diff --check passes. No renderer changes, provider
-calls, paid usage or new dependencies are required.
+The focused QC/evidence coverage includes the existing Creative QC acceptance
+suite plus deterministic objective-evidence fixtures for visual change/motion,
+luminance, segment statistics, face/mask normalization, target prominence, and
+audio onset/beat linkage. Targeted regression suites cover the dependent media,
+audio, timeline, workflow, guidance, segmentation, bridge, and intent paths.
+Syntax/ESLint and `git diff --check` are required gates for touched files. No
+renderer changes, provider calls, paid usage or new dependencies are required.
