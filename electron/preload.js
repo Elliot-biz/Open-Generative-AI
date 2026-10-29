@@ -67,6 +67,8 @@ contextBridge.exposeInMainWorld('whihmHost', {
     getProviderStatus: request => ipcRenderer.invoke('whihm:getProviderStatus',request ?? {}),
     testProviderReadiness: request => ipcRenderer.invoke('whihm:testProviderReadiness',request ?? {}),
     getProviderDependencies: request => ipcRenderer.invoke('whihm:getProviderDependencies',request ?? {}),
+    setProviderCredential: request => ipcRenderer.invoke('whihm:setProviderCredential', request ?? {}),
+    removeProviderCredential: request => ipcRenderer.invoke('whihm:removeProviderCredential', request ?? {}),
     planCreativeRevision: request => ipcRenderer.invoke('whihm:planCreativeRevision',request),
     runCreativeRevision: request => ipcRenderer.invoke('whihm:runCreativeRevision',request),
     getCreativeRevision: request => ipcRenderer.invoke('whihm:getCreativeRevision',request),

@@ -1,13 +1,19 @@
 # Provider Center v1
 
-Provider Center is a read-only view over capability projection, owner readiness
-checks and observed runtime state. It is not a provider registry, credential store,
-connection manager, account health service or execution permission system.
+Provider Center is a normalized view over capability projection, owner readiness
+checks and observed runtime state. It is not a provider registry, connection
+manager, account health service or execution permission system. The only mutation
+surface is the narrow host-owned credential control described below.
 
 Upstream SettingsModal/muapi transports already own the renderer-side MuAPI key.
 That UI/storage is unchanged. The host cannot attest its presence, so MuAPI reports
 UNKNOWN configuration and unknown credential presence with external_config source.
-Higgsfield and Meta reuse their existing safe environment/configuration validators.
+Higgsfield and Meta reuse their existing safe environment/configuration validators
+and may additionally use the host-owned encrypted credential store. A complete
+host credential takes precedence over environment values; an absent host record
+falls back to the environment. Partial or corrupt host data is reported as
+malformed and deliberately blocks environment merging rather than combining a
+credential from two sources.
 No credentials, environment values, auth headers, local model paths or raw adapter
 errors are copied into Provider Center. Public records allowlist identifiers and
 bounded status fields rather than forwarding whole adapter/runtime objects.
@@ -21,8 +27,10 @@ bounded status fields rather than forwarding whole adapter/runtime objects.
 - getProviderDependencies({projectHandle,providerId}): registered project workflow
   node references matching current catalog bindings; no filesystem scan.
 
-All are fixed host/preload reads. Unknown fields, credential retrieval/configuration
-and unsafe inputs reject. No new capability entry is needed: planning overview
+All reads are fixed host/preload operations. Credential writes/removals are also
+fixed allowlisted operations (`setProviderCredential` and
+`removeProviderCredential`) and return status only. Unknown fields, credential
+retrieval and unsafe inputs reject. No new capability entry is needed: planning overview
 advertises the read-only host operation. Counts stay 54 groups /622 entries.
 
 ## Record and trust
@@ -79,6 +87,26 @@ links remain empty; no account/billing URLs are invented or interpolated. Runtim
 dependency matches are labeled catalog-declared requirements, not proof that every
 operation on a multi-operation tool needs that runtime.
 
+## Host-owned credential store
+
+Electron owns a version-1 store at the app user-data location
+`provider-credentials.json`. Values are encrypted/decrypted only by Electron's
+`safeStorage`; the renderer, preload responses, project files, workflow records,
+projection, planning context, QC and agent records never receive plaintext or
+ciphertext. The allowlist contains only:
+
+- Higgsfield: `HF_API_KEY_ID` + `HF_API_KEY_SECRET` as one complete credential.
+- Meta: `WHIHM_META_API_KEY`.
+
+The store writes atomically and keeps only schema/field/ciphertext metadata. If
+the OS encryption primitive is unavailable, writes fail closed and no plaintext
+fallback is attempted. Host status exposes only presence, source (`host_store`,
+`environment`, or `unavailable`), storage state and unverified verification
+metadata. Saving does not prove account access. Removing a stored credential never
+deletes environment variables; effective status is recomputed using the fallback
+rule above. MuAPI remains owned by its upstream settings/localStorage flow and is
+not migrated.
+
 ## Limits and next work
 
 Readiness describes last local observation/configuration, not successful inference
@@ -86,34 +114,35 @@ or a live authenticated provider connection. Remote connection tests remain
 NOT_SUPPORTED and accounts unverified; no generation request is used as a test.
 MuAPI credential presence, live provider health, balances, billing metadata, actual
 usage aggregation, some native-evidence support, local weights and session liveness
-remain unknown. No credential mutation, UI, secret manager, disabling, Director
-Bridge or durable orchestration is introduced. Next: owner-controlled credential
-presence and UI controls, preserving these host/renderer secret boundaries.
+remain unknown. No generic secret manager, credential getter, disabling, Director
+Bridge or durable orchestration is introduced. Browser mode has no credential
+setter and must use environment/setup instructions; only trusted Electron can
+mutate the two allowlisted credential schemas.
 
-Validation: 455 unique targeted tests pass, including 8 Provider Center tests,
-Workflow/Agent/Creative Revision, native Higgsfield, Meta, multimedia, local model
-availability, projection/planning and host/preload regressions. Syntax/ESLint pass
-for all 7 touched JS/MJS files; git diff --check passes. No provider calls, paid
-usage, runtime installation, dependency or renderer changes occurred.
+Validation covers the existing Provider Center, Workflow/Agent/Creative Revision,
+native Higgsfield, Meta, multimedia, local model availability, projection/planning
+and host/preload regressions plus dedicated encrypted-store and fixed-bridge tests.
+No provider calls, paid usage or runtime installation are used.
 
 ## In-app UI and credential controls
 
 The existing app router now has a `providers` page via Providers in the header,
 with a compact navigation button below desktop widths. ProviderCenter uses the
-fixed existing preload reads; no new host APIs or credential mutation authority
-were added. Cards group remote providers, runtimes and models/utilities, derive
+fixed preload reads plus the two allowlisted credential controls. Cards group
+remote providers, runtimes and models/utilities, derive
 capabilities/modes from the snapshot, expose account-usage warnings and unknown
 cost, and expand model/evidence details. Users can open a registered project folder
 through existing openProject to query node dependencies. Readiness tests are explicit
 and show a display-only check time. No generation or authenticated connection probe
 is added. Errors show fixed sanitized text, never adapter exception messages.
 
-Higgsfield and Meta remain manage-only environment configuration. There is no
-existing persistent credential setter/store for them; implementing one is deferred
-rather than writing plaintext secrets or changing process credential ownership.
-Configure the documented host variables before launching Electron. Credential
-removal is likewise deferred. A paid acceptance requires credentials, current
-readiness, explicit execution permission and any existing workflow approvals.
+Higgsfield and Meta have write-only Electron forms for configure/replace and
+stored-credential removal. Fields are transient password/text inputs, cleared after
+submission; the UI never pre-fills or reads a saved value. A successful save shows
+present/host-store and configured/unverified state only. Removal warns about project
+dependencies when a project handle is available and leaves environment fallback
+untouched. A paid acceptance still requires credentials, current readiness, explicit
+execution permission and any existing workflow approvals.
 
 MuAPI uses the unchanged upstream settings/localStorage transport. The page derives
 only a boolean presence, never retains or exports the key, and labels a present key
@@ -130,17 +159,12 @@ and the external manage link. Full normalized host state, local probes and proje
 dependencies require Electron. No insecure browser credential workaround is added.
 
 UI validation includes 390/1023/1440 browser viewports, screenshots and overflow
-checks, password no-prefill/clear-after-save with a recognizable fixture key, and
-existing storage preservation. Host behavior is tested by existing fixed API suites;
+checks, password no-prefill/clear-after-save with recognizable fixture values, and
+existing storage preservation. Host behavior is tested through fixed preload APIs;
 Electron-style page data uses a mocked preload in browser QA, not a live provider.
 
-Final UI QA: 277 unique targeted tests pass (9 new UI contract tests plus existing
-Provider Center, host/preload, projection/planning, Workflow, Agent and Creative
-Revision suites). All 6 touched JS/MJS files pass syntax/ESLint; production Vite
-build and git diff --check pass. Existing upstream sourcemap/use-client/chunk-size
-warnings remain. Browser checks at 390, 1023 and 1440 show no page/card horizontal
-overflow and accessible Providers navigation. Mocked preload checks cover dependency
-nodes, readiness feedback and focus. Browser fallback, sanitized failed reads,
-MuAPI no-prefill, clear-after-save, storage failure/clear, and external-link target
-were checked. No real provider connection, Electron packaged launch, paid usage,
-credential removal or host credential-store mutation was performed.
+The targeted credential-store/host suites cover encryption-at-rest, schema
+allowlisting, precedence, malformed-store blocking, write-only preload responses,
+replacement/removal, sanitized errors and environment compatibility. No real
+provider connection, paid usage or real-user upload is used; credential mutation
+tests use fake safeStorage and fixture values only.

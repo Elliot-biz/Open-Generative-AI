@@ -2,7 +2,7 @@ const { register: registerLoader } = require('node:module');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
-const operations = ['getProviderCenter','getProviderStatus','testProviderReadiness','getProviderDependencies','planCreativeRevision','runCreativeRevision','getCreativeRevision','continueCreativeRevision','planCreativeQc','evaluateCreativeQc','getCreativeQc','recordCreativeQcHumanAssessment','planAgentExecution','applyAgentPlan','runAgentExecution','getAgentExecution','continueAgentExecution','analyzeAudioTiming','planAudioProduction','produceAudioMix','planTimelineComposition','composeTimeline','planPerformanceGuidance','preparePerformanceGuidance','getPerformanceGuidance','reviewPerformanceGuidance','createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark','planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
+const operations = ['getProviderCenter','getProviderStatus','testProviderReadiness','getProviderDependencies','setProviderCredential','removeProviderCredential','planCreativeRevision','runCreativeRevision','getCreativeRevision','continueCreativeRevision','planCreativeQc','evaluateCreativeQc','getCreativeQc','recordCreativeQcHumanAssessment','planAgentExecution','applyAgentPlan','runAgentExecution','getAgentExecution','continueAgentExecution','analyzeAudioTiming','planAudioProduction','produceAudioMix','planTimelineComposition','composeTimeline','planPerformanceGuidance','preparePerformanceGuidance','getPerformanceGuidance','reviewPerformanceGuidance','createPerformanceBenchmark','getPerformanceBenchmark','recordBenchmarkCandidate','recordBenchmarkEvaluation','comparePerformanceBenchmark','planWorkflowExecution','runWorkflow','getWorkflowRun','approveWorkflowCheckpoint','resumeWorkflow','invalidateWorkflowRun', 'getMultimediaRuntimeStatus', 'finishMedia', 'planMediaFinishing', 'inspectMedia', 'planMediaInspection', 'getPlanningOverview', 'getCapabilityContext', 'getExecutorContext', 'getCapabilityProjection', 'openProject', 'getWorkflow', 'getAsset', 'planNode', 'executeNode', 'assessWorkflowReadiness', 'applyWorkflowApproval', 'applyWorkflowInvalidation'];
 const reject = code => ({ status: 'rejected', diagnostics: [{ code, path: '', message: code.replaceAll('_', ' ') }] });
 let loaded;
 function multimediaHostEnvironment(app, { resourcesPath = process.resourcesPath, platform = process.platform, arch = process.arch } = {}) {
@@ -27,7 +27,7 @@ function loadHost() {
 }
 
 // Fixed IPC transport for existing clients, not a job service or polling loop.
-function register({ ipcMain, getWindow, load = loadHost, timeoutMs = 35 * 60 * 1000 }) {
+function register({ ipcMain, getWindow, load = loadHost, timeoutMs = 35 * 60 * 1000, providerCredentials = null }) {
     const sessions = new Map();
     function trusted(event) {
         const window = getWindow();
@@ -41,7 +41,7 @@ function register({ ipcMain, getWindow, load = loadHost, timeoutMs = 35 * 60 * 1
         const pending = new Map();
         const send = (channel, value) => { if (!event.sender.isDestroyed()) event.sender.send(channel, value); };
         const state = { pending, ready: false, host: null };
-        state.host = Promise.resolve().then(load).then(({ createWorkflowHost }) => createWorkflowHost({
+        state.host = Promise.resolve().then(load).then(({ createWorkflowHost }) => createWorkflowHost({ providerCredentials,
             emit: value => send('whihm:status', value),
             callRuntime(operation, payload) {
                 if (!state.ready) return Promise.reject(Object.assign(new Error('Runtime not ready'), { hostCode: 'HOST_RUNTIME_NOT_READY' }));

@@ -4,6 +4,7 @@ require('./lib/face-guidance').registerFaceScheme(require('electron').protocol);
 const { register: registerLocalInference } = require('./lib/localInference');
 const { register: registerWan2gp } = require('./lib/wan2gpProvider');
 const { register: registerWhihmHost } = require('./lib/whihm-host');
+const { createProviderCredentialStore } = require('./lib/provider-credentials');
 
 process.on('uncaughtException', (err) => {
     console.error('Uncaught exception:', err);
@@ -71,7 +72,15 @@ function createWindow() {
 
 app.whenReady().then(() => {
     createWindow();
-    registerWhihmHost({ ipcMain: require('electron').ipcMain, getWindow: () => mainWindow });
+    let providerCredentials = null;
+    try {
+        providerCredentials = createProviderCredentialStore({ app, safeStorage: require('electron').safeStorage });
+    } catch (error) {
+        // Keep environment-based development flows available, but never fall back
+        // to plaintext storage when the OS encryption primitive is unavailable.
+        console.error('Provider credential store unavailable:', error?.code || 'PROVIDER_CREDENTIAL_STORE_UNAVAILABLE');
+    }
+    registerWhihmHost({ ipcMain: require('electron').ipcMain, getWindow: () => mainWindow, providerCredentials });
 
     try {
         registerLocalInference();

@@ -16,8 +16,38 @@ export function ProviderCenter({host=window.whihmHost,projectHandle=null}={}) {
     if(p.paidSideEffect==='REMOTE_UNKNOWN_COST')node('p','Backend spend unknown',c);
     else if(p.local)node('p','No provider spend',c);
     node('p',`Credential: ${p.id==='muapi'?(p.uiPresence===null?'unknown':p.uiPresence?'present':'missing'):p.credential.presence}`,c);
+    if(p.id!=='muapi'&&p.credential?.source)node('p',`Credential source: ${p.credential.source}`,c);
     const blocker=node('p',p.readiness.code??'',c);blocker.className='provider-code';
-    if(p.id==='higgsfield'||p.id==='meta')node('p',`Manage-only: configure ${p.credential.requirements?.join(' + ')||'host environment credentials'} before launching Electron. In-app storage is not supported.`,c);
+    const ownerControlled=(p.id==='higgsfield'||p.id==='meta')&&host?.setProviderCredential&&host?.removeProviderCredential;
+    if(ownerControlled){
+      const form=node('form','',c);form.className='provider-credential-form';
+      const values=p.id==='higgsfield'?[['key_id','Key ID','text'],['key_secret','Secret','password']]:[['api_key','API key','password']];
+      const inputs=Object.fromEntries(values.map(([field,label,type])=>{const id=`provider-${p.id}-${field}`;const l=node('label',label,form);l.htmlFor=id;const input=node('input','',form);input.id=id;input.name=field;input.type=type;input.autocomplete='new-password';input.required=true;input.maxLength=4096;return [field,input];}));
+      const formActions=node('div','',form);formActions.className='provider-actions';
+      const save=button(p.credential.presence==='present'?'Replace credential':'Save credential',formActions,async()=>{});save.type='submit';
+      let remove=null;
+      if(p.credential.source==='host_store')remove=button('Remove stored credential',formActions,async()=>{
+        let warning='Remove the stored host credential? Environment fallback, if configured, will remain available.';
+        if(projectHandle&&host.getProviderDependencies){try{const d=await host.getProviderDependencies({projectHandle,providerId:p.id});if(d.dependencies?.length)warning+=` ${d.dependencies.length} workflow node${d.dependencies.length===1?'':'s'} currently depend on this provider.`;}catch{/* dependency warning is advisory */}}
+        if(typeof window.confirm==='function'&&!window.confirm(warning))return;
+        remove.disabled=true;
+        try{const result=await host.removeProviderCredential({providerId:p.id});if(result?.status!=='removed')throw Error();await refresh();}
+        catch{credentialMessage.textContent='Credential removal failed. No secret details were returned.';}
+        finally{remove.disabled=false;}
+      });
+      if(remove)remove.type='button';
+      const credentialMessage=node('p','',form);credentialMessage.setAttribute('role','status');
+      form.onsubmit=async event=>{event.preventDefault();save.disabled=true;if(remove)remove.disabled=true;credentialMessage.textContent='';
+        try{
+          const credentials=Object.fromEntries(values.map(([field])=>[field,inputs[field].value]));
+          const result=await host.setProviderCredential({providerId:p.id,credentials});
+          if(result?.status!=='saved')throw Error();
+          credentialMessage.textContent='Credential saved. Account access remains unverified until a supported non-billable check exists.';
+          await refresh();
+        }catch{credentialMessage.textContent='Credential was not saved. Check the fields; no secret details were returned.';}
+        finally{for(const input of Object.values(inputs))input.value='';save.disabled=false;if(remove)remove.disabled=false;}
+      };
+    }else if(p.id==='higgsfield'||p.id==='meta')node('p',`Manage-only: configure ${p.credential.requirements?.join(' + ')||'host environment credentials'} in the trusted Electron environment.`,c);
     node('p','Account access and provider connection remain unverified. Workflow approvals still apply.',c);
     const controls=node('div','',c);controls.className='provider-actions';
     if(p.id==='muapi'){
