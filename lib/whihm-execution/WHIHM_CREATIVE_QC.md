@@ -1,5 +1,10 @@
 # Creative QC Foundation v1
 
+External semantic/subjective review now has a checksum-bound snapshot and validated
+submission path. See `WHIHM_SEMANTIC_CREATIVE_QC.md` for contracts, policy,
+confidence/importance, typed contradiction checks, immutable integration and the
+explicit Structured Intent revision boundary. Objective findings retain authority.
+
 Objective extensions are documented in `WHIHM_OBJECTIVE_EVIDENCE.md`: bounded
 pixel-domain evidence, typed comparisons, authored production measurements,
 change-derived segment statistics, checksum-bound face/mask normalization,

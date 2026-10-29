@@ -176,3 +176,12 @@ node scripts/external-director-client.mjs --project /absolute/registered/project
 The client is deliberately not a reasoning engine and has no model SDK. A future
 Work/Codex/Astra adapter can call `start()`, `getManifest()`, `call(tool,args)` and
 `refreshContext()` while retaining the same structured result/error envelopes.
+
+# Semantic creative review
+
+`plan_semantic_creative_qc` returns an evidence snapshot for an external reasoner.
+`evaluate_semantic_creative_qc` accepts a validated external submission and writes
+a canonical Creative QC record. Schemas and review policy are in the manifest;
+see `WHIHM_SEMANTIC_CREATIVE_QC.md`. Existing client call/action IDs, ambiguity
+handling and local stdio boundaries apply. No model API or credential privilege
+is added. Semantic review is also described in the generic planning overview.
