@@ -1,5 +1,9 @@
 # Structured Creative Revision Intent v1
 
+Objective outcomes can now include `id`, `artifactId`, and an
+`objective_measurement` rule. These become explicit requirements in fresh QC after
+revision. See `WHIHM_OBJECTIVE_EVIDENCE.md`; descriptions alone remain advisory.
+
 External directors supply creative decisions. Creative Revision validates and
 translates them to its existing bounded corrections, Agent Execution authors the
 workflow, Workflow Execution executes, and Creative QC evaluates new artifacts.
@@ -65,9 +69,9 @@ change family. `remote_provider` is only a declaration, never authorization;
 existing Agent/Revision remote approval controls remain mandatory.
 
 Expected outcomes are bounded descriptions classified objective or subjective.
-They are retained, not parsed or automatically added as QC rules. Existing bound
-QC requirements remain the acceptance authority. Machine-evaluable new outcome
-rules and confidence metadata are deferred.
+Descriptions are retained without parsing. Objective outcomes with explicit typed
+rules become additional requirements in fresh QC; original bound requirements
+remain in force. Subjective evaluation and confidence metadata remain deferred.
 
 Proposals retain the submitted intent and stable intentHash alongside the existing
 finding/action mapping and Agent plan. Set-like finding/capability/side-effect

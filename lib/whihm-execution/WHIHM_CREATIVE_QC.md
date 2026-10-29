@@ -1,5 +1,9 @@
 # Creative QC Foundation v1
 
+Objective extensions are documented in `WHIHM_OBJECTIVE_EVIDENCE.md`: bounded
+pixel-domain evidence, typed comparisons, authored production measurements and
+conversion of explicit revision outcomes into post-render QC requirements.
+
 `EVALUATE_CREATIVE` / `creative-qc` / `evaluate_creative` evaluates a production
 against explicit requirements. It writes immutable evidence only. It cannot edit
 workflows, approve execution, rerun work, rank providers, retry or invoke a model.
