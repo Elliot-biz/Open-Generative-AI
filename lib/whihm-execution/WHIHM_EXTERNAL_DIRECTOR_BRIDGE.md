@@ -151,6 +151,12 @@ their tool protocol; no application model integration is required.
 
 ## External client harness
 
+`plan_creative_revision.arguments.request.structuredIntent` accepts Structured
+Creative Revision Intent v1. Its schema is discoverable in the tool manifest and
+capability projection. Keep `request.intents` empty when using it. The enclosing
+revision request still binds project, workflow hash, QC asset/checksum, selected
+findings, scope, run and cycle. See `WHIHM_STRUCTURED_CREATIVE_INTENT.md`.
+
 `lib/whihm-execution/external-director-client.mjs` is a reusable child-process
 client. It starts the source bridge, negotiates and validates the v1 manifest,
 validates calls against the received schemas, assigns request/action IDs, parses

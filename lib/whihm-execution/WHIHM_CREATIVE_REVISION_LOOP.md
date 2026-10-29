@@ -1,5 +1,10 @@
 # Bounded Creative QC → Agent Revision
 
+Structured Creative Revision Intent v1 extends the existing request via optional
+`structuredIntent` (with empty legacy `intents`). See
+`WHIHM_STRUCTURED_CREATIVE_INTENT.md` for typed operations, preservation rules,
+hashing, expected-outcome boundaries and the bridge example.
+
 Creative QC evaluates. Agent Execution authors workflow edits. Workflow Execution
 owns dispatch, approvals, continuation, invalidation and asset outputs. This bridge
 creates constrained Agent plans and requests a fresh QC evaluation after successful
